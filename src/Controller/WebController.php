@@ -79,4 +79,12 @@ class WebController extends AbstractController
             'form' => $form->createView()
         ]);
     }
+
+    /**
+     * @Route("/manage", name="cabinet_home")
+     */
+    public function userCabinetHomeAction(Request $request)
+    {
+
+    }
 }

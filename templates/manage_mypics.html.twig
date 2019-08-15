@@ -1,0 +1,79 @@
+{% extends 'manage_layout.twig' %}
+
+{% block managecontent %}
+    <div class="row">
+        <div class="col-md-3">
+            {% if data.dateTree is not empty %}
+                <ul>
+                    {% for year, monthdata in data.dateTree %}
+                        <li>
+                            {{ year }}
+                            <ul>
+                                {% for month, count in monthdata %}
+                                    <li>
+                                        {{ month }} - ({{ count }})
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="col-md-9">
+            {% if data.status == true %}
+                <div class="row">
+                    <div id="navpanel">
+                        <a class="btn btn-default" href="{{ path('manage_mypics', {'before': data.beforeId}) }}"><i class="ion ion-chevron-left"></i></a>
+                        <a class="btn btn-default" href="{{ path('manage_mypics', {'after': data.afterId}) }}"><i class="ion ion-chevron-right"></i></a>
+                    </div>
+                </div>
+            {% for row in data.files|batch(3, 'false') %}
+                <div class="row">
+                    {% for item in row %}
+                        {% if item != 'false' %}
+                            <div class="col-sm-6 col-lg-4">
+                                <div class="itembox">
+                                    <div class="itembox-img-container">
+                                        <div class="itembox-img-container-in">
+                                            {% if item.IsImage == true %}
+                                            <img src="{{ item.getcustomurl }}">
+                                            {% elseif item.IsVideo == true %}
+                                            <img src="/static/webm_file.png">
+                                            {% elseif item.IsAudio == true %}
+                                            <img src="/static/audio_file.png">
+                                            {% else %}
+                                            <img src="/static/generic_file.png">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="itembox-text">
+                                        <span>
+                                            {{ item.getOriginalName }}
+                                        </span>
+                                        <span>
+                                            {{ item.getDate|date("d/m/Y h:i:s") }}
+                                        </span>
+                                    </div>
+                                    <div class="itembox-controls">
+                                        <a href="{{ item.getcustomurl }}"><i class="ion ion-android-download"></i></a>
+                                        <button data-deleteaction="del" data-deleteid="{{ item.getid }}" data-toggle="tooltip" title="Delete" class="btn btn-danger {% if item.isdeleted == true %}hidden{% endif %}"><i class="buttontext ion ion-trash-a"></i></button>
+                                        <button data-deleteaction="undo"  data-deleteid="{{ item.getid }}" data-toggle="tooltip" title="Undelete" class="btn btn-warning {% if item.isdeleted == false %}hidden{% endif %}"><i class="buttontext ion ion-trash-b"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            {% else %}
+                You have not uploaded anything yet.
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/js/manage_mypics.js"></script>
+{% endblock %}

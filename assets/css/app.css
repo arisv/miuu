@@ -1,0 +1,126 @@
+body {
+    background: #f5f5f5;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
+#uploader{
+    padding-top: 100px;
+}
+
+#loginpanel{
+    margin-top: 10px;
+    padding-left: 40px;
+    margin-right: 10%;
+}
+
+#userheader{
+    margin-right: 5%;
+}
+
+.header{
+    height: 60px;
+    background-color: #491080;
+    color: white;
+}
+
+.header a{
+    color: #ffa800;
+}
+
+#managebuttons{
+    padding: 20px;
+}
+
+#navpanel{
+    padding: 20px;
+    background-color: white;
+}
+
+.displayimage img {
+    width: 250px;
+}
+
+.itembox{
+    background: white;
+    height: 380px;
+    margin: 5px;
+}
+
+
+.itembox-img-container{
+    height: 250px;
+    position:relative;
+}
+
+.itembox-img-container-in{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+}
+
+.itembox-img-container-in > img{
+    max-height: 200px;
+    max-width: 100%;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.itembox-text{
+    margin-left: 15px;
+    font-weight: 600;
+}
+
+.itembox-text > span{
+    position: relative;
+    display: block;
+}
+
+.itembox-controls{
+    margin-left: 20px;
+    font-weight: 600;
+    font-size: 40px;
+}
+
+.error-image{
+    max-width: 90%;
+}
+
+.buttontext{
+    font-size: 25px;
+}
+
+#header-home{
+    margin-left: 15px;
+    margin-top: 9px;
+}
+
+.uploadControls{
+    display: inline-block;
+}
+
+#uploadResult{
+    width: auto;
+    min-width: 238px;
+}

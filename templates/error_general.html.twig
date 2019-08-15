@@ -1,0 +1,20 @@
+{% extends 'base_layout.html.twig' %}
+
+{% block title %}
+    Oh no.
+{% endblock %}
+
+{% block maincontent %}
+    <div class="row">
+        <div class="center-block">
+            <h2>Something went horribly wrong</h2>
+            <span>Maybe it's your fault. Maybe you pressed something you shouldn't have</span>
+            <span>Think about that for a while as we deal with the issue.</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="center-block">
+            <img class="error-image" src="/static/general_error.jpg">
+        </div>
+    </div>
+{% endblock %}

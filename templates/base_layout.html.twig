@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {% block stylesheets %}
+        <!--hmm-->
+        {{ encore_entry_link_tags('app') }}
+        <link rel="icon" type="image/png" href="/favicon.png">
+    {% endblock %}
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+<div class="header">
+    <div id="header-home" class="float-left">
+        <a href="/">Home</a>
+    </div>
+    {% if not is_granted('ROLE_USER') %}
+        <div id="loginpanel" class="float-right">
+            <a href="{{ path('auth_login') }}">Login</a> or <a href="{{ path('auth_register') }}">Sign up</a>
+        </div>
+    {% endif %}
+
+    {% if is_granted('ROLE_USER') %}
+        <div id="userheader" class="float-right">
+            Welcome, {{ app.user.login }}.<br>
+            <a href="/manage/">Control Panel</a> |
+            <a href="{{ path('auth_logout') }}">Logout</a>
+        </div>
+    {% endif %}
+</div>
+{% if app.session.flashbag.has('global-success') or app.session.flashbag.has('global-danger') %}
+    <div class="global-alerts">
+        {% for flashMessage in app.session.flashbag.get('global-danger') %}
+            <div class="alert alert-danger">
+                <p class="text-center">{{ flashMessage }}</p>
+            </div>
+        {% endfor %}
+        {% for flashMessage in app.session.flashbag.get('global-success') %}
+            <div class="alert alert-success">
+                <p class="text-center">{{ flashMessage }}</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<div class="container">
+    {% block maincontent %}
+
+    {% endblock %}
+</div>
+<div class="footer">
+
+</div>
+{% block javascripts %}
+    {{ encore_entry_script_tags('app') }}
+{% endblock %}
+</body>
+</html>

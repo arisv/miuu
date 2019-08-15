@@ -1,0 +1,59 @@
+{% extends 'base_layout.html.twig' %}
+
+{% form_theme form _self %}
+
+{% block form_errors %}
+    {% spaceless %}
+        {% if errors is defined and errors|length > 0 %}
+            <div class="alert alert-danger">
+                <ul class="list-unstyled">
+                    {% for error in errors %}
+                        <li>{{ error.message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endspaceless %}
+{% endblock form_errors %}
+
+{% block title %}
+    MeowUpload - home
+{% endblock %}
+
+{% block maincontent %}
+    <div id="uploader">
+        <div class="row">
+            <div class="col-md-2 col-md-offset-5">
+                {{ form_start(form) }}
+
+                    <h1 class="text-center mrgb30">Login</h1>
+
+                    <div class="form-group l-sign-form-group">
+                        {{ form_label(form.username, "Login", {'label_attr': {'class':'sr-only'} }) }}
+                        {{ form_widget(form.username, {'value': lastUsername, 'attr':{'class': 'form-control', 'placeholder': 'Email / Login'}}) }}
+                        {{ form_errors(form.username) }}
+                    </div>
+
+                    <div class="form-group l-sign-form-group">
+                        {{ form_label(form.password, "Password", {'label_attr': {'class':'sr-only'} }) }}
+                        {{ form_widget(form.password, {'attr':{'class': 'form-control', 'placeholder': 'Password'}}) }}
+                        {{ form_errors(form.password) }}
+                    </div>
+
+                    <div class="l-sign-inner">
+                        {% if error is not null %}
+                        <div class="alert alert-danger">
+                            {{ "Login failed, check your info" }}
+                        </div>
+                        {% endif %}
+                        <div class="l-sign-btn">
+                            <button id="login-form-button" type="submit" class="btn btn-primary btn-wmid">Log in</button>
+                        </div>
+
+                    </div><!-- /.l-sign-inner -->
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

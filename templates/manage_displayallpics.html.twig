@@ -1,0 +1,15 @@
+{% extends 'manage_layout.twig' %}
+
+{% block managecontent %}
+   {% for row in imagelist|batch(4, 'false') %}
+       <div class="row">
+           {% for item in row %}
+               {% if item != 'false' %}
+                   <div class="col-xs-12 col-sm-6 col-md-3 displayimage">
+                       <img src="{{ item.getcustomurl }}">
+                   </div>
+               {% endif %}
+           {% endfor %}
+       </div>
+   {% endfor %}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base_layout.html.twig' %}
+
+{% block title %}
+    Userlist - MIU
+{% endblock %}
+
+{% block maincontent %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Storage usage</th>
+            <th>Status</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in userlist %}
+        <tr data-userid="{{ user.id }}">
+            <td>{{ user.id }}</td>
+            <td>{{ user.login }}</td>
+            <td>{{ user.email }}</td>
+            <td data-usersize>Calculating...</td>
+            <td>{{ user.active }}</td>
+            <td>{{ user.role }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/js/admin_users.js"></script>
+{% endblock %}

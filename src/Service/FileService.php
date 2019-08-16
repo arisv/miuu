@@ -133,6 +133,71 @@ class FileService
         $file->move($storagePath, $newName);
     }
 
+    public function mirrorRemoteFile($url, ?User $user)
+    {
+        $remoteSize = $this->queryRemoteFileSize($url);
+        if (!$remoteSize) {
+            throw new \Exception("Unable to get filesize from remote target");
+        }
+        $maxFileSize = $_ENV['MAX_REMOTE_FILE_SIZE'];
+        if ($remoteSize > $maxFileSize) {
+            throw new \Exception("Remote filesize is too big");
+        }
+
+        $savedFile = $this->FetchRemoteFile($url, $remoteSize);
+        $extractedFilename = $this->ExtractFilenameFromUrl($url);
+
+        $uploadedFile = new UploadedFile(
+            $savedFile,
+            $extractedFilename,
+            null,
+            $remoteSize,
+            0,
+            true
+        );
+
+        return $this->addFileToStorage($uploadedFile, $user);
+
+    }
+
+    private function queryRemoteFileSize($url)
+    {
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_HEADER, TRUE);
+        curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $data = curl_exec($ch);
+        $size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+
+        curl_close($ch);
+        return $size;
+    }
+
+    public function FetchRemoteFile($url, $fileSize)
+    {
+        $tempPath = tempnam(sys_get_temp_dir(), 'miufile');
+        $fp = fopen($tempPath, 'w');
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        $data = curl_exec($ch);
+        curl_close($ch);
+        fclose($fp);
+        return $tempPath;
+    }
+
+    public function ExtractFilenameFromUrl($url)
+    {
+        $pathinfo = pathinfo($url);
+        if(!isset($pathinfo['filename']) || $pathinfo['filename'] == "")
+        {
+            return time();
+        }
+        return $pathinfo['filename'];
+    }
+
     private function generateCustomURL()
     {
         $randomOffset = function ($min, $max) {

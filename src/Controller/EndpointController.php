@@ -18,8 +18,22 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 
 class EndpointController extends AbstractController
 {
+
     /**
-     * @Route("/i/{customUrl}.{fileExtension}", name="get_file_custom_url")
+     * @Route("/i/{customUrl}.{fileExtension}", name="get_file_custom_legacy")
+     */
+    public function serveFileLegacyAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
+    {
+        return $this->forward('App\Controller\EndpointController::serveFileDirectAction', [
+            'customUrl' => $customUrl,
+            'fileExtension' => $fileExtension,
+            'logger' => $logger,
+            'fileService' => $fileService
+        ]);
+    }
+
+    /**
+     * @Route("/{customUrl}.{fileExtension}", name="get_file_custom_url")
      */
     public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
@@ -69,8 +83,7 @@ class EndpointController extends AbstractController
             try {
                 $storedFile = $fileService->storeRemoteUploadFile($file, $remoteToken);
                 $fullUrl = $fileService->generateFullURL($storedFile);
-                if($request->request->get('plaintext'))
-                {
+                if ($request->request->get('plaintext')) {
                     return new Response($fullUrl, 201);
                 }
                 return new JsonResponse(['file' => $fullUrl]);
@@ -82,9 +95,29 @@ class EndpointController extends AbstractController
         return $this->redirectToRoute('home');
     }
 
-    public function mirrorFileAction(Request $request)
+    /**
+     * @Route("/mirrorfile/", name="mirror_file")
+     */
+    public function mirrorFileAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
+        $user = $this->getUser();
+        if ($request->request->has('mirrorfile')) {
+            try {
+                $path = $request->request->get('mirrorfile');
+                $storedFile = $fileService->mirrorRemoteFile($path, $user);
+                return $this->render('uploadresult.html.twig', [
+                    'file' => $storedFile
+                ]);
+            } catch (\Exception $e) {
+                $logger->error('Error mirroring file: ' . $e->getMessage());
+                $this->addFlash('global-danger', 'Unable to mirror remote file');
+                return $this->redirectToRoute('home');
+            }
 
+
+        }
+        $this->addFlash('global-danger', 'No input file specified');
+        return $this->redirectToRoute('home');
     }
 
 
@@ -99,8 +132,7 @@ class EndpointController extends AbstractController
         ];
         $user = $this->getUser();
         $code = 400;
-        if($request->files->has('meowfile'))
-        {
+        if ($request->files->has('meowfile')) {
             $file = $request->files->get('meowfile');
             try {
                 $storedFile = $fileService->storeFormUploadFile($file, $user);

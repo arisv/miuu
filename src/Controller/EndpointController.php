@@ -28,6 +28,7 @@ class EndpointController extends AbstractController
             [$file, $path] = $fileService->getFileByCustomURL($customUrl);
             $response = new BinaryFileResponse($path);
             $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
+            $response->headers->set('Connection', 'close');
             $response->setAutoEtag();
             $response->setSharedMaxAge(86400);
             $response->headers->addCacheControlDirective('must-revalidate', true);

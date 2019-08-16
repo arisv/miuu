@@ -12,13 +12,13 @@ $(function () {
         maxFiles: 4,
         timeout: 0
     });
-    //$('#upload-legacy').hide();
-    //$('#upload-dropzone').show();
+    $('#upload-legacy').hide();
+    $('#upload-dropzone').show();
     dz.on("success", function (file, reply) {
         console.log(reply);
         if (reply.success) {
             $(file.previewTemplate).append(
-                $('<button class="btn btn-default clipbutton" data-clipboard-text="' + reply.download + '">Copy URL</button>')
+                $('<button class="btn btn-outline-info clipbutton" data-clipboard-text="' + reply.download + '">Copy URL</button>')
             );
         }
     });

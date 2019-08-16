@@ -45,7 +45,7 @@ class EndpointController extends AbstractController
     /**
      * @Route("/getfile/", name="set_file_form")
      */
-    public function formUploadAction(Request $request, FileService $fileService, LoggerInterface $logger, RouterInterface $router)
+    public function formUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $user = $this->getUser();
         if ($request->files->has('meowfile')) {
@@ -66,10 +66,7 @@ class EndpointController extends AbstractController
             $remoteToken = $request->request->get('private_key');
             try {
                 $storedFile = $fileService->storeRemoteUploadFile($file, $remoteToken);
-                $fullUrl = $router->generate('get_file_custom_url', [
-                    'customUrl' => $storedFile->getCustomUrl(),
-                    'fileExtension'=> $storedFile->getOriginalExtension()
-                ], Router::ABSOLUTE_URL);
+                $fullUrl = $fileService->generateFullURL($storedFile);
                 if($request->request->get('plaintext'))
                 {
                     return new Response($fullUrl, 201);
@@ -88,8 +85,30 @@ class EndpointController extends AbstractController
 
     }
 
-    public function ajaxUploadAction(Request $request)
-    {
 
+    /**
+     * @Route("/endpoint/dropzone/", name="set_file_ajax")
+     */
+    public function ajaxUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
+    {
+        $result = [
+            'success' => false,
+            'message' => 'No input supplied'
+        ];
+        $user = $this->getUser();
+        $code = 400;
+        if($request->files->has('meowfile'))
+        {
+            $file = $request->files->get('meowfile');
+            try {
+                $storedFile = $fileService->storeFormUploadFile($file, $user);
+                $result['success'] = true;
+                $result['download'] = $fileService->generateFullURL($storedFile);
+                $code = 200;
+            } catch (\Exception $e) {
+                $logger->error('Error saving dropzone file: ' . $e->getMessage());
+            }
+        }
+        return new JsonResponse($result, $code);
     }
 }

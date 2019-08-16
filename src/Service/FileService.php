@@ -11,18 +11,22 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Routing\Router;
+use Symfony\Component\Routing\RouterInterface;
 
 class FileService
 {
     private $em;
     private $logger;
     private $projectDir;
+    private $router;
 
-    public function __construct(EntityManagerInterface $em, LoggerInterface $logger, $projectDir)
+    public function __construct(EntityManagerInterface $em, LoggerInterface $logger, RouterInterface $router, $projectDir)
     {
         $this->em = $em;
         $this->logger = $logger;
         $this->projectDir = $projectDir;
+        $this->router = $router;
     }
 
     public function getFileByCustomURL($customUrl)
@@ -74,20 +78,32 @@ class FileService
         return $this->addFileToStorage($file, $user);
     }
 
+    public function generateFullURL(StoredFile $file)
+    {
+        return $this->router->generate('get_file_custom_url', [
+            'customUrl' => $file->getCustomUrl(),
+            'fileExtension'=> $file->getOriginalExtension()
+        ], Router::ABSOLUTE_URL);
+    }
+
     private function addFileToStorage(UploadedFile $file, ?User $user)
     {
         $storedFile = new StoredFile();
         $storedFile->setOriginalName($file->getClientOriginalName());
         $sha = sha1_file($file->getPathname());
         $storedFile->setInternalSize($file->getSize());
-        $storedFile->setOriginalExtension($file->guessExtension());
         $storedFile->setInternalMimetype($file->getMimeType());
+        $extension = $file->guessExtension();
+        if (!$extension) {
+            $extension = "bin";
+        }
+        $storedFile->setOriginalExtension($extension);
         $storedFile->setDate(time());
         $storedFile->setInternalName($sha . '_' . $storedFile->getDate());
         $storedFile->setCustomUrl($this->generateCustomURL());
         $storedFile->setServiceUrl($this->generateServiceURL());
         $storedFile->setVisibilityStatus(true);
-        $this->moveUploadedFile($file, $storedFile->getInternalName());
+        $this->moveUploadedFile($file, $storedFile->getInternalName(), $storedFile->getDate());
         if ($user) {
             $log = new UploadRecord();
             $log->setImage($storedFile);
@@ -99,10 +115,14 @@ class FileService
         return $storedFile;
     }
 
-    public function moveUploadedFile(UploadedFile $file, $newName)
+    public function moveUploadedFile(UploadedFile $file, $newName, $overrideTimestamp = null)
     {
         $dt = new \DateTime();
-        $dt->setTimestamp(time());
+        if ($overrideTimestamp) {
+            $dt->setTimestamp($overrideTimestamp);
+        } else {
+            $dt->setTimestamp(time());
+        }
 
         $storageDir = $_ENV['STORAGE_DIR'];
         if (!$storageDir) {

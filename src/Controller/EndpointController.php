@@ -13,8 +13,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Router;
-use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 
 
 class EndpointController extends AbstractController
@@ -28,7 +27,9 @@ class EndpointController extends AbstractController
             /** @var StoredFile $file */
             [$file, $path] = $fileService->getFileByCustomURL($customUrl);
             $response = new BinaryFileResponse($path);
+            $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
             $response->setAutoEtag();
+            $response->setMaxAge(31536000);
             $response->headers->set('Content-Type', $file->getInternalMimetype());
             if ($file->shouldEmbed()) {
                 $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());

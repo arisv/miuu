@@ -29,7 +29,8 @@ class EndpointController extends AbstractController
             $response = new BinaryFileResponse($path);
             $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
             $response->setAutoEtag();
-            $response->setMaxAge(31536000);
+            $response->setSharedMaxAge(86400);
+            $response->headers->addCacheControlDirective('must-revalidate', true);
             $response->headers->set('Content-Type', $file->getInternalMimetype());
             if ($file->shouldEmbed()) {
                 $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());

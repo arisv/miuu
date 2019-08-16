@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 class EndpointController extends AbstractController
 {
     /**
-     * @Route("/i/{customUrl}.{fileExtension}", name="get_file_custom_url")
+     * @Route("/longpath/{customUrl}.{fileExtension}", name="get_file_custom_url")
      */
     public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {

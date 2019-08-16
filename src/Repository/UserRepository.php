@@ -14,4 +14,14 @@ class UserRepository extends EntityRepository implements UserLoaderInterface
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findActiveUserByToken($remoteToken)
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.remoteToken = :token')
+            ->setParameter('token', $remoteToken)
+            ->andWhere('u.active = true')
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

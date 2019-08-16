@@ -5,3 +5,6 @@ require('../css/app.css');
 
 const $ = require('jquery');
 require('bootstrap');
+import * as Clipboard from './clipboard.min';
+
+new Clipboard('.clipbutton');

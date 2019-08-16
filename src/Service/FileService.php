@@ -4,10 +4,13 @@ namespace App\Service;
 
 
 use App\Entity\StoredFile;
+use App\Entity\UploadRecord;
+use App\Entity\User;
 use App\Repository\StoredFileRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileService
 {
@@ -51,9 +54,106 @@ class FileService
         }
     }
 
-    public function readStream()
+    public function storeFormUploadFile(UploadedFile $file, ?User $user)
     {
-
+        if (!$file || !$file->isValid()) {
+            throw new \Exception("File failed validation");
+        }
+        return $this->addFileToStorage($file, $user);
     }
+
+    public function storeRemoteUploadFile(UploadedFile $file, $remoteToken)
+    {
+        if (!$file || !$file->isValid()) {
+            throw new \Exception("File failed validation");
+        }
+        $user = $this->em->getRepository(User::class)->findActiveUserByToken($remoteToken);
+        if (!$user) {
+            throw new \Exception("Unable to find user by token " . $remoteToken);
+        }
+        return $this->addFileToStorage($file, $user);
+    }
+
+    private function addFileToStorage(UploadedFile $file, ?User $user)
+    {
+        $storedFile = new StoredFile();
+        $storedFile->setOriginalName($file->getClientOriginalName());
+        $sha = sha1_file($file->getPathname());
+        $storedFile->setInternalSize($file->getSize());
+        $storedFile->setOriginalExtension($file->guessExtension());
+        $storedFile->setInternalMimetype($file->getMimeType());
+        $storedFile->setDate(time());
+        $storedFile->setInternalName($sha . '_' . $storedFile->getDate());
+        $storedFile->setCustomUrl($this->generateCustomURL());
+        $storedFile->setServiceUrl($this->generateServiceURL());
+        $storedFile->setVisibilityStatus(true);
+        $this->moveUploadedFile($file, $storedFile->getInternalName());
+        if ($user) {
+            $log = new UploadRecord();
+            $log->setImage($storedFile);
+            $log->setUser($user);
+            $this->em->persist($log);
+        }
+        $this->em->persist($storedFile);
+        $this->em->flush();
+        return $storedFile;
+    }
+
+    public function moveUploadedFile(UploadedFile $file, $newName)
+    {
+        $dt = new \DateTime();
+        $dt->setTimestamp(time());
+
+        $storageDir = $_ENV['STORAGE_DIR'];
+        if (!$storageDir) {
+            throw new \Exception("Please configure STORAGE_DIR directory");
+        }
+
+        $storagePath = $this->projectDir . '/' . $storageDir . '/' . $dt->format('Y-m') . '/';
+        $file->move($storagePath, $newName);
+    }
+
+    private function generateCustomURL()
+    {
+        $randomOffset = function ($min, $max) {
+            $range = $max - $min;
+            if ($range < 1) return $min;
+            $log = ceil(log($range, 2));
+            $bytes = (int)($log / 8) + 1;
+            $bits = (int)$log + 1;
+            $filter = (int)(1 << $bits) - 1;
+            do {
+                $rnd = hexdec(bin2hex(openssl_random_pseudo_bytes($bytes)));
+                $rnd = $rnd & $filter;
+            } while ($rnd >= $range);
+            return $min + $rnd;
+        };
+
+        $alphabet = "123456789abcdefghijklmnopqrstuvwkyz";
+        $alphabetLength = strlen($alphabet);
+        $length = 10;
+        do {
+            $token = "";
+            for ($i = 0; $i < $length; $i++) {
+                $token .= $alphabet[$randomOffset(0, $alphabetLength)];
+            }
+            $exists = $this->em->getRepository(StoredFile::class)->findOneBy([
+                'customUrl' => $token
+            ]);
+        } while ($exists);
+        return $token;
+    }
+
+    private function generateServiceURL()
+    {
+        do {
+            $token = bin2hex(openssl_random_pseudo_bytes(16));
+            $exists = $this->em->getRepository(StoredFile::class)->findOneBy([
+                'serviceUrl' => $token
+            ]);
+        } while ($exists);
+        return $token;
+    }
+
 
 }

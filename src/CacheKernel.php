@@ -11,6 +11,7 @@ class CacheKernel extends HttpCache
     {
         return [
             'debug' => true,
+            'trace_level' => 'full',
             'allow_reload' => true
         ];
     }

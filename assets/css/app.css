@@ -53,7 +53,6 @@ body {
 
 #navpanel{
     padding: 20px;
-    background-color: white;
 }
 
 .displayimage img {
@@ -91,6 +90,7 @@ body {
 .itembox-text{
     margin-left: 15px;
     font-weight: 600;
+    overflow: hidden;
 }
 
 .itembox-text > span{

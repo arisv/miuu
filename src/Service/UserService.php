@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Service;
 
 
+use App\Entity\StoredFile;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -10,6 +12,7 @@ class UserService
 {
     private $em;
     private $encoder;
+
     public function __construct(EntityManagerInterface $em, UserPasswordEncoderInterface $encoder)
     {
         $this->em = $em;
@@ -43,4 +46,76 @@ class UserService
         } while ($exists);
         return $token;
     }
+
+    public function getUploadDateTree(User $user)
+    {
+        $sql = 'SELECT YEAR(FROM_UNIXTIME(filestorage.date)) as dyear, MONTH(FROM_UNIXTIME(filestorage.date)) as dmonth, COUNT(filestorage.id) as dcount FROM uploadlog
+JOIN filestorage ON uploadlog.image_id = filestorage.id AND uploadlog.user_id = :user
+GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.date))';
+        $stmt = $this->em->getConnection()->prepare($sql);
+        $stmt->bindValue("user", $user->getId());
+
+        $stmt->execute();
+        $report = $stmt->fetchAll();
+
+        $result = [];
+        foreach($report as $dateTreeReport)
+        {
+            $result[$dateTreeReport['dyear']][$dateTreeReport['dmonth']] = $dateTreeReport['dcount'];
+        }
+
+        return $result;
+    }
+
+    public function getUserUploadHistoryPage(User $user, $beforeOffset, $afterOffset)
+    {
+        $result = [
+            'files' => []
+        ];
+        $limit = 9;
+        $fileRepo = $this->em->getRepository(StoredFile::class);
+        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $beforeOffset, $afterOffset, $limit);
+
+        if (count($pageFiles) > $limit) {
+            $result['hasNextPage'] = true;
+        } else {
+            $result['hasNextPage'] = false;
+        }
+
+
+        if ($afterOffset > 0) {
+            $result['prev'] = 'after';
+
+        } else if ($beforeOffset > 0) {
+            $result['prev'] = 'before';
+
+        } else {
+            $result['prev'] = 'home';
+        }
+
+        $used = 0;
+        foreach ($pageFiles as $file) {
+            if ($used < $limit) {
+                $result['files'][] = $file;
+            }
+            $used++;
+        }
+
+        if (!empty($pageFiles)) {
+            $lastElementOffset = (count($result['files']) - 1);
+            if ($beforeOffset > 0) //before returns files in inverse order
+            {
+                $result['files'] = array_reverse($result['files']);
+                $result['beforeId'] = $pageFiles[$lastElementOffset]->getUploadId();
+                $result['afterId'] = $pageFiles[0]->getUploadId();
+            } else {
+                $result['beforeId'] = $pageFiles[0]->getUploadId();
+                $result['afterId'] = $pageFiles[$lastElementOffset]->getUploadId();
+            }
+
+        }
+
+        return $result;
+    }
+
 }

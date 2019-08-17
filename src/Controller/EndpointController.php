@@ -6,6 +6,7 @@ use App\Entity\StoredFile;
 use App\Repository\StoredFileRepository;
 use App\Service\FileService;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Tests\Compiler\J;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -143,5 +144,40 @@ class EndpointController extends AbstractController
             }
         }
         return new JsonResponse($result, $code);
+    }
+
+    /**
+     * @Route("/endpoint/setdeletestatus/", name="set_file_delete_status")
+     */
+    public function setDeleteStatus(Request $request, FileService $fileService, LoggerInterface $logger)
+    {
+        $result = ['status' => 'ok'];
+        $user = $this->getUser();
+        $action = $request->get('action');
+        $fileId = $request->get('id');
+        try {
+            $fileService->setDeleteStatus($user, $fileId, $action);
+        } catch (\Exception $e) {
+            $logger->error("Cannot mark file ${fileId} for ${action} by user ${user}: " . $e->getMessage());
+            $result['status'] = 'error';
+        }
+        return new JsonResponse($result);
+    }
+
+
+    /**
+     * @Route("/endpoint/endlesstrash/", name="delete_marked")
+     */
+    public function deleteMarkedFiles(Request $request, FileService $fileService, LoggerInterface $logger)
+    {
+        $workerToken = $_ENV['WORKER_TOKEN'];
+        $token = $request->query->get('token');
+        try {
+            $report = $fileService->deleteMarkedFiles($token);
+            return new JsonResponse($report);
+        } catch (\Exception $e) {
+            $logger->warning("Cannot delete marked files: " . $e->getFile());
+            return new JsonResponse(['error' => $e->getMessage()]);
+        }
     }
 }

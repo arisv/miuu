@@ -215,7 +215,12 @@ class StoredFile
         $this->visibilityStatus = $visibilityStatus;
     }
 
-    private function IsMimeType(array $types)
+    public function markedForDeletion()
+    {
+        return $this->visibilityStatus == false;
+    }
+
+    public function isMimeType(array $types)
     {
         foreach ($types as $type) {
             if (strpos($this->internalMimetype, $type) === 0)
@@ -226,7 +231,7 @@ class StoredFile
 
     public function shouldEmbed()
     {
-        return $this->IsMimeType(['image', 'audio', 'video/webm']);
+        return $this->isMimeType(['image', 'audio', 'video/webm']);
     }
 
     public function getFullFilePath($projectRoot)

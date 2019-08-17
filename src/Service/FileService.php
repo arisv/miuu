@@ -10,6 +10,7 @@ use App\Repository\StoredFileRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Router;
 use Symfony\Component\Routing\RouterInterface;
@@ -244,5 +245,57 @@ class FileService
         return $token;
     }
 
+    public function setDeleteStatus(User $user, $fileId, $action)
+    {
+        $record = $this->em->getRepository(UploadRecord::class)->findOneBy([
+            'user' => $user,
+            'image' => $fileId
+        ]);
 
+        if (!$record) {
+            throw new \Exception("File not found");
+        }
+
+        /** @var StoredFile $file */
+        $file = $record->getImage();
+        if ($action == 'del') {
+            $file->setVisibilityStatus(false);
+        } else {
+            $file->setVisibilityStatus(true);
+        }
+        $this->em->flush();
+    }
+
+    public function deleteMarkedFiles($token)
+    {
+        if ($_ENV['WORKER_TOKEN'] != $token) {
+            throw new \Exception("Unauthorized invocation");
+        }
+
+        $filesToDelete = $this->em->createQueryBuilder()
+            ->select('file')
+            ->from('App\Entity\StoredFile', 'file')
+            ->where('file.visibilityStatus = 0')
+            ->getQuery()
+            ->execute();
+
+        $deletedIds = [];
+
+        foreach ($filesToDelete as $file) {
+            $deletedIds[] = $this->deleteFileFromStorage($file);
+        }
+
+        return ['deleted' => $deletedIds];
+    }
+
+    public function deleteFileFromStorage(StoredFile $file)
+    {
+        $id = $file->getId();
+        $path = $this->buildFullFilePath($file);
+        $fs = new Filesystem();
+        $fs->remove($path);
+        $this->em->remove($file);
+        $this->em->flush();
+        return $id;
+    }
 }

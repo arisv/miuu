@@ -61,7 +61,7 @@ class UploadRecord
     }
 
     /**
-     * @return mixed
+     * @return StoredFile | null
      */
     public function getImage()
     {

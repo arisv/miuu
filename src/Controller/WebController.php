@@ -101,4 +101,22 @@ class WebController extends AbstractController
             'page' => 'token'
         ]);
     }
+
+    /**
+     * @Route("/manage/mypics/", name="cabinet_mypics")
+     */
+    public function userCabinetViewPicturesAction(Request $request, UserService $userService)
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        $afterOffset = $request->query->getInt('after');
+        $beforeOffset = $request->query->getInt('before');
+        $user = $this->getUser();
+        $pageData = $userService->getUserUploadHistoryPage($user, $beforeOffset, $afterOffset);
+        $dateTree = $userService->getUploadDateTree($user);
+        return $this->render('manage_mypics.html.twig', [
+            'page' => 'mypics',
+            'pageData' => $pageData,
+            'dateTree' => $dateTree
+        ]);
+    }
 }

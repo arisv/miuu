@@ -101,9 +101,8 @@ class EndpointController extends AbstractController
     public function mirrorFileAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $user = $this->getUser();
-        if ($request->request->has('mirrorfile')) {
+        if ($request->request->has('mirrorfile') && $path = $request->request->get('mirrorfile')) {
             try {
-                $path = $request->request->get('mirrorfile');
                 $storedFile = $fileService->mirrorRemoteFile($path, $user);
                 return $this->render('uploadresult.html.twig', [
                     'file' => $storedFile

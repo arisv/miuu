@@ -10,7 +10,7 @@
             <div class="col-md-6 col-md-offset-3 col-xs-12">
                 <input class="form-control uploadControls" id="uploadResult" title="Here's your file!" value="{{ url('get_file_custom_url', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) }}">
                 <button id="clipboardbtn" class="btn btn-success uploadControls clipbutton" data-clipboard-target="#uploadResult">
-                    <img src="/static/clippy.svg" alt="Copy to clipboard" width="15">
+                    <img src="{{ asset('static/clippy.svg') }}" alt="Copy to clipboard" width="15">
                 </button>
             </div>
         </div>

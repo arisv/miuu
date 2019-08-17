@@ -151,7 +151,7 @@ class User implements UserInterface
     {
         $roles = ['ROLE_USER'];
         if ($this->role == self::ROLE_ADMIN) {
-            $role[] = 'ROLE_ADMIN';
+            $roles[] = 'ROLE_ADMIN';
         }
         return $roles;
     }

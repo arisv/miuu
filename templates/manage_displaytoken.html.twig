@@ -1,5 +1,12 @@
-{% extends 'manage_layout.twig' %}
+{% extends 'manage_layout.html.twig' %}
 
 {% block managecontent %}
-    {{ myToken }}
+    <div class="row pt-3">
+        <div class="mx-auto">
+            <input class="form-control uploadControls" id="uploadResult" title="Your token for ShareX" value="{{ app.user.remoteToken }}">
+            <button id="clipboardbtn" class="btn btn-success uploadControls clipbutton" data-clipboard-target="#uploadResult">
+                <img src="{{ asset('static/clippy.svg') }}" alt="Copy to clipboard" width="15">
+            </button>
+        </div>
+    </div>
 {% endblock %}

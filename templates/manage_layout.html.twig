@@ -1,18 +1,25 @@
 {% extends 'base_layout.html.twig' %}
 
 {% block title %}
-    My files - {{ userName }}
+    My files - {{ app.user.login }}
 {% endblock %}
 
 {% block maincontent %}
-    <div class="row">
-        <div class="col-md-offset-4 col-xs-8" id="managebuttons">
-            <a class="btn {{ page == 'token' ? 'btn-info' : 'btn-default' }}" href="/manage/mytoken" role="button">Remote token</a>
-            <a class="btn {{ page == 'mypics' ? 'btn-info' : 'btn-default' }}" href="/manage/mypics" role="button">View my pictures</a>
-            {% if app.isUserAdmin == true %}
-                <a class="btn {{ page == 'adminusers' ? 'btn-info' : 'btn-default' }}" href="/manage/admin/users" role="button">Admin control panel</a>
-            {% endif %}
+    <div class="row pt-3">
+        <div class="col-sm">
+            <a class="btn btn-outline-primary {{ page == 'token' ? 'active' : '' }}" href="/manage/mytoken" role="button">Remote token</a>
         </div>
+        <div class="col-sm">
+            <a class="btn btn-outline-primary {{ page == 'mypics' ? 'active' : '' }}" href="/manage/mypics" role="button">View my pictures</a>
+
+        </div>
+        {% if is_granted('ROLE_ADMIN') %}
+            <div class="col-sm">
+                <a class="btn btn-outline-primary {{ page == 'adminusers' ? 'active' : '' }}" href="/manage/admin/users" role="button">Admin control panel</a>
+
+            </div>
+        {% endif %}
+
     </div>
     {% block managecontent %}
     {% endblock %}

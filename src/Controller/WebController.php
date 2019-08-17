@@ -81,10 +81,24 @@ class WebController extends AbstractController
     }
 
     /**
-     * @Route("/manage", name="cabinet_home")
+     * @Route("/manage/", name="cabinet_home")
      */
     public function userCabinetHomeAction(Request $request)
     {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        return $this->render('manage_layout.html.twig', [
+            'page' => 'home'
+        ]);
+    }
 
+    /**
+     * @Route("/manage/mytoken/", name="cabinet_token")
+     */
+    public function userCabinetViewTokenAction(Request $request)
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        return $this->render('manage_displaytoken.html.twig', [
+            'page' => 'token'
+        ]);
     }
 }

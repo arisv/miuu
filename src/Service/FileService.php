@@ -136,7 +136,7 @@ class FileService
     public function mirrorRemoteFile($url, ?User $user)
     {
         $remoteSize = $this->queryRemoteFileSize($url);
-        if (!$remoteSize) {
+        if ($remoteSize < 1) {
             throw new \Exception("Unable to get filesize from remote target");
         }
         $maxFileSize = $_ENV['MAX_REMOTE_FILE_SIZE'];
@@ -155,6 +155,10 @@ class FileService
             0,
             true
         );
+
+        if(empty($uploadedFile) || !$uploadedFile->isValid()) {
+            throw new \Exception("Could not construct valid UploadedFile from remote file");
+        }
 
         return $this->addFileToStorage($uploadedFile, $user);
 

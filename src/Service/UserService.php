@@ -59,8 +59,7 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         $report = $stmt->fetchAll();
 
         $result = [];
-        foreach($report as $dateTreeReport)
-        {
+        foreach ($report as $dateTreeReport) {
             $result[$dateTreeReport['dyear']][$dateTreeReport['dmonth']] = $dateTreeReport['dcount'];
         }
 
@@ -116,6 +115,69 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         }
 
         return $result;
+    }
+
+    public function getAllUserIndex()
+    {
+        $allUsers = $this->em->getRepository(User::class)->findAll();
+        array_unshift($allUsers, $this->getDefaultUser());
+        return $allUsers;
+    }
+
+    public function getDefaultUser()
+    {
+        $user = new User();
+        $user->setId(0);
+        $user->setLogin('Anonymous uploads');
+        $user->setActive(true);
+        return $user;
+    }
+
+    public function getStorageStats()
+    {
+        $namedUsersQuery = <<<SQL
+SELECT uploadlog.image_id, filestorage.id, uploadlog.user_id, SUM(filestorage.internal_size) as total FROM uploadlog
+JOIN filestorage ON uploadlog.image_id = filestorage.id
+WHERE uploadlog.user_id IS NOT NULL
+GROUP BY uploadlog.user_id
+SQL;
+
+        $anonUserQuery = <<<SQL
+SELECT filestorage.id, uploadlog.image_id, uploadlog.user_id, SUM(filestorage.internal_size) as total FROM filestorage
+LEFT OUTER JOIN uploadlog ON uploadlog.image_id = filestorage.id
+WHERE uploadlog.user_id is null
+GROUP BY uploadlog.user_id
+SQL;
+        $stmt = $this->em->getConnection()->prepare($namedUsersQuery);
+        $stmt->execute();
+        $namedUsers = $stmt->fetchAll();
+
+        $stmt = $this->em->getConnection()->prepare($anonUserQuery);
+        $stmt->execute();
+        $anonUsers = $stmt->fetchAll();
+
+        $result = [];
+
+        foreach ($namedUsers as $namedUser) {
+            $result[$namedUser['user_id']] = $this->formatSize($namedUser['total']);
+        }
+        foreach ($anonUsers as $anonUser) {
+            $result['0'] = $this->formatSize($anonUser['total']);
+        }
+
+        return $result;
+    }
+
+    private function formatSize($size, $pres = 2)
+    {
+        $names = array('B', 'KB', 'MB', 'G', 'T');
+        $i = 0;
+        while($size > 1024)
+        {
+            $size /= 1024;
+            $i++;
+        }
+        return round($size, $pres) . ' ' . $names[$i];
     }
 
 }

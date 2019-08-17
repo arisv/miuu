@@ -119,4 +119,16 @@ class WebController extends AbstractController
             'dateTree' => $dateTree
         ]);
     }
+
+    /**
+     * @Route("/manage/admin/users/", name="admin_manage_users")
+     */
+    public function adminManageUsers(Request $request, UserService $userService)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $userData = $userService->getAllUserIndex();
+        return $this->render('admin_users.html.twig', [
+            'userlist' => $userData
+        ]);
+    }
 }

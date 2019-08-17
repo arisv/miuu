@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\StoredFile;
 use App\Repository\StoredFileRepository;
 use App\Service\FileService;
+use App\Service\UserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Tests\Compiler\J;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -151,6 +152,7 @@ class EndpointController extends AbstractController
      */
     public function setDeleteStatus(Request $request, FileService $fileService, LoggerInterface $logger)
     {
+        $this->denyAccessUnlessGranted('ROLE_USER');
         $result = ['status' => 'ok'];
         $user = $this->getUser();
         $action = $request->get('action');
@@ -170,7 +172,6 @@ class EndpointController extends AbstractController
      */
     public function deleteMarkedFiles(Request $request, FileService $fileService, LoggerInterface $logger)
     {
-        $workerToken = $_ENV['WORKER_TOKEN'];
         $token = $request->query->get('token');
         try {
             $report = $fileService->deleteMarkedFiles($token);
@@ -179,5 +180,21 @@ class EndpointController extends AbstractController
             $logger->warning("Cannot delete marked files: " . $e->getFile());
             return new JsonResponse(['error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * @Route("/endpoint/getstoragestats/", name="admin_storage_stats")
+     */
+    public function getStorageStats(Request $request, UserService $userService, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $result = ['status' => 'ok'];
+        try {
+            $result['message'] = $userService->getStorageStats();
+        } catch (\Exception $e) {
+            $logger->warning("Error fetching storage stats: " . $e->getMessage());
+            $result['status'] = 'error';
+        }
+        return new JsonResponse($result);
     }
 }

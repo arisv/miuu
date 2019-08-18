@@ -32,10 +32,14 @@
             <div class="col-md-6 col-xs-12 mx-auto">
                 <h2>Mirror a file from other server</h2>
                 <p>May not work as intended or work at all depending on the server hosting the target file</p>
-                <form id="mirror_uploader" class="form-inline" action="/mirrorfile/" method="post" enctype="multipart/form-data">
-                    <input id="mirrorfile" name="mirrorfile" title="Direct link" class="form-control" type="text" value="">
-                    <input type="submit" value="Fetch!" class="btn btn-primary">
-                </form>
+                <div class="row">
+                    <div class="mx-auto">
+                        <form id="mirror_uploader" class="form-inline" action="/mirrorfile/" method="post" enctype="multipart/form-data">
+                            <input id="mirrorfile" name="mirrorfile" title="Direct link" class="form-control" type="text" value="">
+                            <input type="submit" value="Fetch!" class="btn btn-primary mx-1">
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

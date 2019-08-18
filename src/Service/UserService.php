@@ -73,7 +73,7 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         $result = [
             'files' => []
         ];
-        $limit = 3;
+        $limit = 12;
         $fileRepo = $this->em->getRepository(StoredFile::class);
         $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy);
 

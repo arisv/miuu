@@ -136,14 +136,14 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
     public function getStorageStats()
     {
         $namedUsersQuery = <<<SQL
-SELECT uploadlog.image_id, filestorage.id, uploadlog.user_id, SUM(filestorage.internal_size) as total FROM uploadlog
+SELECT uploadlog.image_id, filestorage.id, uploadlog.user_id, SUM(filestorage.internal_size) as total, COUNT(filestorage.id) as amount FROM uploadlog
 JOIN filestorage ON uploadlog.image_id = filestorage.id
 WHERE uploadlog.user_id IS NOT NULL
 GROUP BY uploadlog.user_id
 SQL;
 
         $anonUserQuery = <<<SQL
-SELECT filestorage.id, uploadlog.image_id, uploadlog.user_id, SUM(filestorage.internal_size) as total FROM filestorage
+SELECT filestorage.id, uploadlog.image_id, uploadlog.user_id, SUM(filestorage.internal_size) as total, COUNT(filestorage.id) as amount FROM filestorage
 LEFT OUTER JOIN uploadlog ON uploadlog.image_id = filestorage.id
 WHERE uploadlog.user_id is null
 GROUP BY uploadlog.user_id
@@ -159,10 +159,17 @@ SQL;
         $result = [];
 
         foreach ($namedUsers as $namedUser) {
-            $result[$namedUser['user_id']] = $this->formatSize($namedUser['total']);
+            $result[$namedUser['user_id']] = [
+                'total' => $this->formatSize($namedUser['total']),
+                'amount' => $namedUser['amount']
+            ];
+
         }
         foreach ($anonUsers as $anonUser) {
-            $result['0'] = $this->formatSize($anonUser['total']);
+            $result['0'] = [
+                'total' => $this->formatSize($anonUser['total']),
+                'amount' => $anonUser['amount']
+            ];
         }
 
         return $result;

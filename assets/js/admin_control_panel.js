@@ -14,7 +14,7 @@ $(document).ready(function () {
                         var row = $(this).parent();
                         var userId = $(row).data("userid");
                         if (cellData[userId]) {
-                            $(cell).html(cellData[userId]);
+                            $(cell).html(cellData[userId]['total'] + ", " + cellData[userId]['amount'] + " files");
                         } else {
                             $(cell).html("No data.");
                         }

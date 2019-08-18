@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\Pagination\CursorEncoder;
+use App\Service\CursorService;
 use App\Service\FileService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -106,13 +108,13 @@ class WebController extends AbstractController
     /**
      * @Route("/manage/mypics/", name="cabinet_mypics")
      */
-    public function userCabinetViewPicturesAction(Request $request, UserService $userService)
+    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
-        $afterOffset = $request->query->getInt('after');
-        $beforeOffset = $request->query->getInt('before');
         $user = $this->getUser();
-        $pageData = $userService->getUserUploadHistoryPage($user, $beforeOffset, $afterOffset);
+        $orderBy = $cursorService->getOrderFromRequest($request);
+        $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
+        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy);
         $dateTree = $userService->getUploadDateTree($user);
         return $this->render('manage_mypics.html.twig', [
             'page' => 'mypics',

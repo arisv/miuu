@@ -24,43 +24,31 @@
             {% if pageData.files is not empty %}
                 <div class="row">
                     <div id="navpanel">
-                        <a class="btn btn-outline-primary" href="{{ path('cabinet_mypics', {'before': pageData.beforeId}) }}"><i class="fas fa-chevron-left"></i></a>
-                        <a class="btn btn-outline-primary" href="{{ path('cabinet_mypics', {'after': pageData.afterId}) }}"><i class="fas fa-chevron-right"></i></a>
+                        {% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
+                        <a class="btn btn-outline-primary" href="{{ path(app.request.attributes.get('_route'), defaultParams | merge({'cursor': pageData.cursor})) }}"><i class="fas fa-chevron-right"></i></a>
+                        <div class="float-right m-2">
+                            <form id="order-form" class="form-inline" action="">
+                                <label class="mr-sm-2" for="order-date">Upload date: </label>
+                                <select name="order-date" class="custom-select mr-sm-2" id="order-date">
+                                    <option hidden value="">Default</option>
+                                    <option value="new">Newest</option>
+                                    <option value="old">Oldest</option>
+                                </select>
+                                <label class="mr-sm-2" for="order-size">File size: </label>
+                                <select name="order-size" class="custom-select mr-sm-2" id="order-size">
+                                    <option hidden value="">Default</option>
+                                    <option value="big">Big</option>
+                                    <option value="small">Small</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary">Order</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 {% for row in pageData.files|batch(3, null) %}
                     <div class="row">
                         {% for item in row if item %}
-                            <div class="col-sm-6 col-lg-4">
-                                <div class="itembox">
-                                    <div class="itembox-img-container">
-                                        <div class="itembox-img-container-in">
-                                            {% if item.image.isMimeType(['image']) %}
-                                                <img src="{{ path('get_file_custom_url', {'customUrl': item.image.customUrl, 'fileExtension': item.image.originalExtension}) }}">
-                                            {% elseif item.image.isMimeType(['video/webm']) %}
-                                                <img src="{{ asset("/static/webm_file.png") }}">
-                                            {% elseif item.image.isMimeType(['audio']) %}
-                                                <img src="{{ asset("/static/audio_file.png") }}">
-                                            {% else %}
-                                                <img src="{{ asset("/static/generic_file.png") }}">
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="itembox-text">
-                                        <span>
-                                            {{ item.image.originalName }}
-                                        </span>
-                                        <span>
-                                            {{ item.image.getDate|date("d/m/Y h:i:s") }}
-                                        </span>
-                                    </div>
-                                    <div class="itembox-controls">
-                                        <a href="{{ path('get_file_custom_url', {'customUrl': item.image.customUrl, 'fileExtension': item.image.originalExtension}) }}"><i class="fas fa-file-download"></i></a>
-                                        <button data-deleteaction="del" data-deleteid="{{ item.image.id }}" data-toggle="tooltip" title="Delete" class="btn btn-danger" {% if item.image.markedForDeletion == true %}style="display:none"{% endif %}><i class="fas fa-trash"></i></button>
-                                        <button data-deleteaction="undo" data-deleteid="{{ item.image.id }}" data-toggle="tooltip" title="Undelete" class="btn btn-warning"  {% if item.image.markedForDeletion == false %}style="display:none"{% endif %}><i class="fas fa-trash-restore"></i></button>
-                                    </div>
-                                </div>
-                            </div>
+                            {% include 'partials/control_panel_file.html.twig' with {'item': item.image} %}
                         {% endfor %}
                     </div>
                 {% endfor %}

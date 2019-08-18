@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 
+use App\Service\UserService;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Index;
 
@@ -243,6 +244,11 @@ class StoredFile
             return $path;
         else
             return "";
+    }
+
+    public function getFileSizeFormatted()
+    {
+        return UserService::formatSize($this->internalSize);
     }
 
 }

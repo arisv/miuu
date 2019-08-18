@@ -24,4 +24,18 @@ class UserRepository extends EntityRepository implements UserLoaderInterface
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findUsersByList($idList)
+    {
+        $users = $this->createQueryBuilder('u')
+            ->where('u.id IN (:idList)')
+            ->setParameter('idList', $idList)
+            ->getQuery()
+            ->getResult();
+        $result = [];
+        foreach ($users as $user) {
+            $result[$user->getId()] = $user;
+        }
+        return $result;
+    }
 }

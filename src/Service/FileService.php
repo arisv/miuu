@@ -10,6 +10,7 @@ use App\Repository\StoredFileRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Tests\Compiler\D;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Router;
@@ -83,7 +84,7 @@ class FileService
     {
         return $this->router->generate('get_file_custom_url', [
             'customUrl' => $file->getCustomUrl(),
-            'fileExtension'=> $file->getOriginalExtension()
+            'fileExtension' => $file->getOriginalExtension()
         ], Router::ABSOLUTE_URL);
     }
 
@@ -157,7 +158,7 @@ class FileService
             true
         );
 
-        if(empty($uploadedFile) || !$uploadedFile->isValid()) {
+        if (empty($uploadedFile) || !$uploadedFile->isValid()) {
             throw new \Exception("Could not construct valid UploadedFile from remote file");
         }
 
@@ -196,8 +197,7 @@ class FileService
     public function ExtractFilenameFromUrl($url)
     {
         $pathinfo = pathinfo($url);
-        if(!isset($pathinfo['filename']) || $pathinfo['filename'] == "")
-        {
+        if (!isset($pathinfo['filename']) || $pathinfo['filename'] == "") {
             return time();
         }
         return $pathinfo['filename'];
@@ -297,5 +297,38 @@ class FileService
         $this->em->remove($file);
         $this->em->flush();
         return $id;
+    }
+
+    public function getAllFilesBySize()
+    {
+        $limit = 50;
+        $fileSql = <<<SQL
+SELECT id, custom_url, original_extension, original_name, internal_size, user_id
+FROM filestorage
+LEFT JOIN uploadlog u on filestorage.id = u.image_id
+ORDER BY internal_size DESC LIMIT $limit
+SQL;
+        $stmt = $this->em->getConnection()->prepare($fileSql);
+        $stmt->execute();
+        $files = $stmt->fetchAll();
+        $userIdsEncountered = [];
+        $result = [];
+        foreach ($files as $fileData) {
+            $userIdsEncountered[] = $fileData['user_id'];
+            $temp = [
+                'file_id' => $fileData['id'],
+                'user_id' => $fileData['user_id'],
+                'name' => $fileData['original_name'],
+                'url' => $fileData['custom_url'],
+                'size' => UserService::formatSize($fileData['internal_size'])
+            ];
+            $temp['extension'] = $fileData['original_extension'];
+            if (!$temp['extension']) {
+                $temp['extension'] = "bin";
+            }
+            $result[] = $temp;
+        }
+        $users = $this->em->getRepository(User::class)->findUsersByList(array_unique($userIdsEncountered));
+        return [$result, $users];
     }
 }

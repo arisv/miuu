@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\FileService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -129,6 +130,19 @@ class WebController extends AbstractController
         $userData = $userService->getAllUserIndex();
         return $this->render('admin_users.html.twig', [
             'userlist' => $userData
+        ]);
+    }
+
+    /**
+     * @Route("/manage/admin/files/", name="admin_manage_files")
+     */
+    public function adminManageFiles(Request $request, FileService $fileService)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        [$files, $users] = $fileService->getAllFilesBySize();
+        return $this->render('admin_files.html.twig', [
+            'files' => $files,
+            'users' => $users
         ]);
     }
 }

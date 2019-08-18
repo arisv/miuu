@@ -1,0 +1,35 @@
+{% extends 'admin_layout.html.twig' %}
+
+{% block title %}
+    Filelist - MIU
+{% endblock %}
+
+{% block managecontent %}
+    <table class="table-responsive-sm table table-striped">
+        <thead>
+        <tr>
+            <th>File id</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Owner user</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for file in files %}
+            <tr>
+                <td>{{ file.file_id }}</td>
+                <td><a href="{{ path('get_file_custom_url', {'customUrl': file.url, 'fileExtension': file.extension}) }}">{{ file.name }}</a></td>
+                <td>{{ file.size }}</td>
+                <td>
+                    {% if users[file.user_id] is defined %}
+                        {% set user = users[file.user_id] %}
+                        {{ user.id ~ ' / ' ~ user.login ~ ' / ' ~ user.email  }}
+                    {% else %}
+                        {{ "Anonymous upload" }}
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

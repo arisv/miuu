@@ -168,7 +168,7 @@ SQL;
         return $result;
     }
 
-    private function formatSize($size, $pres = 2)
+    public static function formatSize($size, $pres = 2)
     {
         $names = array('B', 'KB', 'MB', 'G', 'T');
         $i = 0;

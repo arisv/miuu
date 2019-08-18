@@ -1,10 +1,10 @@
-{% extends 'base_layout.html.twig' %}
+{% extends 'admin_layout.html.twig' %}
 
 {% block title %}
     Userlist - MIU
 {% endblock %}
 
-{% block maincontent %}
+{% block managecontent %}
 <table class="table-responsive-sm table table-striped">
     <thead>
         <tr>
@@ -29,9 +29,4 @@
     {% endfor %}
     </tbody>
 </table>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    {{ encore_entry_script_tags('manage_admin') }}
 {% endblock %}

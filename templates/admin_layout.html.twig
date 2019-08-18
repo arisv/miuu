@@ -1,0 +1,26 @@
+{% extends 'base_layout.html.twig' %}
+
+{% block title %}
+    Admin panel
+{% endblock %}
+
+{% block maincontent %}
+    <div class="row pt-3">
+        <div class="col-md-3">
+            <ul class="list-group admin-menu">
+                {% set route = app.request.attributes.get('_route') %}
+                <li class="list-group-item {% if route == "admin_manage_users" %}active disabled{% endif %}"><a href="{{ path('admin_manage_users') }}">User list</a></li>
+                <li class="list-group-item {% if route == "admin_manage_files" %}active disabled{% endif %}"><a href="{{ path('admin_manage_files') }}">Manage files</a></li>
+            </ul>
+        </div>
+        <div class="col-md-9">
+            {% block managecontent %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('manage_admin') }}
+{% endblock %}

@@ -42,6 +42,27 @@ class CursorService
         return $result;
     }
 
+    public function getFilterFromRequest(Request $request)
+    {
+        $calendarStart = \DateTime::createFromFormat('Y-m-d', $request->query->get('calendar-start'));
+        $calendarEnd = \DateTime::createFromFormat('Y-m-d', $request->query->get('calendar-end'));
+
+        $result = [];
+
+        if ($calendarStart && $calendarEnd) {
+            $result['calendar'] = [
+                'start' => $calendarStart->getTimestamp(),
+                'end' => $calendarEnd->getTimestamp()
+            ];
+            if ($calendarStart > $calendarEnd) {
+                $result['calendar']['start'] = $calendarEnd->getTimestamp();
+                $result['calendar']['end'] = $calendarStart->getTimestamp();
+            }
+        }
+
+        return $result;
+    }
+
     public function decodeCursor($cursor)
     {
         $data = json_decode(base64_decode($cursor), true);

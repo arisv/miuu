@@ -137,3 +137,12 @@ body {
 .admin-menu a {
     color: black;
 }
+
+.calendar-highlight {
+    background-color: #491080;
+    color: #ffa800;
+}
+
+.calendar-element :hover {
+    cursor: pointer;
+}

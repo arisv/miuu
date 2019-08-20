@@ -18,7 +18,7 @@ class StoredFileRepository extends EntityRepository
         return $qb->getQuery()->getOneOrNullResult();
     }
 
-    public function getUserUploadHistoryPage(User $user, $cursor, $limit, $orderBy)
+    public function getUserUploadHistoryPage(User $user, $cursor, $limit, $orderBy, $filter)
     {
         $resolve = function ($symbol) {
             if ($symbol == "<") {
@@ -43,6 +43,13 @@ class StoredFileRepository extends EntityRepository
                 'op' => '<',
                 'order' => 'DESC'
             ]];
+        }
+
+        if (isset($filter['calendar'])) {
+            $qb->andWhere('file.date > :start')
+                ->andWhere('file.date < :end')
+                ->setParameter('start', $filter['calendar']['start'])
+                ->setParameter('end', $filter['calendar']['end']);
         }
 
         $firstSortColumn = array_key_first($orderBy);

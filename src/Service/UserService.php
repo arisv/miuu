@@ -68,14 +68,14 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         return $result;
     }
 
-    public function getUserUploadHistoryPage(User $user, $cursor, $orderBy)
+    public function getUserUploadHistoryPage(User $user, $cursor, $orderBy, $filter)
     {
         $result = [
             'files' => []
         ];
         $limit = 12;
         $fileRepo = $this->em->getRepository(StoredFile::class);
-        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy);
+        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy, $filter);
 
         if (count($pageFiles) > $limit) {
             $result['hasNextPage'] = true;

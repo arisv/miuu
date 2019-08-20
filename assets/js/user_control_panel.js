@@ -1,9 +1,54 @@
 $(document).ready(function () {
     var UserGalleryControls = {
         fetchLock: false,
+        calendarRangeStart: null,
+        calendarRangeEnd: null,
+        calendarPointer: 'start',
         initialize: function () {
             $('body').on('click', 'button[data-deleteid]', this.manageDeletion.bind(this));
             $('button[data-pagination-next]').on('click', this.fetchNextPage.bind(this));
+            $('[data-date]').on('click', this.calendarHighlight.bind(this));
+            $('#order-form').on('submit', function (e) {
+                var el = e.currentTarget;
+                $(el).find("input[name='calendar-start']").val(this.calendarRangeStart);
+                $(el).find("input[name='calendar-end']").val(this.calendarRangeEnd);
+                $(el).find(":input").filter(function(){ return !this.value; }).attr("disabled", "disabled");
+                return true;
+            }.bind(this));
+        },
+        calendarHighlight: function (e) {
+            var el = e.currentTarget;
+            var date = $(el).data('date');
+            var months = $('[data-date]');
+
+            if (this.calendarPointer === 'start') {
+                this.calendarRangeStart = date;
+                this.calendarPointer = 'end';
+            } else if (this.calendarPointer === 'end') {
+                this.calendarRangeEnd = date;
+                this.calendarPointer = 'start';
+            }
+
+            $(months).removeClass('calendar-highlight');
+            var activeSelection = false;
+            var firstDate = Date.parse(this.calendarRangeStart);
+            var secondDate = Date.parse(this.calendarRangeEnd);
+            console.log({'start': this.calendarRangeStart, 'end': this.calendarRangeEnd});
+            console.log({'first': firstDate, 'second': secondDate});
+
+            if (secondDate > firstDate) {
+                var temp = firstDate;
+                firstDate = secondDate;
+                secondDate = temp;
+            }
+            console.log({'first': firstDate, 'second': secondDate});
+            $(months).each(function (i, o) {
+                var thisDate = Date.parse($(o).data('date'));
+                if (thisDate <= firstDate && thisDate >= secondDate) {
+                    $(o).addClass('calendar-highlight');
+                }
+            }.bind(this));
+
         },
         manageDeletion: function (e) {
             var pressed = e.currentTarget;

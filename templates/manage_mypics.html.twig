@@ -10,8 +10,8 @@
                             {{ year }}
                             <ul>
                                 {% for month, count in monthdata %}
-                                    <li>
-                                        {{ month }} - ({{ count }})
+                                    <li class="calendar-element" data-date="{{ year ~ '-' ~ month ~ '-01' }}">
+                                        <span>{{ month }} - ({{ count }})</span>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -38,6 +38,8 @@
                                     <option value="big">Big</option>
                                     <option value="small">Small</option>
                                 </select>
+                                <input type="hidden" name="calendar-start">
+                                <input type="hidden" name="calendar-end">
                                 <button type="submit" class="btn btn-primary">Order</button>
                             </form>
                         </div>

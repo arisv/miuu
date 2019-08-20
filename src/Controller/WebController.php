@@ -113,8 +113,9 @@ class WebController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
         $orderBy = $cursorService->getOrderFromRequest($request);
+        $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
-        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy);
+        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
         $dateTree = $userService->getUploadDateTree($user);
         return $this->render('manage_mypics.html.twig', [
             'page' => 'mypics',

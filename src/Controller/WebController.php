@@ -120,7 +120,8 @@ class WebController extends AbstractController
         return $this->render('manage_mypics.html.twig', [
             'page' => 'mypics',
             'pageData' => $pageData,
-            'dateTree' => $dateTree
+            'dateTree' => $dateTree,
+            'filter' => json_encode($request->query->all())
         ]);
     }
 

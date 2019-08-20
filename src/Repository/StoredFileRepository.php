@@ -46,10 +46,12 @@ class StoredFileRepository extends EntityRepository
         }
 
         if (isset($filter['calendar'])) {
+            [$calendarStart, $calendarEnd] = $filter['calendar'];
+            $calendarEnd->modify('last day of this month');
             $qb->andWhere('file.date > :start')
                 ->andWhere('file.date < :end')
-                ->setParameter('start', $filter['calendar']['start'])
-                ->setParameter('end', $filter['calendar']['end']);
+                ->setParameter('start', $calendarStart->getTimestamp())
+                ->setParameter('end', $calendarEnd->getTimestamp());
         }
 
         $firstSortColumn = array_key_first($orderBy);

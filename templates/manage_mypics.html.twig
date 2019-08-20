@@ -26,17 +26,17 @@
                     <div id="navpanel">
                         <div class="float-right m-2">
                             <form id="order-form" class="form-inline" action="">
-                                <label class="mr-sm-2" for="order-date">Upload date: </label>
-                                <select name="order-date" class="custom-select mr-sm-2" id="order-date">
-                                    <option hidden value="">Default</option>
-                                    <option value="new">Newest</option>
-                                    <option value="old">Oldest</option>
-                                </select>
                                 <label class="mr-sm-2" for="order-size">File size: </label>
                                 <select name="order-size" class="custom-select mr-sm-2" id="order-size">
                                     <option hidden value="">Default</option>
                                     <option value="big">Big</option>
                                     <option value="small">Small</option>
+                                </select>
+                                <label class="mr-sm-2" for="order-date">Upload date: </label>
+                                <select name="order-date" class="custom-select mr-sm-2" id="order-date">
+                                    <option hidden value="">Default</option>
+                                    <option value="new">Newest</option>
+                                    <option value="old">Oldest</option>
                                 </select>
                                 <input type="hidden" name="calendar-start">
                                 <input type="hidden" name="calendar-end">
@@ -68,8 +68,11 @@
                 </div>
                 <div class="row">
                     {% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
-
-                    <button data-pagination-next="{{ path('user_next_files_page', defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg btn-block m-3">Get more!</button>
+                    {% if pageData.hasNextPage %}
+                        <button data-pagination-next="{{ path('user_next_files_page', defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg btn-block m-3">Get more!</button>
+                    {% else %}
+                        <button disabled type="button" class="btn btn-info btn-lg btn-block m-3">No more files!</button>
+                    {% endif %}
                 </div>
             {% else %}
                 You have not uploaded anything yet.
@@ -80,5 +83,8 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script>
+        __filter = {{ filter | raw }}
+    </script>
     {{ encore_entry_script_tags('manage_user') }}
 {% endblock %}

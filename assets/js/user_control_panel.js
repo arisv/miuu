@@ -15,11 +15,11 @@ $(document).ready(function () {
                 $(el).find(":input").filter(function(){ return !this.value; }).attr("disabled", "disabled");
                 return true;
             }.bind(this));
+            this.applyExistingFilter(__filter);
         },
         calendarHighlight: function (e) {
             var el = e.currentTarget;
             var date = $(el).data('date');
-            var months = $('[data-date]');
 
             if (this.calendarPointer === 'start') {
                 this.calendarRangeStart = date;
@@ -28,31 +28,42 @@ $(document).ready(function () {
                 this.calendarRangeEnd = date;
                 this.calendarPointer = 'start';
             }
-
+            this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
+        },
+        repaintCalendar: function(rangeStart, rangeEnd) {
+            var months = $('[data-date]');
             $(months).removeClass('calendar-highlight');
-            var activeSelection = false;
-            var firstDate = Date.parse(this.calendarRangeStart);
-            var secondDate = Date.parse(this.calendarRangeEnd);
-            console.log({'start': this.calendarRangeStart, 'end': this.calendarRangeEnd});
-            console.log({'first': firstDate, 'second': secondDate});
+            var firstDate = Date.parse(rangeStart);
+            var secondDate = Date.parse(rangeEnd);
 
             if (secondDate > firstDate) {
                 var temp = firstDate;
                 firstDate = secondDate;
                 secondDate = temp;
             }
-            console.log({'first': firstDate, 'second': secondDate});
             $(months).each(function (i, o) {
                 var thisDate = Date.parse($(o).data('date'));
                 if (thisDate <= firstDate && thisDate >= secondDate) {
                     $(o).addClass('calendar-highlight');
                 }
             }.bind(this));
-
+        },
+        applyExistingFilter: function (filter) {
+            if (filter['calendar-start'] && filter['calendar-start']) {
+                this.calendarRangeStart = filter['calendar-start'];
+                this.calendarRangeEnd = filter['calendar-end'];
+                this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
+            }
+            var form = $('#order-form');
+            if (filter['order-size']) {
+                $(form).find('select[name="order-size"]').val(filter['order-size']);
+            }
+            if (filter['order-date']) {
+                $(form).find('select[name="order-date"]').val(filter['order-date']);
+            }
         },
         manageDeletion: function (e) {
             var pressed = e.currentTarget;
-            console.log(pressed);
             var itemId = $(pressed).data('deleteid');
             var action = $(pressed).data('deleteaction');
             var newAction = 'del';
@@ -112,7 +123,7 @@ $(document).ready(function () {
                 type: 'GET',
                 url: url
             });
-        }
+        },
     };
 
     UserGalleryControls.initialize();

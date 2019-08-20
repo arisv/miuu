@@ -50,14 +50,9 @@ class CursorService
         $result = [];
 
         if ($calendarStart && $calendarEnd) {
-            $result['calendar'] = [
-                'start' => $calendarStart->getTimestamp(),
-                'end' => $calendarEnd->getTimestamp()
-            ];
-            if ($calendarStart > $calendarEnd) {
-                $result['calendar']['start'] = $calendarEnd->getTimestamp();
-                $result['calendar']['end'] = $calendarStart->getTimestamp();
-            }
+            $calendar = [$calendarStart, $calendarEnd];
+            sort($calendar);
+            $result['calendar'] = $calendar;
         }
 
         return $result;

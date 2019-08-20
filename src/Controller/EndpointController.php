@@ -207,8 +207,9 @@ class EndpointController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
         $orderBy = $cursorService->getOrderFromRequest($request);
+        $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
-        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy);
+        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
         $rendered = [];
         foreach ($pageData['files'] as $file) {
             $rendered[] = $twig->render('partials/control_panel_file.html.twig', [
@@ -223,8 +224,10 @@ class EndpointController extends AbstractController
                 $defaultParameters[$key] = $value;
             }
         }
-        $defaultParameters['cursor'] = $pageData['cursor'];
-        $result['nextPageRequest'] = $this->generateUrl('user_next_files_page', $defaultParameters);
+        if (!empty($pageData['files'])) {
+            $defaultParameters['cursor'] = $pageData['cursor'];
+            $result['nextPageRequest'] = $this->generateUrl('user_next_files_page', $defaultParameters);
+        }
         return new JsonResponse($result);
     }
 }

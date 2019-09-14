@@ -10,8 +10,8 @@
                             {{ year }}
                             <ul>
                                 {% for month, count in monthdata %}
-                                    <li>
-                                        {{ month }} - ({{ count }})
+                                    <li class="calendar-element" data-date="{{ year ~ '-' ~ month ~ '-01' }}">
+                                        <span>{{ month }} - ({{ count }})</span>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -24,46 +24,56 @@
             {% if pageData.files is not empty %}
                 <div class="row">
                     <div id="navpanel">
-                        <a class="btn btn-outline-primary" href="{{ path('cabinet_mypics', {'before': pageData.beforeId}) }}"><i class="fas fa-chevron-left"></i></a>
-                        <a class="btn btn-outline-primary" href="{{ path('cabinet_mypics', {'after': pageData.afterId}) }}"><i class="fas fa-chevron-right"></i></a>
+                        <div class="float-right m-2">
+                            <form id="order-form" class="form-inline" action="">
+                                <label class="mr-sm-2" for="order-size">File size: </label>
+                                <select name="order-size" class="custom-select mr-sm-2" id="order-size">
+                                    <option hidden value="">Default</option>
+                                    <option value="big">Big</option>
+                                    <option value="small">Small</option>
+                                </select>
+                                <label class="mr-sm-2" for="order-date">Upload date: </label>
+                                <select name="order-date" class="custom-select mr-sm-2" id="order-date">
+                                    <option hidden value="">Default</option>
+                                    <option value="new">Newest</option>
+                                    <option value="old">Oldest</option>
+                                </select>
+                                <input type="hidden" name="calendar-start">
+                                <input type="hidden" name="calendar-end">
+                                <button type="submit" class="btn btn-primary">Order</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-                {% for row in pageData.files|batch(3, null) %}
-                    <div class="row">
-                        {% for item in row if item %}
-                            <div class="col-sm-6 col-lg-4">
-                                <div class="itembox">
-                                    <div class="itembox-img-container">
-                                        <div class="itembox-img-container-in">
-                                            {% if item.image.isMimeType(['image']) %}
-                                                <img src="{{ path('get_file_custom_url', {'customUrl': item.image.customUrl, 'fileExtension': item.image.originalExtension}) }}">
-                                            {% elseif item.image.isMimeType(['video/webm']) %}
-                                                <img src="{{ asset("/static/webm_file.png") }}">
-                                            {% elseif item.image.isMimeType(['audio']) %}
-                                                <img src="{{ asset("/static/audio_file.png") }}">
-                                            {% else %}
-                                                <img src="{{ asset("/static/generic_file.png") }}">
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="itembox-text">
-                                        <span>
-                                            {{ item.image.originalName }}
-                                        </span>
-                                        <span>
-                                            {{ item.image.getDate|date("d/m/Y h:i:s") }}
-                                        </span>
-                                    </div>
-                                    <div class="itembox-controls">
-                                        <a href="{{ path('get_file_custom_url', {'customUrl': item.image.customUrl, 'fileExtension': item.image.originalExtension}) }}"><i class="fas fa-file-download"></i></a>
-                                        <button data-deleteaction="del" data-deleteid="{{ item.image.id }}" data-toggle="tooltip" title="Delete" class="btn btn-danger" {% if item.image.markedForDeletion == true %}style="display:none"{% endif %}><i class="fas fa-trash"></i></button>
-                                        <button data-deleteaction="undo" data-deleteid="{{ item.image.id }}" data-toggle="tooltip" title="Undelete" class="btn btn-warning"  {% if item.image.markedForDeletion == false %}style="display:none"{% endif %}><i class="fas fa-trash-restore"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+                <div class="row" id="file-container">
+                    {% for item in pageData.files %}
+                        {% include 'partials/control_panel_file.html.twig' with {'item': item.image} %}
+                    {% endfor %}
+                </div>
+                <div id="fetch-in-progress" style="display:none">
+                    <div class="d-flex justify-content-center my-2">
+                        <div class="spinner-grow" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <div class="spinner-grow" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <div class="spinner-grow" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <div class="spinner-grow" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
                     </div>
-                {% endfor %}
+                </div>
+                <div class="row">
+                    {% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
+                    {% if pageData.hasNextPage %}
+                        <button data-pagination-next="{{ path('user_next_files_page', defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg btn-block m-3">Get more!</button>
+                    {% else %}
+                        <button disabled type="button" class="btn btn-info btn-lg btn-block m-3">No more files!</button>
+                    {% endif %}
+                </div>
             {% else %}
                 You have not uploaded anything yet.
             {% endif %}
@@ -73,5 +83,8 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script>
+        __filter = {{ filter | raw }}
+    </script>
     {{ encore_entry_script_tags('manage_user') }}
 {% endblock %}

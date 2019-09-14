@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 
+use App\Service\UserService;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Index;
 
@@ -231,7 +232,7 @@ class StoredFile
 
     public function shouldEmbed()
     {
-        return $this->isMimeType(['image', 'audio', 'video/webm']);
+        return $this->isMimeType(['image', 'audio', 'video/webm', 'video/mp4']);
     }
 
     public function getFullFilePath($projectRoot)
@@ -243,6 +244,11 @@ class StoredFile
             return $path;
         else
             return "";
+    }
+
+    public function getFileSizeFormatted()
+    {
+        return UserService::formatSize($this->internalSize);
     }
 
 }

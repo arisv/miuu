@@ -12,11 +12,13 @@ class UserService
 {
     private $em;
     private $encoder;
+    private $cursorService;
 
-    public function __construct(EntityManagerInterface $em, UserPasswordEncoderInterface $encoder)
+    public function __construct(EntityManagerInterface $em, UserPasswordEncoderInterface $encoder, CursorService $cursorService)
     {
         $this->em = $em;
         $this->encoder = $encoder;
+        $this->cursorService = $cursorService;
     }
 
     public function createUser($userData)
@@ -66,30 +68,19 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         return $result;
     }
 
-    public function getUserUploadHistoryPage(User $user, $beforeOffset, $afterOffset)
+    public function getUserUploadHistoryPage(User $user, $cursor, $orderBy, $filter)
     {
         $result = [
             'files' => []
         ];
-        $limit = 9;
+        $limit = 12;
         $fileRepo = $this->em->getRepository(StoredFile::class);
-        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $beforeOffset, $afterOffset, $limit);
+        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy, $filter);
 
         if (count($pageFiles) > $limit) {
             $result['hasNextPage'] = true;
         } else {
             $result['hasNextPage'] = false;
-        }
-
-
-        if ($afterOffset > 0) {
-            $result['prev'] = 'after';
-
-        } else if ($beforeOffset > 0) {
-            $result['prev'] = 'before';
-
-        } else {
-            $result['prev'] = 'home';
         }
 
         $used = 0;
@@ -102,16 +93,7 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
 
         if (!empty($pageFiles)) {
             $lastElementOffset = (count($result['files']) - 1);
-            if ($beforeOffset > 0) //before returns files in inverse order
-            {
-                $result['files'] = array_reverse($result['files']);
-                $result['beforeId'] = $pageFiles[$lastElementOffset]->getUploadId();
-                $result['afterId'] = $pageFiles[0]->getUploadId();
-            } else {
-                $result['beforeId'] = $pageFiles[0]->getUploadId();
-                $result['afterId'] = $pageFiles[$lastElementOffset]->getUploadId();
-            }
-
+            $result['cursor'] = $this->cursorService->encodeCursor($pageFiles[$lastElementOffset]);
         }
 
         return $result;

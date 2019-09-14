@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\StoredFile;
 use App\Repository\StoredFileRepository;
+use App\Service\CursorService;
 use App\Service\FileService;
 use App\Service\UserService;
 use Psr\Log\LoggerInterface;
@@ -194,6 +195,38 @@ class EndpointController extends AbstractController
         } catch (\Exception $e) {
             $logger->warning("Error fetching storage stats: " . $e->getMessage());
             $result['status'] = 'error';
+        }
+        return new JsonResponse($result);
+    }
+
+    /**
+     * @Route("/endpoint/user_next_files_page/", name="user_next_files_page")
+     */
+    public function fetchNextFilesPage(Request $request, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        $user = $this->getUser();
+        $orderBy = $cursorService->getOrderFromRequest($request);
+        $filter = $cursorService->getFilterFromRequest($request);
+        $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
+        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
+        $rendered = [];
+        foreach ($pageData['files'] as $file) {
+            $rendered[] = $twig->render('partials/control_panel_file.html.twig', [
+                'item' => $file->getImage()
+            ]);
+        }
+        $result['rendered'] = $rendered;
+        $result['hasNextPage'] = $pageData['hasNextPage'];
+        $defaultParameters = [];
+        foreach ($request->query->all() as $key => $value) {
+            if ($value) {
+                $defaultParameters[$key] = $value;
+            }
+        }
+        if (!empty($pageData['files'])) {
+            $defaultParameters['cursor'] = $pageData['cursor'];
+            $result['nextPageRequest'] = $this->generateUrl('user_next_files_page', $defaultParameters);
         }
         return new JsonResponse($result);
     }

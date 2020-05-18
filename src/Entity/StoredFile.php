@@ -57,6 +57,11 @@ class StoredFile
     private $visibilityStatus;
 
     /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $markedForDeletionAt;
+
+    /**
      * @return mixed
      */
     public function getId()
@@ -218,7 +223,10 @@ class StoredFile
 
     public function markedForDeletion()
     {
-        return $this->visibilityStatus == false;
+        if (is_null($this->markedForDeletionAt)) {
+            return false;
+        }
+        return true;
     }
 
     public function isMimeType(array $types)
@@ -249,6 +257,22 @@ class StoredFile
     public function getFileSizeFormatted()
     {
         return UserService::formatSize($this->internalSize);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMarkedForDeletionAt()
+    {
+        return $this->markedForDeletionAt;
+    }
+
+    /**
+     * @param mixed $markedForDeletionAt
+     */
+    public function setMarkedForDeletionAt($markedForDeletionAt): void
+    {
+        $this->markedForDeletionAt = $markedForDeletionAt;
     }
 
 }

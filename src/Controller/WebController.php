@@ -108,7 +108,7 @@ class WebController extends AbstractController
     /**
      * @Route("/manage/mypics/", name="cabinet_mypics")
      */
-    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService)
+    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
@@ -117,10 +117,12 @@ class WebController extends AbstractController
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
         $dateTree = $userService->getUploadDateTree($user);
+        $removalPivot = $fileService->getDeletionPivotDate();
         return $this->render('manage_mypics.html.twig', [
             'page' => 'mypics',
             'pageData' => $pageData,
             'dateTree' => $dateTree,
+            'pivot' => $removalPivot,
             'filter' => json_encode($request->query->all())
         ]);
     }

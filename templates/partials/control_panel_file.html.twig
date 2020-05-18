@@ -2,7 +2,9 @@
     <div class="itembox">
         <div class="itembox-img-container">
             <div class="itembox-img-container-in">
-                {% if item.isMimeType(['image']) %}
+                {% if item.markedForDeletion == true %}
+                    <img src="{{ asset("/static/hidden_image.png") }}">
+                {% elseif item.isMimeType(['image']) %}
                     <img src="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}">
                 {% elseif item.isMimeType(['video/webm']) %}
                     <img src="{{ asset("/static/webm_file.png") }}">

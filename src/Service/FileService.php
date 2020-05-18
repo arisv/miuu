@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
 use App\Entity\User;
+use App\Exception\FileNotInStorageException;
 use App\Repository\StoredFileRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,10 @@ class FileService
     private $logger;
     private $projectDir;
     private $router;
+
+    const DELETED_OK = 1;
+    const DELETED_NOT_ON_DISK = 2;
+    const DELETED_FAIL = 3;
 
     public function __construct(EntityManagerInterface $em, LoggerInterface $logger, RouterInterface $router, $projectDir)
     {
@@ -56,7 +61,7 @@ class FileService
         if (file_exists($path)) {
             return $path;
         } else {
-            throw new \Exception("Path " . $path . " does not exist");
+            throw new FileNotInStorageException("Path " . $path . " does not exist");
         }
     }
 
@@ -268,6 +273,10 @@ class FileService
 
     public function deleteMarkedFiles($token)
     {
+        $result = [
+            'deleted' => [],
+            'orphaned' => []
+        ];
         if ($_ENV['WORKER_TOKEN'] != $token) {
             throw new \Exception("Unauthorized invocation");
         }
@@ -282,21 +291,34 @@ class FileService
         $deletedIds = [];
 
         foreach ($filesToDelete as $file) {
-            $deletedIds[] = $this->deleteFileFromStorage($file);
+            $report = $this->deleteFileFromStorage($file);
+            if ($report['status'] == self::DELETED_OK) {
+                $result['deleted'][] = $report['id'];
+            }
+            if ($report['status'] == self::DELETED_NOT_ON_DISK) {
+                $result['orphaned'][] = $report['id'];
+            }
         }
 
-        return ['deleted' => $deletedIds];
+        return $result;
     }
 
     public function deleteFileFromStorage(StoredFile $file)
     {
-        $id = $file->getId();
-        $path = $this->buildFullFilePath($file);
-        $fs = new Filesystem();
-        $fs->remove($path);
+        $result = [
+            'status' => self::DELETED_OK,
+            'id' => $file->getId()
+        ];
+        try {
+            $path = $this->buildFullFilePath($file);
+            $fs = new Filesystem();
+            $fs->remove($path);
+        } catch (FileNotInStorageException $fse) {
+            $result['status'] = self::DELETED_NOT_ON_DISK;
+        }
         $this->em->remove($file);
         $this->em->flush();
-        return $id;
+        return $result;
     }
 
     public function getAllFilesBySize()

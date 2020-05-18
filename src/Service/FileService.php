@@ -265,8 +265,10 @@ class FileService
         $file = $record->getImage();
         if ($action == 'del') {
             $file->setVisibilityStatus(false);
+            $file->setMarkedForDeletionAt(new \DateTime());
         } else {
             $file->setVisibilityStatus(true);
+            $file->setMarkedForDeletionAt(null);
         }
         $this->em->flush();
     }
@@ -281,14 +283,15 @@ class FileService
             throw new \Exception("Unauthorized invocation");
         }
 
+        $pivot = $this->getDeletionPivotDate();
+
         $filesToDelete = $this->em->createQueryBuilder()
             ->select('file')
             ->from('App\Entity\StoredFile', 'file')
-            ->where('file.visibilityStatus = 0')
+            ->where('file.markedForDeletionAt IS NOT NULL AND file.markedForDeletionAt < :pivot')
+            ->setParameter('pivot', $pivot)
             ->getQuery()
             ->execute();
-
-        $deletedIds = [];
 
         foreach ($filesToDelete as $file) {
             $report = $this->deleteFileFromStorage($file);
@@ -352,5 +355,14 @@ SQL;
         }
         $users = $this->em->getRepository(User::class)->findUsersByList(array_unique($userIdsEncountered));
         return [$result, $users];
+    }
+
+    public function getDeletionPivotDate()
+    {
+        $now = new \DateTime();
+        $minutesAgo = intval($_ENV['DELETE_MARKED_FILES_AFTER_MINUTES']) ?? 5;
+        $interval = new \DateInterval("PT${minutesAgo}M");
+        $now->sub($interval);
+        return $now;
     }
 }

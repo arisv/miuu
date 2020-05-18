@@ -202,7 +202,7 @@ class EndpointController extends AbstractController
     /**
      * @Route("/endpoint/user_next_files_page/", name="user_next_files_page")
      */
-    public function fetchNextFilesPage(Request $request, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
+    public function fetchNextFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
@@ -211,9 +211,11 @@ class EndpointController extends AbstractController
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
         $rendered = [];
+        $removalPivot = $fileService->getDeletionPivotDate();
         foreach ($pageData['files'] as $file) {
             $rendered[] = $twig->render('partials/control_panel_file.html.twig', [
-                'item' => $file->getImage()
+                'item' => $file->getImage(),
+                'pivot' => $removalPivot
             ]);
         }
         $result['rendered'] = $rendered;

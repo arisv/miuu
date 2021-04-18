@@ -1,55 +1,61 @@
 {% extends 'base_layout.html.twig' %}
 
 {% block title %}
-    MeowUpload - home
+MeowUpload - home
 {% endblock %}
 
 {% block stylesheets %}
-    {{ parent() }}
-    {{ encore_entry_link_tags('home') }}
+{{ parent() }}
+{{ encore_entry_link_tags('home') }}
 {% endblock %}
 
 {% block maincontent %}
-    <div id="uploader">
-        <div class="row" id="upload-legacy">
-            <div class="col-md-6 col-xs-12 mx-auto">
-                <h2>Upload your file (100Mb max)</h2>
-                <form class="form-inline" action="/getfile/" method="post" enctype="multipart/form-data">
-                    <label class="btn btn-default btn-file">
-                        Browse <input type="file" name="meowfile">
-                    </label>
-                    <input type="submit" value="Upload" class="btn btn-primary">
-                </form>
-            </div>
+<div id="uploader">
+    <div class="row" id="upload-legacy">
+        <div class="col-md-6 col-xs-12 mx-auto">
+            <h2>Upload your file (100Mb max)</h2>
+            <form class="form-inline" action="/getfile/" method="post" enctype="multipart/form-data">
+                <label class="btn btn-default btn-file">
+                    Browse <input type="file" name="meowfile">
+                </label>
+                <input type="submit" value="Upload" class="btn btn-primary">
+            </form>
         </div>
-        <div class="row" id="upload-dropzone" style="display:none">
-            <div class="col-md-6 col-xs-12 mx-auto">
-                <h2>Drag or open up to 4 files (100 mb max)</h2>
-                <div class="dropzone" id="dropzonefield"></div>
-            </div>
+    </div>
+    <div class="row" id="upload-dropzone" style="display:none">
+        <div class="col-md-6 col-xs-12 mx-auto">
+            <h2>Drag or open up to 4 files (100 mb max)</h2>
+            <div class="dropzone" id="dropzonefield"></div>
         </div>
-        <div class="row">
-            <div class="col-md-6 col-xs-12 mx-auto">
-                <h2>Mirror a file from other server</h2>
-                <p>May not work as intended or work at all depending on the server hosting the target file</p>
-                <div class="row">
-                    <div class="mx-auto">
-                        <form id="mirror_uploader" class="form-inline" action="/mirrorfile/" method="post" enctype="multipart/form-data">
-                            <input id="mirrorfile" name="mirrorfile" title="Direct link" class="form-control" type="text" value="">
-                            <input type="submit" value="Fetch!" class="btn btn-primary mx-1">
-                        </form>
-                    </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 col-xs-12 mx-auto">
+            <h2>Mirror a file from other server</h2>
+            <p>May not work as intended or work at all depending on the server hosting the target file</p>
+            <div class="row">
+                <div class="mx-auto">
+                    <form id="mirror_uploader" class="form-inline" action="/mirrorfile/" method="post"
+                        enctype="multipart/form-data">
+                        <input id="mirrorfile" name="mirrorfile" title="Direct link" class="form-control" type="text"
+                            value="">
+                        <input type="submit" value="Fetch!" class="btn btn-primary mx-1">
+                    </form>
                 </div>
-                <p class="p-1 m-1 text-center">Email complaints to <a href="mailto:abuse@onozuka.info">abuse@onozuka.info</a></p>
             </div>
         </div>
     </div>
+    <div class="row">
+        <p class="mx-auto p-1 text-center">
+            Email complaints to <a href="mailto:abuse@onozuka.info">abuse@onozuka.info</a>
+        </p>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
-    {{ parent() }}
-    {{ encore_entry_script_tags('home') }}
-    <script>
+{{ parent() }}
+{{ encore_entry_script_tags('home') }}
+<script>
 
-    </script>
+</script>
 {% endblock %}

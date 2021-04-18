@@ -142,6 +142,7 @@ class FileService
 
     public function mirrorRemoteFile($url, ?User $user)
     {
+        $this->validateUrl($url);
         $remoteSize = $this->queryRemoteFileSize($url);
         if ($remoteSize < 1) {
             throw new \Exception("Unable to get filesize from remote target");
@@ -168,7 +169,44 @@ class FileService
         }
 
         return $this->addFileToStorage($uploadedFile, $user);
+    }
 
+    private function IPinRange($ip, $range)
+    {
+        list($range, $netmask) = explode('/', $range, 2);
+        $range_decimal = ip2long($range);
+        $ip_decimal = ip2long($ip);
+        $wildcard_decimal = pow(2, (32 - $netmask)) - 1;
+        $netmask_decimal = ~$wildcard_decimal;
+        return (($ip_decimal & $netmask_decimal) == ($range_decimal & $netmask_decimal));
+    }
+
+    private function validateUrl($url)
+    {
+        $structure = parse_url($url);
+        $scheme = $structure['scheme'] ?? 'https';
+        if (!in_array($scheme, ['http', 'https'])) {
+            throw new \Exception("Unsupported protocol");
+        }
+        $host = $structure['host'] ?? null;
+        if (!$host) {
+            throw new \Exception("Host unspecified");
+        }
+        $ip = gethostbyname($host);
+        if (!$ip) {
+            throw new \Exception("Host unresolvable");
+        }
+        $rangeBlacklist = [
+            '10.0.0.0/8',
+            '172.16.0.0/12',
+            '192.168.0.0/16'
+        ];
+        foreach ($rangeBlacklist as $range) {
+            $is = $this->IPinRange($ip, $range);
+            if ($is) {
+                throw new \Exception("Network unreachable");
+            }
+        }
     }
 
     private function queryRemoteFileSize($url)

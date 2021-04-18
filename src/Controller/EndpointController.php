@@ -112,7 +112,7 @@ class EndpointController extends AbstractController
                 ]);
             } catch (\Exception $e) {
                 $logger->error('Error mirroring file: ' . $e->getMessage());
-                $this->addFlash('global-danger', 'Unable to mirror remote file');
+                $this->addFlash('global-danger', sprintf("Unable to mirror remote file: %s", $e->getMessage()));
                 return $this->redirectToRoute('home');
             }
 

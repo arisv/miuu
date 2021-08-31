@@ -8,3 +8,9 @@ require('bootstrap');
 import * as Clipboard from './clipboard.min';
 
 new Clipboard('.clipbutton');
+
+$(document).ready(() => {
+    $("#sidebarShowBtn, #sidebarCloseBtn").click((ev) => {
+        $("#sidebar").toggle("slide");
+    });
+})

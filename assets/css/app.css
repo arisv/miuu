@@ -1,11 +1,61 @@
 body {
-    background: #fdf4ee;
+    background: #1f1f1f;
+    color: #b4b4b4;
+    position: relative;
 }
+
+
+
+@media (min-width: 576px) {
+    .app {
+        min-height: 300px;
+    }
+}
+
+@media (min-width: 768px) {
+    .app {
+        min-height: 900px;
+    }
+}
+
+#sidebar {
+    top: 0;
+    left: 0;
+    width: 224px;
+    z-index: 9999;
+    background: #1f1f1f;
+    position: absolute;
+    height: 100%;
+}
+
+.app {
+    background: #17221d;
+    padding-bottom: 16px;
+}
+
+a,
+a:visited {
+    color: #34e6a1;
+}
+
+#mainblock {
+    background-color: #1f1f1f;
+    border: 1px solid #3d3d3d;
+    border-radius: 8px;
+}
+
+.footer {
+    border-top: solid 1px #3d3d3d;
+    background-color: #1f1f1f;
+    padding: 16px;
+}
+
 
 .btn-file {
     position: relative;
     overflow: hidden;
 }
+
 .btn-file input[type=file] {
     position: absolute;
     top: 0;
@@ -17,41 +67,185 @@ body {
     filter: alpha(opacity=0);
     opacity: 0;
     outline: none;
-    background: white;
+    background: #b4b4b4;
     cursor: inherit;
     display: block;
 }
 
-#uploader{
-    padding-top: 100px;
+#upload-box {
+    position: relative;
 }
 
-#loginpanel{
-    margin-top: 10px;
-    padding-left: 40px;
-    margin-right: 10%;
+#upload-box::before {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("../../public/static/miu_bg.png");
+    overflow: hidden;
 }
 
-#userheader{
-    margin-right: 5%;
+#upload-box-inner {
+    position: relative;
 }
 
-.header{
-    padding-top: 6px;
-    height: 60px;
-    background-color: #491080;
-    color: white;
+.dropzone-border {
+    /* border: 1px solid #34e6a1; */
+    padding: 32px;
+    border-radius: 8px;
 }
 
-.header a{
+
+#mirrorfile {
+    background-color: #252526;
+    color: #b4b4b4;
+    border: solid 1px #3d3d3d;
+}
+
+#upload-box {
+    border-bottom: #3d3d3d solid 1px;
+}
+
+#mirror-box {
+    text-align: center;
+}
+
+#mirror-box span {
+    display: inline-block;
+    width: 64px;
+    height: 14pt;
+    border-bottom: solid 1px #313131;
+    margin: 0 10px 4px 10px;
+}
+
+.mirror-form {
+    /* border: 1px solid #34e6a1; */
+    padding: 8px 16px 16px 16px;
+    border-radius: 8px;
+}
+
+.btn-outline-miu {
+    border-color: #34e6a1;
+    color: #34e6a1;
+}
+
+.btn-outline-miu:hover {
+    background-color: #34e6a1;
+    border-color: #34e6a1;
+}
+
+.clipbutton {
+    margin-top: 4px;
+    background-color: #34e6a1;
+    color: #313131;
+}
+
+#sidebarShowBtn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 16px;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 9998;
+}
+
+#hamburger-userheader li>*{
+    position: relative;
+    width: 100%;
+    display: inline-block;
+    padding: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    text-decoration: none;
+    color:#b4b4b4;
+}
+
+#sidebarCloseBtn {
+    cursor: pointer;
+}
+
+#hamburger-userheader li {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid #3d3d3d;
+    background-color: #1f1f1f;
+    margin-right: 0;
+    margin-right: 0;
+    border-radius: 0;
+}
+
+#hamburger-userheader li:hover {
+    background-color: #3a3a3a;
+    cursor: pointer;
+}
+
+#loginpanel,
+#userheader {
+    display: inline-block;
+    border-radius: 10px;
+    padding: 4px 0;
+}
+
+#userheader li {
+    border: #3d3d3d 1px solid;
+    background-color: #1f1f1f;
+    margin-right: 0;
+    margin-right: 0;
+}
+
+#userheader li:not(:first-child) {
+    border-left: 0;
+}
+
+#userheader li:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+#userheader li:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+#profilebox li:not(:first-child) {
+    cursor: pointer;
+}
+
+#profilebox li {
+    padding: 8px 16px;
+}
+
+
+#profilebox li:hover {
+    background-color: #3a3a3a;
+}
+
+#profilebox a,
+#profilebox a:hover {
+    text-decoration: none;
+    color: #b4b4b4;
+}
+
+.header {
+    padding: 16px;
+    color: #b4b4b4;
+}
+
+.header a {
     color: #ffa800;
 }
 
-#managebuttons{
+#managebuttons {
     padding: 20px;
 }
 
-#navpanel{
+#navpanel {
     padding: 20px;
 }
 
@@ -59,19 +253,19 @@ body {
     width: 250px;
 }
 
-.itembox{
-    background: white;
+.itembox {
+    background: #b4b4b4;
     height: 380px;
     margin: 5px;
 }
 
 
-.itembox-img-container{
+.itembox-img-container {
     height: 250px;
-    position:relative;
+    position: relative;
 }
 
-.itembox-img-container-in{
+.itembox-img-container-in {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -80,57 +274,60 @@ body {
     padding: 15px;
 }
 
-.itembox-img-container-in > img{
+.itembox-img-container-in>img {
     max-height: 200px;
     max-width: 100%;
     vertical-align: middle;
     display: inline-block;
 }
 
-.itembox-text{
+.itembox-text {
     margin-left: 15px;
     font-weight: 600;
     overflow: hidden;
 }
 
-.itembox-text > span{
+.itembox-text>span {
     position: relative;
     display: block;
 }
 
-.itembox-controls{
+.itembox-controls {
     margin-left: 20px;
     font-weight: 600;
     font-size: 40px;
 }
 
-.error-image{
+.error-image {
     max-width: 90%;
 }
 
-.buttontext{
+.buttontext {
     font-size: 25px;
 }
 
-#header-home{
-    margin-left: 15px;
-    margin-top: 9px;
+#header-home {
+    padding: 16px;
 }
 
-.uploadControls{
+.app-brand {
+    width: 72px;
+}
+
+.uploadControls {
     display: inline-block;
 }
 
-#uploadResult{
+#uploadResult {
     width: auto;
     min-width: 238px;
 }
 
-.admin-menu > li.active {
-    background-color: #491080;
+.admin-menu>li.active {
+    background-color: #34e6a1;
 }
 
-.admin-menu li.active > a {
+.admin-menu li.active>a {
     color: #ffa800;
 }
 
@@ -139,10 +336,42 @@ body {
 }
 
 .calendar-highlight {
-    background-color: #491080;
+    background-color: #34e6a1;
     color: #ffa800;
 }
 
 .calendar-element :hover {
     cursor: pointer;
+}
+
+.profile-sidebar {
+    padding: 8px 0;
+    margin: 0;
+    border-right: #3d3d3d solid 1px;
+}
+
+
+.profile-sidebar .list-group a {
+    border-radius: 0;
+    border: 0;
+    background-color: #1f1f1f;
+    color: #b4b4b4;
+}
+
+.profile-sidebar .list-group .active {
+    border: 0;
+    border-right: solid 1px #34e6a1;
+    background-color: #252526;
+    color: #b4b4b4;
+}
+
+#profile {
+    padding: 16px;
+}
+
+
+#file-container .itembox {
+    color: #b4b4b4;
+    border: 1px solid #3d3d3d;
+    background-color: #252526;
 }

@@ -421,7 +421,7 @@ var Dropzone = function (_Emitter) {
         /**
          * The text used before any files are dropped.
          */
-        dictDefaultMessage: "Drop files here to upload",
+        dictDefaultMessage: "Drop files here",
 
         /**
          * The text that replaces the default message text it the browser is not supported.
@@ -574,7 +574,7 @@ var Dropzone = function (_Emitter) {
             }
           }
           if (!messageElement) {
-            messageElement = Dropzone.createElement("<div class=\"dz-message\"><span></span></div>");
+            messageElement = Dropzone.createElement("<div class=\"dz-message\"><div class=\"dz-flexitem\"><span></span></div></div>");
             this.element.appendChild(messageElement);
           }
 
@@ -1194,7 +1194,7 @@ var Dropzone = function (_Emitter) {
       }
 
       if (this.element.classList.contains("dropzone") && !this.element.querySelector(".dz-message")) {
-        this.element.appendChild(Dropzone.createElement("<div class=\"dz-default dz-message\"><span>" + this.options.dictDefaultMessage + "</span></div>"));
+        this.element.appendChild(Dropzone.createElement("<div class=\"dz-default dz-message\"><div class=\"dz-flexitem\"><span>" + this.options.dictDefaultMessage + "</span></div></div>"));
       }
 
       if (this.clickableElements.length) {

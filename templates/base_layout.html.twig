@@ -1,59 +1,88 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {% block stylesheets %}
-        {{ encore_entry_link_tags('app') }}
-        <link rel="icon" type="image/png" href="{{ asset('static/favicon.png') }}">
-    {% endblock %}
-    <title>{% block title %}{% endblock %}</title>
-</head>
-<body>
-<div class="header">
-    <div id="header-home" class="float-left">
-        <a href="/">Home</a>
-    </div>
-    {% if not is_granted('ROLE_USER') %}
-        <div id="loginpanel" class="float-right">
-            <a href="{{ path('auth_login') }}">Login</a> or <a href="{{ path('auth_register') }}">Sign up</a>
-        </div>
-    {% endif %}
+		{% block stylesheets %}
+			{{ encore_entry_link_tags('app') }}
+			<link rel="icon" type="image/png" href="{{ asset('static/miu_favicon.png') }}">
+		{% endblock %}
+		<title>
+			{% block title %}{% endblock %}
+		</title>
+	</head>
+	<body>
+		<div class="app">
+			<div class="header">
+				<div class="row align-items-start">
+					<div id="header-home" class="col-md-2 col-sm-12 text-center">
+						<a href="/"><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></a>
+					</div>
+                    <div class="d-md-none" id="sidebarShowBtn">
+                    <i class="fas fa-bars"></i>
+                    </div>
+                    <div class="d-md-none" id="sidebar" style="display: none;">
+                        <div id="hamburger-userheader" class="">
+                            <ul id="hamburger-profilebox" class="list-unstyled text-left list-group">
+                                <li class="list-group-item"><span><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></span><span id="sidebarCloseBtn"><i class="fas fa-times"></i></span></li>
+                                {% if is_granted('ROLE_USER') %}
+                                <li class="list-group-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li>
+                                <li class="list-group-item"><a href="{{ path('cabinet_mypics') }}">Pictures</a></li>
+                                <li class="list-group-item"><a href="{{ path('auth_logout') }}">Logout</a>
+                                {% else %}
+                                <li class="list-group-item"><a href="{{ path('auth_login') }}">Login</a></li>
+                                <li class="list-group-item"><a href="{{ path('auth_register') }}">Sign up</a></li>
+                                {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+					<div class="col text-right d-none d-md-block">
+						{% if not is_granted('ROLE_USER') %}
+							<div id="loginpanel" class="">
+								<a href="{{ path('auth_login') }}">Login</a>
+								or
+								<a href="{{ path('auth_register') }}">Sign up</a>
+							</div>
+						{% endif %}
+						{% if is_granted('ROLE_USER') %}
+							<div id="userheader" class="">
+								<ul id="profilebox" class="list-unstyled list-inline text-left"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}">Pictures</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}">Logout</a>
+									</li>
+								</ul>
+							</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+			{% if app.session.flashbag.has('global-success') or app.session.flashbag.has('global-danger') %}
+				<div class="global-alerts">
+					{% for flashMessage in app.session.flashbag.get('global-danger') %}
+						<div class="alert alert-danger">
+							<p class="text-center">{{ flashMessage }}</p>
+						</div>
+					{% endfor %}
+					{% for flashMessage in app.session.flashbag.get('global-success') %}
+						<div class="alert alert-success">
+							<p class="text-center">{{ flashMessage }}</p>
+						</div>
+					{% endfor %}
+				</div>
+			{% endif %}
+			<div id="mainblock" class="container"> {% block maincontent %}{% endblock %}
+				</div>
+			</div>
 
-    {% if is_granted('ROLE_USER') %}
-        <div id="userheader" class="float-right">
-            Welcome, {{ app.user.login }}.<br>
-            <a href="{{ path('cabinet_home') }}">Control Panel</a> |
-            <a href="{{ path('auth_logout') }}">Logout</a>
-        </div>
-    {% endif %}
-</div>
-{% if app.session.flashbag.has('global-success') or app.session.flashbag.has('global-danger') %}
-    <div class="global-alerts">
-        {% for flashMessage in app.session.flashbag.get('global-danger') %}
-            <div class="alert alert-danger">
-                <p class="text-center">{{ flashMessage }}</p>
-            </div>
-        {% endfor %}
-        {% for flashMessage in app.session.flashbag.get('global-success') %}
-            <div class="alert alert-success">
-                <p class="text-center">{{ flashMessage }}</p>
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
-<div class="container">
-    {% block maincontent %}
-
-    {% endblock %}
-</div>
-<div class="footer">
-
-</div>
-{% block javascripts %}
-    {{ encore_entry_script_tags('app') }}
-{% endblock %}
-</body>
-</html>
+			<div class="footer container-fluid">
+				<p id="footer-abuse" class="mx-auto text-center">
+					Abuse email:
+					<a href="mailto:abuse@onozuka.info">abuse@onozuka.info</a>
+				</p>
+			</div>
+			{% block javascripts %}
+				{{ encore_entry_script_tags('app') }}
+			{% endblock %}
+		</body>
+	</html>

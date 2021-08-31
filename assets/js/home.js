@@ -18,7 +18,7 @@ $(function () {
         console.log(reply);
         if (reply.success) {
             $(file.previewTemplate).append(
-                $('<button class="btn btn-outline-info clipbutton" data-clipboard-text="' + reply.download + '">Copy URL</button>')
+                $('<div class="text-center"><button class="btn clipbutton" data-clipboard-text="' + reply.download + '">Copy Link</button></div>')
             );
         }
     });

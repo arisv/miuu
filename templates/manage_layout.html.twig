@@ -6,7 +6,7 @@
 
 {% block maincontent %}
 	<div class="row">
-		<div class="col-2 profile-sidebar">
+		<div class="col-2 profile-sidebar d-none d-md-block">
 			<div class="list-group">
 				<a href="{{path("cabinet_home")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_home" ? 'active' : '' }}">Profile</a>
 				<a href="{{path("cabinet_mypics")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_mypics" ? 'active' : '' }}">My Pictures</a>

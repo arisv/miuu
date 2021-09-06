@@ -154,7 +154,7 @@ a:visited {
     z-index: 9998;
 }
 
-#hamburger-userheader li>*{
+#hamburger-userheader li>* {
     position: relative;
     width: 100%;
     display: inline-block;
@@ -162,7 +162,7 @@ a:visited {
     text-align: center;
     text-transform: uppercase;
     text-decoration: none;
-    color:#b4b4b4;
+    color: #b4b4b4;
 }
 
 #sidebarCloseBtn {
@@ -255,41 +255,42 @@ a:visited {
 
 .itembox {
     background: #b4b4b4;
-    height: 380px;
-    margin: 5px;
-}
-
-
-.itembox-img-container {
-    height: 250px;
+    color: #b4b4b4;
+    border: 1px solid #3d3d3d;
+    background-color: #252526;
     position: relative;
+    min-width: 224px;
+    min-height: 240px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
-.itembox-img-container-in {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 15px;
+.itembox:hover {
+    border: solid #34e6a1 4px;
 }
 
-.itembox-img-container-in>img {
-    max-height: 200px;
-    max-width: 100%;
-    vertical-align: middle;
-    display: inline-block;
+.itembox:hover .itembox-hover {
+    display: block;
+}
+
+.itembox-hover {
+    display: none;
 }
 
 .itembox-text {
-    margin-left: 15px;
-    font-weight: 600;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255, .45);  
+    backdrop-filter: blur(5px);
     overflow: hidden;
+    padding: 8px;
 }
 
-.itembox-text>span {
-    position: relative;
-    display: block;
+.itembox-text p {
+    color:rgb(24, 22, 22);
+    margin: 0;
 }
 
 .itembox-controls {
@@ -367,11 +368,4 @@ a:visited {
 
 #profile {
     padding: 16px;
-}
-
-
-#file-container .itembox {
-    color: #b4b4b4;
-    border: 1px solid #3d3d3d;
-    background-color: #252526;
 }

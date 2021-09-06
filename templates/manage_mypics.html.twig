@@ -1,8 +1,8 @@
 {% extends 'manage_layout.html.twig' %}
 
 {% block managecontent %}
-    <div class="row pt-3">
-        <div class="col-md-3">
+    <div class="row">
+        <div class="col-md-2">
             {% if dateTree is not empty %}
                 <ul>
                     {% for year, monthdata in dateTree %}
@@ -20,7 +20,7 @@
                 </ul>
             {% endif %}
         </div>
-        <div class="col-md-9">
+        <div class="col-md-10">
             {% if pageData.files is not empty %}
                 <div class="row">
                     <div id="navpanel">
@@ -45,7 +45,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row" id="file-container">
+                <div class="row no-gutters" id="file-container">
                     {% for item in pageData.files %}
                         {% include 'partials/control_panel_file.html.twig' with {'item': item.image} %}
                     {% endfor %}

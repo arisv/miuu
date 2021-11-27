@@ -5,27 +5,29 @@
 {% endblock %}
 
 {% block maincontent %}
-	<div class="row">
-		<div class="col-2 profile-sidebar d-none d-md-block">
-			<div class="list-group">
-				<a href="{{path("cabinet_home")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_home" ? 'active' : '' }}">Profile</a>
-				<a href="{{path("cabinet_mypics")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_mypics" ? 'active' : '' }}">My Pictures</a>
-				<a href="{{path("cabinet_token")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_token" ? 'active' : '' }}">Security</a>
-	            {% if is_granted('ROLE_ADMIN') %}
-				<a href="{{path("admin_manage_users")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_users" ? 'active' : '' }}">Manage Users</a>
-				<a href="{{path("admin_manage_files")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_files" ? 'active' : '' }}">Manage Files</a>
-                {% endif %}
+	<div class="block-app container-fluid">
+		<div class="row">
+			<div class="col-2 profile-sidebar d-none d-md-block">
+				<div class="list-group">
+					<a href="{{path("cabinet_home")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_home" ? 'active' : '' }}">Profile</a>
+					<a href="{{path("cabinet_mypics")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_mypics" ? 'active' : '' }}">My Pictures</a>
+					<a href="{{path("cabinet_token")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_token" ? 'active' : '' }}">Security</a>
+					{% if is_granted('ROLE_ADMIN') %}
+					<a href="{{path("admin_manage_users")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_users" ? 'active' : '' }}">Manage Users</a>
+					<a href="{{path("admin_manage_files")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_files" ? 'active' : '' }}">Manage Files</a>
+						{% endif %}
+				</div>
 			</div>
+				<div class="col">
+			{% block managecontent %}
+					<div id="profile">
+						<h3>Welcome, {{ app.user.login }}</h3>
+						<p>
+							Current API token: <strong>{{ app.user.remotetoken }}</strong>
+						</p>
+					</div>
+				{% endblock %}
+				</div>
 		</div>
-        <div class="col">
-	    {% block managecontent %}
-            <div id="profile">
-                <h3>Welcome, {{ app.user.login }}</h3>
-                <p>
-                    Current API token: <strong>{{ app.user.remotetoken }}</strong>
-                </p>
-            </div>
-        {% endblock %}
-        </div>
 	</div>
 {% endblock %}

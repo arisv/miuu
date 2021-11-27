@@ -38,7 +38,27 @@ a:visited {
     color: #34e6a1;
 }
 
-#mainblock {
+.border-miu {
+    border: 1px solid #3d3d3d;
+}
+
+.border-right-miu {
+    border-right: 1px solid #3d3d3d;
+}
+
+.bg-miu {
+    background: #1f1f1f;
+}
+
+.bg-secondary-miu {
+    background: #353535;
+}
+
+.hover-miu:hover {
+    background: #5a5a5a;
+}
+
+.block-app {
     background-color: #1f1f1f;
     border: 1px solid #3d3d3d;
     border-radius: 8px;
@@ -282,14 +302,14 @@ a:visited {
     position: absolute;
     bottom: 0;
     width: 100%;
-    background-color: rgba(255, 255, 255, .45);  
+    background-color: rgba(255, 255, 255, .45);
     backdrop-filter: blur(5px);
     overflow: hidden;
     padding: 8px;
 }
 
 .itembox-text p {
-    color:rgb(24, 22, 22);
+    color: rgb(24, 22, 22);
     margin: 0;
 }
 

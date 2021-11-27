@@ -18,7 +18,7 @@
         </div>
         <div class="itembox-hover">
             <div class="itembox-controls">
-                <a href="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"><i class="fas fa-file-download"></i></a>
+                <a href="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}" class="btn btn-primary"><i class="fas fa-file-download"></i></a>
                 <button data-deleteaction="del" data-deleteid="{{ item.id }}" data-toggle="tooltip" title="Delete" class="btn btn-danger" {% if item.markedForDeletion == true %}style="display:none"{% endif %}><i class="fas fa-trash"></i></button>
                 <button data-deleteaction="undo" data-deleteid="{{ item.id }}" data-toggle="tooltip" title="Undelete" class="btn btn-warning"  {% if item.markedForDeletion == false %}style="display:none"{% endif %}><i class="fas fa-trash-restore"></i></button>
             </div>

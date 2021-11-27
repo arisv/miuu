@@ -12,7 +12,9 @@ $(document).ready(function () {
                 var el = e.currentTarget;
                 $(el).find("input[name='calendar-start']").val(this.calendarRangeStart);
                 $(el).find("input[name='calendar-end']").val(this.calendarRangeEnd);
-                $(el).find(":input").filter(function(){ return !this.value; }).attr("disabled", "disabled");
+                $(el).find(":input").filter(function () {
+                    return !this.value;
+                }).attr("disabled", "disabled");
                 return true;
             }.bind(this));
             this.applyExistingFilter(__filter);
@@ -30,7 +32,7 @@ $(document).ready(function () {
             }
             this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
         },
-        repaintCalendar: function(rangeStart, rangeEnd) {
+        repaintCalendar: function (rangeStart, rangeEnd) {
             var months = $('[data-date]');
             $(months).removeClass('calendar-highlight');
             var firstDate = Date.parse(rangeStart);
@@ -72,7 +74,10 @@ $(document).ready(function () {
             }
             var newButton = $('button[data-deleteid="' + itemId + '"][data-deleteaction="' + newAction + '"]');
             $(pressed).prop('disabled', true);
-            this.postData('/endpoint/setdeletestatus/', {'id': itemId, 'action': action})
+            this.postData('/endpoint/setdeletestatus/', {
+                    'id': itemId,
+                    'action': action
+                })
                 .done(function (data, status, xhr) {
                     if (data.status === 'ok') {
                         $(pressed).prop('disabled', false);

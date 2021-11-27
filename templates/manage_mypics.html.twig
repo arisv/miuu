@@ -1,90 +1,110 @@
 {% extends 'manage_layout.html.twig' %}
-
+{% set months = {
+    "1": "January",
+    "2": "February",
+    "3": "March",
+    "4": "April",
+    "5": "May",
+    "6": "June",
+    "7": "July",
+    "8": "August",
+    "9": "September",
+    "10": "October",
+    "11": "November",
+    "12": "December",
+} %}
 {% block managecontent %}
-    <div class="row pt-3">
-        <div class="col-md-3">
-            {% if dateTree is not empty %}
-                <ul>
-                    {% for year, monthdata in dateTree %}
-                        <li>
-                            {{ year }}
-                            <ul>
-                                {% for month, count in monthdata %}
-                                    <li class="calendar-element" data-date="{{ year ~ '-' ~ month ~ '-01' }}">
-                                        <span>{{ month }} - ({{ count }})</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-        <div class="col-md-9">
-            {% if pageData.files is not empty %}
-                <div class="row">
-                    <div id="navpanel">
-                        <div class="float-right m-2">
-                            <form id="order-form" class="form-inline" action="">
-                                <label class="mr-sm-2" for="order-size">File size: </label>
-                                <select name="order-size" class="custom-select mr-sm-2" id="order-size">
-                                    <option hidden value="">Default</option>
-                                    <option value="big">Big</option>
-                                    <option value="small">Small</option>
-                                </select>
-                                <label class="mr-sm-2" for="order-date">Upload date: </label>
-                                <select name="order-date" class="custom-select mr-sm-2" id="order-date">
-                                    <option hidden value="">Default</option>
-                                    <option value="new">Newest</option>
-                                    <option value="old">Oldest</option>
-                                </select>
-                                <input type="hidden" name="calendar-start">
-                                <input type="hidden" name="calendar-end">
-                                <button type="submit" class="btn btn-primary">Order</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="row" id="file-container">
-                    {% for item in pageData.files %}
-                        {% include 'partials/control_panel_file.html.twig' with {'item': item.image} %}
-                    {% endfor %}
-                </div>
-                <div id="fetch-in-progress" style="display:none">
-                    <div class="d-flex justify-content-center my-2">
-                        <div class="spinner-grow" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                        <div class="spinner-grow" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                        <div class="spinner-grow" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                        <div class="spinner-grow" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    {% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
-                    {% if pageData.hasNextPage %}
-                        <button data-pagination-next="{{ path('user_next_files_page', defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg btn-block m-3">Get more!</button>
-                    {% else %}
-                        <button disabled type="button" class="btn btn-info btn-lg btn-block m-3">No more files!</button>
-                    {% endif %}
-                </div>
-            {% else %}
-                You have not uploaded anything yet.
-            {% endif %}
-        </div>
-    </div>
+	<div class="row" style="height: 1440px">
+		<div class="col-md-2 border-right-miu p-0 overflow-auto h-100">
+			{% if dateTree is not empty %}
+				<ul class="list-group list-group-flush">
+					{% for year, monthdata in dateTree %}
+						<li class="list-group-item border-miu bg-miu p-0">
+							<div class="p-2">
+								<h4>{{ year }}</h4>
+							</div>
+							<ul class="list-group list-group-flush">
+								{% for month, count in monthdata %}
+									<li class="list-group-item border-miu hover-miu bg-secondary-miu calendar-element" data-date="{{ year ~ '-' ~ month ~ '-01' }}">
+										<div class="d-flex align-items-center">
+											<div class="w-100">{{ months[month] }}</div>
+											<div class="ms-auto">
+												<a href="" class="btn btn-sm btn-secondary disabled">{{ count }}</a>
+											</div>
+										</div>
+									</li>
+								{% endfor %}
+							</ul>
+						</li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+		</div>
+		<div class="col-md-10  overflow-auto h-100">
+			{% if pageData.files is not empty %}
+				<div class="row">
+					<div id="navpanel">
+						<div class="float-right m-2">
+							<form id="order-form" class="form-inline" action="">
+								<label class="mr-sm-2" for="order-size">File size:
+								</label>
+								<select name="order-size" class="custom-select mr-sm-2" id="order-size">
+									<option hidden value="">Default</option>
+									<option value="big">Big</option>
+									<option value="small">Small</option>
+								</select>
+								<label class="mr-sm-2" for="order-date">Upload date:
+								</label>
+								<select name="order-date" class="custom-select mr-sm-2" id="order-date">
+									<option hidden value="">Default</option>
+									<option value="new">Newest</option>
+									<option value="old">Oldest</option>
+								</select>
+								<input type="hidden" name="calendar-start">
+								<input type="hidden" name="calendar-end">
+								<button type="submit" class="btn btn-primary">Order</button>
+							</form>
+						</div>
+					</div>
+				</div>
+				<div class="row no-gutters" id="file-container">
+					{% for item in pageData.files %}
+						{% include 'partials/control_panel_file.html.twig' with {'item': item.image} %}
+					{% endfor %}
+				</div>
+				<div id="fetch-in-progress" style="display:none">
+					<div class="d-flex justify-content-center my-2">
+						<div class="spinner-grow" role="status">
+							<span class="sr-only">Loading...</span>
+						</div>
+						<div class="spinner-grow" role="status">
+							<span class="sr-only">Loading...</span>
+						</div>
+						<div class="spinner-grow" role="status">
+							<span class="sr-only">Loading...</span>
+						</div>
+						<div class="spinner-grow" role="status">
+							<span class="sr-only">Loading...</span>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					{% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
+					{% if pageData.hasNextPage %}
+						<button data-pagination-next="{{ path('user_next_files_page', defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg btn-block m-3">Get more!</button>
+					{% else %}
+						<button disabled type="button" class="btn btn-info btn-lg btn-block m-3">No more files!</button>
+					{% endif %}
+				</div>
+			{% else %}
+				You have not uploaded anything yet.
+			{% endif %}
+		</div>
+	</div>
 {% endblock %}
 
-{% block javascripts %}
-    {{ parent() }}
-    <script>
-        __filter = {{ filter | raw }}
-    </script>
-    {{ encore_entry_script_tags('manage_user') }}
+{% block javascripts %} {{ parent() }}
+	<script>
+		__filter = {{ filter | raw }}
+	</script> {{ encore_entry_script_tags('manage_user') }}
 {% endblock %}

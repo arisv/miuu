@@ -1,7 +1,7 @@
 {% extends 'base_layout.html.twig' %}
 
 {% block title %}
-MeowUpload - home
+MIU
 {% endblock %}
 
 {% block stylesheets %}
@@ -10,44 +10,40 @@ MeowUpload - home
 {% endblock %}
 
 {% block maincontent %}
-<div id="uploader">
-    <div class="row" id="upload-legacy">
-        <div class="col-md-6 col-xs-12 mx-auto">
-            <h2>Upload your file (100Mb max)</h2>
-            <form class="form-inline" action="/getfile/" method="post" enctype="multipart/form-data">
-                <label class="btn btn-default btn-file">
-                    Browse <input type="file" name="meowfile">
-                </label>
-                <input type="submit" value="Upload" class="btn btn-primary">
-            </form>
-        </div>
-    </div>
-    <div class="row" id="upload-dropzone" style="display:none">
-        <div class="col-md-6 col-xs-12 mx-auto">
-            <h2>Drag or open up to 4 files (100 mb max)</h2>
-            <div class="dropzone" id="dropzonefield"></div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-6 col-xs-12 mx-auto">
-            <h2>Mirror a file from other server</h2>
-            <p>May not work as intended or work at all depending on the server hosting the target file</p>
-            <div class="row">
-                <div class="mx-auto">
-                    <form id="mirror_uploader" class="form-inline" action="/mirrorfile/" method="post"
-                        enctype="multipart/form-data">
-                        <input id="mirrorfile" name="mirrorfile" title="Direct link" class="form-control" type="text"
-                            value="">
-                        <input type="submit" value="Fetch!" class="btn btn-primary mx-1">
-                    </form>
+<div id="uploader" class="block-app container">
+    <div class="row sideblock justify-content-md-center" id="upload-box">
+        <div class="col-md-8 col-sm-12" id="upload-box-inner">
+            <div id="upload-legacy">
+                <h2>Upload your file (100Mb max)</h2>
+                <form class="form-inline" action="/getfile/" method="post" enctype="multipart/form-data">
+                    <label class="btn btn-default btn-file">
+                        Browse <input type="file" name="meowfile">
+                    </label>
+                    <input type="submit" value="Upload" class="btn btn-primary">
+                </form>
+            </div>
+            <div class="upload-dropzone">
+                <div class="dropzone-border">
+                    <div class="dropzone" id="dropzonefield"></div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row">
-        <p class="mx-auto p-1 text-center">
-            Email complaints to <a href="mailto:abuse@onozuka.info">abuse@onozuka.info</a>
-        </p>
+    <div class="row sideblock justify-content-md-center" id="mirror-box">
+        <div class="col-md-6 col-sm-12">
+            <p class="mt-2 mb-0">Upload a file</p>
+            <p class="mb-0 mt-0"><span></span>or<span></span></p>
+            <form id="mirror_uploader" class="mirror-form" action="/mirrorfile/" method="post"
+                enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="mirrorfile">Mirror a file</label>
+                    <input id="mirrorfile" name="mirrorfile" placeholder="Direct link" class="form-control" type="text" value="">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-outline-primary btn-outline-miu">Fetch</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

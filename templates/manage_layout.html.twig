@@ -1,26 +1,33 @@
 {% extends 'base_layout.html.twig' %}
-
+{% set currentRoute = app.request.get('_route') %}
 {% block title %}
-    My files - {{ app.user.login }}
+	{{ app.user.login }}'s files - MIU
 {% endblock %}
 
 {% block maincontent %}
-    <div class="row pt-3">
-        <div class="col-sm">
-            <a class="btn btn-outline-primary {{ page == 'token' ? 'active' : '' }}" href="/manage/mytoken" role="button">Remote token</a>
-        </div>
-        <div class="col-sm">
-            <a class="btn btn-outline-primary {{ page == 'mypics' ? 'active' : '' }}" href="/manage/mypics" role="button">View my pictures</a>
-
-        </div>
-        {% if is_granted('ROLE_ADMIN') %}
-            <div class="col-sm">
-                <a class="btn btn-outline-primary {{ page == 'adminusers' ? 'active' : '' }}" href="/manage/admin/users" role="button">Admin control panel</a>
-
-            </div>
-        {% endif %}
-
-    </div>
-    {% block managecontent %}
-    {% endblock %}
+	<div class="block-app container-fluid">
+		<div class="row">
+			<div class="col-2 profile-sidebar d-none d-md-block">
+				<div class="list-group">
+					<a href="{{path("cabinet_home")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_home" ? 'active' : '' }}">Profile</a>
+					<a href="{{path("cabinet_mypics")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_mypics" ? 'active' : '' }}">My Pictures</a>
+					<a href="{{path("cabinet_token")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_token" ? 'active' : '' }}">Security</a>
+					{% if is_granted('ROLE_ADMIN') %}
+					<a href="{{path("admin_manage_users")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_users" ? 'active' : '' }}">Manage Users</a>
+					<a href="{{path("admin_manage_files")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_files" ? 'active' : '' }}">Manage Files</a>
+						{% endif %}
+				</div>
+			</div>
+				<div class="col">
+			{% block managecontent %}
+					<div id="profile">
+						<h3>Welcome, {{ app.user.login }}</h3>
+						<p>
+							Current API token: <strong>{{ app.user.remotetoken }}</strong>
+						</p>
+					</div>
+				{% endblock %}
+				</div>
+		</div>
+	</div>
 {% endblock %}

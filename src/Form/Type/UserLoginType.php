@@ -25,13 +25,13 @@ class UserLoginType extends AbstractType
 
     public function getBlockPrefix()
     {
-        return 'user_login_type';
+        return '';
     }
 
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'csrf_token_id' => 'auth_login'
+            'csrf_token_id' => 'authenticate'
         ]);
     }
 }

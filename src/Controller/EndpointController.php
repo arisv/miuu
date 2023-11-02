@@ -155,7 +155,7 @@ class EndpointController extends AbstractController
         try {
             $fileService->setDeleteStatus($user, $fileId, $action);
         } catch (\Exception $e) {
-            $logger->error("Cannot mark file ${fileId} for ${action} by user ${user}: " . $e->getMessage());
+            $logger->error("Cannot mark file {$fileId} for {$action} by user {$user}: " . $e->getMessage());
             $result['status'] = 'error';
         }
         return new JsonResponse($result);

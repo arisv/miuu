@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Form\Type\UserLoginType;
 use App\Service\CursorService;
 use App\Service\FileService;
 use App\Service\UserService;
@@ -23,12 +24,12 @@ class WebController extends AbstractController
         return $this->render('homepage.html.twig');
     }
 
-    #[Route("/login", name:"auth_login")]
+    #[Route("/login", name: "auth_login")]
     public function loginAction(AuthenticationUtils $authenticationUtils)
     {
         $error = $authenticationUtils->getLastAuthenticationError();
         $lastUsername = $authenticationUtils->getLastUsername();
-        $form = $this->createForm('App\Form\Type\UserLoginType');
+        $form = $this->createForm(UserLoginType::class);
 
         return $this->render('loginpage.html.twig', [
             'error' => $error,
@@ -37,17 +38,9 @@ class WebController extends AbstractController
         ]);
     }
 
-    #[Route('/login_check', name: "auth_login_check")]
-    public function loginCheckAction()
-    {
-        // this controller will not be executed,
-        // as the route is handled by the Security system
-    }
-
     #[Route("/logout", name: "auth_logout")]
     public function logoutAction()
     {
-
     }
 
     #[Route("/register", name: "auth_register")]

@@ -6,19 +6,17 @@ namespace App\Service;
 use App\Entity\StoredFile;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class UserService
 {
-    private $em;
-    private $encoder;
-    private $cursorService;
-
-    public function __construct(EntityManagerInterface $em, UserPasswordEncoderInterface $encoder, CursorService $cursorService)
+    public function __construct(
+        private EntityManagerInterface $em,
+        private CursorService $cursorService,
+        private UserPasswordHasherInterface $uphi
+        )
     {
-        $this->em = $em;
-        $this->encoder = $encoder;
-        $this->cursorService = $cursorService;
     }
 
     public function createUser($userData)
@@ -26,7 +24,7 @@ class UserService
         $user = new User();
         $user->setLogin($userData['login']);
         $user->setEmail($userData['email']);
-        $user->setPassword($this->encoder->encodePassword(
+        $user->setPassword($this->uphi->hashPassword(
             $user,
             $userData['password']
         ));

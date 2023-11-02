@@ -43,7 +43,7 @@ class FileService
         /** @var StoredFile $file */
         $file = $fileRepo->findFileByCustomURL($customUrl);
         if (!$file) {
-            throw new \Exception("File ${customUrl} not found");
+            throw new \Exception("File {$customUrl} not found");
         }
         $path = $this->buildFullFilePath($file);
         return [$file, $path];
@@ -399,7 +399,7 @@ SQL;
     {
         $now = new \DateTime();
         $minutesAgo = intval($_ENV['DELETE_MARKED_FILES_AFTER_MINUTES']) ?? 5;
-        $interval = new \DateInterval("PT${minutesAgo}M");
+        $interval = new \DateInterval("PT{$minutesAgo}M");
         $now->sub($interval);
         return $now;
     }

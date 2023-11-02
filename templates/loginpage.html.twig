@@ -3,7 +3,7 @@
 {% form_theme form _self %}
 
 {% block form_errors %}
-    {% spaceless %}
+    {% apply spaceless %}
         {% if errors is defined and errors|length > 0 %}
             <div class="alert alert-danger">
                 <ul class="list-unstyled">
@@ -13,7 +13,7 @@
                 </ul>
             </div>
         {% endif %}
-    {% endspaceless %}
+    {% endapply %}
 {% endblock form_errors %}
 
 {% block title %}

@@ -14,20 +14,22 @@ security:
         main:
             pattern: ^/*
             provider: users
-            entry_point: form_login
             form_login:
                 login_path: auth_login
-                check_path: auth_login_check
+                check_path: auth_login
                 default_target_path: cabinet_home
-                username_parameter: login
+                username_parameter: username
                 password_parameter: password
                 use_referer: true
+                enable_csrf: true
+                csrf_parameter: _token
             logout:
                 path: auth_logout
                 target: home
 
     access_control:
-        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/manage/admin, roles: ROLE_ADMIN }
         - { path: ^/manage, roles: ROLE_USER }
 

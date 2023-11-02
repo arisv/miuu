@@ -3,63 +3,65 @@
 {% form_theme form _self %}
 
 {% block form_errors %}
-    {% spaceless %}
-        {% if errors is defined and errors|length > 0 %}
-            <div class="alert alert-danger">
-                <ul class="list-unstyled">
-                    {% for error in errors %}
-                        <li>{{ error.message }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-    {% endspaceless %}
+  {% apply spaceless %}
+  {% if errors is defined and errors|length > 0 %}
+    <div class="alert alert-danger">
+      <ul class="list-unstyled">
+        {% for error in errors %}
+          <li>{{ error.message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  {% endapply %}
 {% endblock form_errors %}
 
 {% block title %}
-    MIU
+  MIU
 {% endblock %}
 
 {% block maincontent %}
-        <div class="row">
-            <div class="col-md-2 mx-auto pt-4">
-                {{ form_start(form) }}
+  <div class="row">
+    <div class="col-md-2 mx-auto pt-4">
+      {{ form_start(form) }}
 
-                    <h1 class="text-center mrgb30">Sign up </h1>
+      <h1 class="text-center mrgb30">Sign up
+      </h1>
 
-                    <div class="form-group l-sign-form-group">
-                        {{ form_label(form.login, "Username", {'label_attr': {'class':'sr-only'} }) }}
-                        {{ form_widget(form.login, {'attr':{'class': 'form-control', 'placeholder': 'Username'}}) }}
-                        {{ form_errors(form.login) }}
-                    </div>
+      <div class="form-group l-sign-form-group">
+        {{ form_label(form.login, "Username", {'label_attr': {'class':'sr-only'} }) }}
+        {{ form_widget(form.login, {'attr':{'class': 'form-control', 'placeholder': 'Username'}}) }}
+        {{ form_errors(form.login) }}
+      </div>
 
-                    <div class="form-group l-sign-form-group">
-                        {{ form_label(form.email, "Email", {'label_attr': {'class':'sr-only'} }) }}
-                        {{ form_widget(form.email, {'attr':{'class': 'form-control', 'placeholder': 'Email'}}) }}
-                        {{ form_errors(form.email) }}
+      <div class="form-group l-sign-form-group">
+        {{ form_label(form.email, "Email", {'label_attr': {'class':'sr-only'} }) }}
+        {{ form_widget(form.email, {'attr':{'class': 'form-control', 'placeholder': 'Email'}}) }}
+        {{ form_errors(form.email) }}
 
-                    </div>
+      </div>
 
-                    <div class="form-group l-sign-form-group">
-                        {{ form_label(form.password.first, "Password", {'label_attr': {'class':'sr-only'} }) }}
-                        {{ form_widget(form.password.first, {'attr':{'class': 'form-control', 'placeholder': 'Password'}}) }}
-                        {{ form_errors(form.password.first) }}
-                    </div>
+      <div class="form-group l-sign-form-group">
+        {{ form_label(form.password.first, "Password", {'label_attr': {'class':'sr-only'} }) }}
+        {{ form_widget(form.password.first, {'attr':{'class': 'form-control', 'placeholder': 'Password'}}) }}
+        {{ form_errors(form.password.first) }}
+      </div>
 
-                    <div class="form-group l-sign-form-group">
-                        {{ form_label(form.password.second, "Repeat password", {'label_attr': {'class':'sr-only'} }) }}
-                        {{ form_widget(form.password.second, {'attr':{'class': 'form-control', 'placeholder': 'Repeat password'}}) }}
-                        {{ form_errors(form.password.second) }}
-                    </div>
+      <div class="form-group l-sign-form-group">
+        {{ form_label(form.password.second, "Repeat password", {'label_attr': {'class':'sr-only'} }) }}
+        {{ form_widget(form.password.second, {'attr':{'class': 'form-control', 'placeholder': 'Repeat password'}}) }}
+        {{ form_errors(form.password.second) }}
+      </div>
 
-                    <div class="l-sign-inner">
-                        {{ form_errors(form) }}
-                        <div class="l-sign-btn l-sign-btn-center">
-                            <button id="login-form-button" type="submit" class="btn btn-primary btn-wmid">Register</button>
-                        </div>
-                    </div><!-- /.l-sign-inner -->
-
-                {{ form_end(form) }}
-            </div>
+      <div class="l-sign-inner">
+        {{ form_errors(form) }}
+        <div class="l-sign-btn l-sign-btn-center">
+          <button id="login-form-button" type="submit" class="btn btn-primary btn-wmid">Register</button>
         </div>
+      </div>
+      <!-- /.l-sign-inner -->
+
+      {{ form_end(form) }}
+    </div>
+  </div>
 {% endblock %}

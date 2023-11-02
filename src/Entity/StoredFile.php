@@ -7,58 +7,35 @@ use App\Service\UserService;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Index;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\StoredFileRepository")
- * @ORM\Table(name="filestorage", indexes={@Index(name="search_idx", columns="custom_url")})
- */
+#[ORM\Table(name: 'filestorage')]
+#[Index(name: 'search_idx', columns: ['custom_url'])]
+#[ORM\Entity(repositoryClass: 'App\Repository\StoredFileRepository')]
 class StoredFile
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[ORM\Column(type: 'integer')]
     private $id;
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private $originalName;
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private $internalName;
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private $customUrl;
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private $serviceUrl;
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private $originalExtension;
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private $internalMimetype;
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: 'integer')]
     private $internalSize;
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: 'integer')]
     private $date;
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     private $visibilityStatus;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
     private $markedForDeletionAt;
 
     /**
@@ -69,10 +46,7 @@ class StoredFile
         return $this->id;
     }
 
-    /**
-     * @param mixed $id
-     */
-    public function setId($id)
+    public function setId(mixed $id)
     {
         $this->id = $id;
     }
@@ -85,10 +59,7 @@ class StoredFile
         return $this->originalName;
     }
 
-    /**
-     * @param mixed $originalName
-     */
-    public function setOriginalName($originalName)
+    public function setOriginalName(mixed $originalName)
     {
         $this->originalName = $originalName;
     }
@@ -101,10 +72,7 @@ class StoredFile
         return $this->internalName;
     }
 
-    /**
-     * @param mixed $internalName
-     */
-    public function setInternalName($internalName)
+    public function setInternalName(mixed $internalName)
     {
         $this->internalName = $internalName;
     }
@@ -117,10 +85,7 @@ class StoredFile
         return $this->customUrl;
     }
 
-    /**
-     * @param mixed $customUrl
-     */
-    public function setCustomUrl($customUrl)
+    public function setCustomUrl(mixed $customUrl)
     {
         $this->customUrl = $customUrl;
     }
@@ -133,10 +98,7 @@ class StoredFile
         return $this->serviceUrl;
     }
 
-    /**
-     * @param mixed $serviceUrl
-     */
-    public function setServiceUrl($serviceUrl)
+    public function setServiceUrl(mixed $serviceUrl)
     {
         $this->serviceUrl = $serviceUrl;
     }
@@ -149,10 +111,7 @@ class StoredFile
         return $this->originalExtension;
     }
 
-    /**
-     * @param mixed $originalExtension
-     */
-    public function setOriginalExtension($originalExtension)
+    public function setOriginalExtension(mixed $originalExtension)
     {
         $this->originalExtension = $originalExtension;
     }
@@ -165,10 +124,7 @@ class StoredFile
         return $this->internalMimetype;
     }
 
-    /**
-     * @param mixed $internalMimetype
-     */
-    public function setInternalMimetype($internalMimetype)
+    public function setInternalMimetype(mixed $internalMimetype)
     {
         $this->internalMimetype = $internalMimetype;
     }
@@ -181,10 +137,7 @@ class StoredFile
         return $this->internalSize;
     }
 
-    /**
-     * @param mixed $internalSize
-     */
-    public function setInternalSize($internalSize)
+    public function setInternalSize(mixed $internalSize)
     {
         $this->internalSize = $internalSize;
     }
@@ -197,10 +150,7 @@ class StoredFile
         return $this->date;
     }
 
-    /**
-     * @param mixed $date
-     */
-    public function setDate($date)
+    public function setDate(mixed $date)
     {
         $this->date = $date;
     }
@@ -213,10 +163,7 @@ class StoredFile
         return $this->visibilityStatus;
     }
 
-    /**
-     * @param mixed $visibilityStatus
-     */
-    public function setVisibilityStatus($visibilityStatus)
+    public function setVisibilityStatus(mixed $visibilityStatus)
     {
         $this->visibilityStatus = $visibilityStatus;
     }
@@ -232,7 +179,7 @@ class StoredFile
     public function isMimeType(array $types)
     {
         foreach ($types as $type) {
-            if (strpos($this->internalMimetype, $type) === 0)
+            if (str_starts_with((string) $this->internalMimetype, (string) $type))
                 return true;
         }
         return false;
@@ -267,10 +214,7 @@ class StoredFile
         return $this->markedForDeletionAt;
     }
 
-    /**
-     * @param mixed $markedForDeletionAt
-     */
-    public function setMarkedForDeletionAt($markedForDeletionAt): void
+    public function setMarkedForDeletionAt(mixed $markedForDeletionAt): void
     {
         $this->markedForDeletionAt = $markedForDeletionAt;
     }

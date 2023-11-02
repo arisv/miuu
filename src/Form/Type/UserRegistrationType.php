@@ -64,7 +64,7 @@ class UserRegistrationType extends AbstractType
         $resolver->setRequired('entity_manager');
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'user_registration_type';
     }

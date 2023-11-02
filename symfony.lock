@@ -139,17 +139,17 @@
         "version": "3.1.3"
     },
     "phpunit/phpunit": {
-        "version": "4.7",
+        "version": "8.5",
         "recipe": {
             "repo": "github.com/symfony/recipes",
-            "branch": "master",
+            "branch": "main",
             "version": "4.7",
-            "ref": "b5b34fa22319ac1f7f6c180b30e160841c154a1e"
+            "ref": "db276258424d15e572d35a4eb834b8f815662b25"
         },
         "files": [
-            "./.env.test",
-            "./phpunit.xml.dist",
-            "./tests/bootstrap.php"
+            ".env.test",
+            "phpunit.xml.dist",
+            "tests/bootstrap.php"
         ]
     },
     "psr/cache": {

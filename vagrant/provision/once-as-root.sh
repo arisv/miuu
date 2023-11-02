@@ -33,7 +33,7 @@ apt install software-properties-common
 add-apt-repository ppa:ondrej/php
 
 info "Installing software"
-apt-get install -y nginx mysql-server php8.0-fpm php8.0-zip php8.0-mysql php8.0-curl php8.0-mbstring php8.0-gd php8.0-xdebug php8.0-xml dos2unix php8.0-common
+apt-get install -y nginx mysql-server php8.2-fpm php8.2-zip php8.2-mysql php8.2-curl php8.2-mbstring php8.2-gd php8.2-xdebug php8.2-xml dos2unix php8.2-common
 
 info "Installing composer"
 EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
@@ -77,7 +77,7 @@ server {
   
   # Pass the PHP scripts to FastCGI server
   location ~ ^/(index|check|config)\.php(/|$) {
-    fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
+    fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
     fastcgi_split_path_info ^(.+\.php)(/.*)$;
     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     include fastcgi_params;

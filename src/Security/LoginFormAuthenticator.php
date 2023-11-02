@@ -68,8 +68,8 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         }
 
         /** @var UserRepository $userRepo */
-        $userRepo = $this->entityManager->getRepository('App\Entity\User');
-        $user = $userRepo->loadUserByUserName($credentials['username']);
+        $userRepo = $this->entityManager->getRepository(User::class);
+        $user = $userRepo->loadUserByIdentifier($credentials['username']);
 
         if (!$user) {
             // fail authentication with a custom error

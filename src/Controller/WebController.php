@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\Pagination\CursorEncoder;
 use App\Service\CursorService;
 use App\Service\FileService;
 use App\Service\UserService;
@@ -12,24 +11,19 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 
 class WebController extends AbstractController
 {
-    /**
-     * @Route("/", name="home")
-     */
+    #[Route("/", name: "home")]
     public function homeAction(Request $request)
     {
         return $this->render('homepage.html.twig');
     }
 
-    /**
-     * @Route("/login", name="auth_login")
-     */
+    #[Route("/login", name:"auth_login")]
     public function loginAction(AuthenticationUtils $authenticationUtils)
     {
         $error = $authenticationUtils->getLastAuthenticationError();
@@ -43,17 +37,20 @@ class WebController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/logout", name="auth_logout")
-     */
+    #[Route('/login_check', name: "auth_login_check")]
+    public function loginCheckAction()
+    {
+        // this controller will not be executed,
+        // as the route is handled by the Security system
+    }
+
+    #[Route("/logout", name: "auth_logout")]
     public function logoutAction()
     {
 
     }
 
-    /**
-     * @Route("/register", name="auth_register")
-     */
+    #[Route("/register", name: "auth_register")]
     public function registerAction(Request $request, EntityManagerInterface $em, UserService $userService, LoggerInterface $logger)
     {
         $currentUser = $this->getUser();
@@ -83,9 +80,7 @@ class WebController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/manage/", name="cabinet_home")
-     */
+    #[Route("/manage/", name: "cabinet_home")]
     public function userCabinetHomeAction(Request $request)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -94,9 +89,7 @@ class WebController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/manage/mytoken/", name="cabinet_token")
-     */
+    #[Route("/manage/mytoken/", name: "cabinet_token")]
     public function userCabinetViewTokenAction(Request $request)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -105,9 +98,7 @@ class WebController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/manage/mypics/", name="cabinet_mypics")
-     */
+    #[Route("/manage/mypics/", name: "cabinet_mypics")]
     public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -127,9 +118,7 @@ class WebController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/manage/admin/users/", name="admin_manage_users")
-     */
+    #[Route("/manage/admin/users/", name: "admin_manage_users")]
     public function adminManageUsers(Request $request, UserService $userService)
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -139,9 +128,7 @@ class WebController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/manage/admin/files/", name="admin_manage_files")
-     */
+    #[Route("/manage/admin/files/", name: "admin_manage_files")]
     public function adminManageFiles(Request $request, FileService $fileService)
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');

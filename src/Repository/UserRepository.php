@@ -3,10 +3,11 @@ namespace App\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 class UserRepository extends EntityRepository implements UserLoaderInterface
 {
-    public function loadUserByUsername($usernameOrEmail)
+    public function loadUserByIdentifier(string $usernameOrEmail): ?UserInterface
     {
         return $this->createQueryBuilder('u')
             ->where('u.login = :query OR u.email = :query')

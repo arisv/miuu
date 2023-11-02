@@ -22,9 +22,7 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 class EndpointController extends AbstractController
 {
 
-    /**
-     * @Route("/i/{customUrl}.{fileExtension}", name="get_file_custom_legacy")
-     */
+    #[Route("/i/{customUrl}.{fileExtension}", name:"get_file_custom_legacy")]
     public function serveFileLegacyAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
         return $this->forward('App\Controller\EndpointController::serveFileDirectAction', [
@@ -35,9 +33,7 @@ class EndpointController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{customUrl}.{fileExtension}", name="get_file_custom_url")
-     */
+    #[Route("/{customUrl}.{fileExtension}", name:"get_file_custom_url")]
     public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
         try {
@@ -61,9 +57,7 @@ class EndpointController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/getfile/", name="set_file_form")
-     */
+    #[Route("/getfile/", name:"set_file_form")]
     public function formUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $user = $this->getUser();

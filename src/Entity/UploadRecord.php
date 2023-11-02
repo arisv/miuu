@@ -5,27 +5,19 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="uploadlog")
- */
+#[ORM\Table(name: 'uploadlog')]
+#[ORM\Entity]
 class UploadRecord
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[ORM\Column(type: 'integer')]
     private $uploadId;
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
+    #[ORM\JoinColumn(nullable: false)]
     private $user;
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\StoredFile")
-     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\StoredFile')]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private $image;
 
     /**
@@ -36,10 +28,7 @@ class UploadRecord
         return $this->uploadId;
     }
 
-    /**
-     * @param mixed $uploadId
-     */
-    public function setUploadId($uploadId): void
+    public function setUploadId(mixed $uploadId): void
     {
         $this->uploadId = $uploadId;
     }
@@ -52,10 +41,7 @@ class UploadRecord
         return $this->user;
     }
 
-    /**
-     * @param mixed $user
-     */
-    public function setUser($user): void
+    public function setUser(mixed $user): void
     {
         $this->user = $user;
     }
@@ -68,10 +54,7 @@ class UploadRecord
         return $this->image;
     }
 
-    /**
-     * @param mixed $image
-     */
-    public function setImage($image): void
+    public function setImage(mixed $image): void
     {
         $this->image = $image;
     }

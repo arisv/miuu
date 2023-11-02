@@ -55,8 +55,7 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         $stmt = $this->em->getConnection()->prepare($sql);
         $stmt->bindValue("user", $user->getId());
 
-        $stmt->execute();
-        $report = $stmt->fetchAll();
+        $report = $stmt->executeQuery()->fetchAllAssociative();
 
         $result = [];
         foreach ($report as $dateTreeReport) {
@@ -129,12 +128,10 @@ WHERE uploadlog.user_id is null
 GROUP BY uploadlog.user_id
 SQL;
         $stmt = $this->em->getConnection()->prepare($namedUsersQuery);
-        $stmt->execute();
-        $namedUsers = $stmt->fetchAll();
+        $namedUsers = $stmt->executeQuery()->fetchAllAssociative();;
 
         $stmt = $this->em->getConnection()->prepare($anonUserQuery);
-        $stmt->execute();
-        $anonUsers = $stmt->fetchAll();
+        $anonUsers = $stmt->executeQuery()->fetchAllAssociative();;
 
         $result = [];
 

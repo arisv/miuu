@@ -92,9 +92,7 @@ class EndpointController extends AbstractController
         return $this->redirectToRoute('home');
     }
 
-    /**
-     * @Route("/mirrorfile/", name="mirror_file")
-     */
+    #[Route(path: '/mirrorfile/', name: 'mirror_file')]
     public function mirrorFileAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $user = $this->getUser();
@@ -117,9 +115,7 @@ class EndpointController extends AbstractController
     }
 
 
-    /**
-     * @Route("/endpoint/dropzone/", name="set_file_ajax")
-     */
+    #[Route(path: '/endpoint/dropzone/', name: 'set_file_ajax')]
     public function ajaxUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $result = [
@@ -142,9 +138,7 @@ class EndpointController extends AbstractController
         return new JsonResponse($result, $code);
     }
 
-    /**
-     * @Route("/endpoint/setdeletestatus/", name="set_file_delete_status")
-     */
+    #[Route(path: '/endpoint/setdeletestatus/', name: 'set_file_delete_status')]
     public function setDeleteStatus(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -162,9 +156,7 @@ class EndpointController extends AbstractController
     }
 
 
-    /**
-     * @Route("/endpoint/endlesstrash/", name="delete_marked")
-     */
+    #[Route(path: '/endpoint/endlesstrash/', name: 'delete_marked')]
     public function deleteMarkedFiles(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $token = $request->query->get('token');
@@ -177,9 +169,7 @@ class EndpointController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/endpoint/getstoragestats/", name="admin_storage_stats")
-     */
+    #[Route(path: '/endpoint/getstoragestats/', name: 'admin_storage_stats')]
     public function getStorageStats(Request $request, UserService $userService, LoggerInterface $logger)
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -193,9 +183,7 @@ class EndpointController extends AbstractController
         return new JsonResponse($result);
     }
 
-    /**
-     * @Route("/endpoint/user_next_files_page/", name="user_next_files_page")
-     */
+    #[Route(path: '/endpoint/user_next_files_page/', name: 'user_next_files_page')]
     public function fetchNextFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');

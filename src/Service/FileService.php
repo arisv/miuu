@@ -372,8 +372,7 @@ LEFT JOIN uploadlog u on filestorage.id = u.image_id
 ORDER BY internal_size DESC LIMIT $limit
 SQL;
         $stmt = $this->em->getConnection()->prepare($fileSql);
-        $stmt->execute();
-        $files = $stmt->fetchAll();
+        $files = $stmt->executeQuery()->fetchAllAssociative();
         $userIdsEncountered = [];
         $result = [];
         foreach ($files as $fileData) {

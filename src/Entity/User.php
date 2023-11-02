@@ -7,46 +7,28 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- * @ORM\Entity()
- * @ORM\Table(name="users")
- */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: "users")]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    const ROLE_USER = 1;
-    const ROLE_ADMIN = 2;
+    final public const ROLE_USER = 1;
+    final public const ROLE_ADMIN = 2;
 
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[ORM\Column(type: 'integer')]
     private $id;
-    /**
-     * @ORM\Column(type="string", name="login", unique=true)
-     */
+    #[ORM\Column(type: 'string', name: 'login', unique: true)]
     private $login;
-    /**
-     * @ORM\Column(type="string", name="email", unique=true)
-     */
+    #[ORM\Column(type: 'string', name: 'email', unique: true)]
     private $email;
-    /**
-     * @ORM\Column(type="text", name="password")
-     */
+    #[ORM\Column(type: 'text', name: 'password')]
     private $password;
-    /**
-     * @ORM\Column(type="string", name="remote_token")
-     */
+    #[ORM\Column(type: 'string', name: 'remote_token')]
     private $remoteToken;
-    /**
-     * @ORM\Column(type="integer", name="role")
-     */
+    #[ORM\Column(type: 'integer', name: 'role')]
     private $role;
-    /**
-     * @ORM\Column(type="boolean", name="active")
-     */
+    #[ORM\Column(type: 'boolean', name: 'active')]
     private $active;
 
     /**
@@ -57,10 +39,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
-    /**
-     * @param mixed $id
-     */
-    public function setId($id)
+    public function setId(mixed $id)
     {
         $this->id = $id;
     }
@@ -73,10 +52,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->login;
     }
 
-    /**
-     * @param mixed $login
-     */
-    public function setLogin($login)
+    public function setLogin(mixed $login)
     {
         $this->login = $login;
     }
@@ -89,10 +65,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
-    /**
-     * @param mixed $email
-     */
-    public function setEmail($email)
+    public function setEmail(mixed $email)
     {
         $this->email = $email;
     }
@@ -105,10 +78,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->remoteToken;
     }
 
-    /**
-     * @param mixed $remoteToken
-     */
-    public function setRemoteToken($remoteToken)
+    public function setRemoteToken(mixed $remoteToken)
     {
         $this->remoteToken = $remoteToken;
     }
@@ -121,10 +91,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->role;
     }
 
-    /**
-     * @param mixed $role
-     */
-    public function setRole($role)
+    public function setRole(mixed $role)
     {
         $this->role = $role;
     }
@@ -137,10 +104,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->active;
     }
 
-    /**
-     * @param mixed $active
-     */
-    public function setActive($active)
+    public function setActive(mixed $active)
     {
         $this->active = $active;
     }

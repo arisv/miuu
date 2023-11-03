@@ -41,7 +41,7 @@ class EndpointController extends AbstractController
             /** @var StoredFile $file */
             [$file, $path] = $fileService->getFileByCustomURL($customUrl);
 
-            $thumbnailPath = $thumbnailService->tryGettingThumbnail($file, $path);
+            $thumbnailPath = $thumbnailService->tryGettingThumbnail($file);
             if ($thumbnailPath) {
                 $path = $thumbnailPath;
             }

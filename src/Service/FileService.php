@@ -19,21 +19,17 @@ use Symfony\Component\Routing\RouterInterface;
 
 class FileService
 {
-    private $em;
-    private $logger;
-    private $projectDir;
-    private $router;
-
     const DELETED_OK = 1;
     const DELETED_NOT_ON_DISK = 2;
     const DELETED_FAIL = 3;
 
-    public function __construct(EntityManagerInterface $em, LoggerInterface $logger, RouterInterface $router, $projectDir)
-    {
-        $this->em = $em;
-        $this->logger = $logger;
-        $this->projectDir = $projectDir;
-        $this->router = $router;
+    public function __construct(
+        private EntityManagerInterface $em,
+        private LoggerInterface $logger,
+        private RouterInterface $router,
+        private ThumbnailService $thumbnailService,
+        private $projectDir
+    ) {
     }
 
     public function getFileByCustomURL($customUrl)
@@ -124,6 +120,7 @@ class FileService
         }
         $this->em->persist($storedFile);
         $this->em->flush();
+        $this->thumbnailService->scheduleThumbnailGeneration($storedFile);
         return $storedFile;
     }
 
@@ -157,16 +154,13 @@ class FileService
             throw new \Exception("Remote filesize is too big");
         }
 
-        $savedFile = $this->FetchRemoteFile($url, $remoteSize);
-        $extractedFilename = $this->ExtractFilenameFromUrl($url);
+        $savedFile = $this->fetchRemoteFile($url, $remoteSize);
+        $extractedFilename = $this->extractFilenameFromUrl($url);
 
         $uploadedFile = new UploadedFile(
-            $savedFile,
-            $extractedFilename,
-            null,
-            $remoteSize,
-            0,
-            true
+            path: $savedFile,
+            originalName: $extractedFilename,
+            test: true
         );
 
         if (empty($uploadedFile) || !$uploadedFile->isValid()) {
@@ -230,7 +224,7 @@ class FileService
         return $size;
     }
 
-    public function FetchRemoteFile($url, $fileSize)
+    public function fetchRemoteFile($url, $fileSize)
     {
         $tempPath = tempnam(sys_get_temp_dir(), 'miufile');
         $fp = fopen($tempPath, 'w');
@@ -242,7 +236,7 @@ class FileService
         return $tempPath;
     }
 
-    public function ExtractFilenameFromUrl($url)
+    public function extractFilenameFromUrl($url)
     {
         $pathinfo = pathinfo($url);
         if (!isset($pathinfo['filename']) || $pathinfo['filename'] == "") {

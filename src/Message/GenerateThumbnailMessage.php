@@ -2,22 +2,15 @@
 
 namespace App\Message;
 
+use App\Entity\StoredFile;
+
 final class GenerateThumbnailMessage
 {
-    /*
-     * Add whatever properties and methods you need
-     * to hold the data for this message class.
-     */
-
-//     private $name;
-
-//     public function __construct(string $name)
-//     {
-//         $this->name = $name;
-//     }
-
-//    public function getName(): string
-//    {
-//        return $this->name;
-//    }
+    public int $fileId;
+    public function __construct(
+        StoredFile $file
+    )
+    {
+        $this->fileId = $file->getId();
+    }
 }

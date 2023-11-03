@@ -193,10 +193,17 @@ class ThumbnailService
 
     private function generateForSingleFile(StoredFile $file)
     {
+        if (!$file->isThumbnailable()) {
+            return;
+        }
         $thumbnailPath = $this->checkForExistingThumbnail($file);
         if ($thumbnailPath) {
             return;
         }
-        $this->generateThumbnail($file);
+        try {
+            $this->generateThumbnail($file);
+        } catch (\Throwable $e) {
+            $this->io->warning(sprintf("File %d has uno problemo: %s", $e->getMessage()));
+        }
     }
 }

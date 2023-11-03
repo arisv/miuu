@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 class EndpointController extends AbstractController
 {
 
-    #[Route("/i/{customUrl}.{fileExtension}", name: "get_file_custom_legacy")]
+    #[Route("/i/{customUrl}.{fileExtension}", name: "get_file_custom_legacy", stateless: true)]
     public function serveFileLegacyAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
         return $this->forward('App\Controller\EndpointController::serveFileDirectAction', [
@@ -34,7 +34,7 @@ class EndpointController extends AbstractController
         ]);
     }
 
-    #[Route("/thumb/{customUrl}.{fileExtension}", name: "serve_file_thumbnail")]
+    #[Route("/thumb/{customUrl}.{fileExtension}", name: "serve_file_thumbnail", stateless: true)]
     public function serveFileThumbnail(Request $request, string $customUrl, string $fileExtension, FileService $fileService, ThumbnailService $thumbnailService, LoggerInterface $logger)
     {
         try {
@@ -52,7 +52,7 @@ class EndpointController extends AbstractController
         }
     }
 
-    #[Route("/{customUrl}.{fileExtension}", name: "get_file_custom_url")]
+    #[Route("/{customUrl}.{fileExtension}", name: "get_file_custom_url", stateless: true)]
     public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
         try {

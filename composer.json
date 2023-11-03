@@ -13,6 +13,7 @@
         "doctrine/doctrine-bundle": "^2.10",
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.7",
+        "php-ffmpeg/php-ffmpeg": "^1.1",
         "phpdocumentor/reflection-docblock": "^5.2",
         "symfony/asset": "6.3.*",
         "symfony/console": "6.3.*",

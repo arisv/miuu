@@ -57,7 +57,12 @@ class FileService
         }
         $dt = new \DateTime();
         $dt->setTimestamp($file->getDate());
-        $path = $this->projectDir . '/' . $storageDir . '/' . $dt->format('Y-m') . '/' . $file->getInternalName();
+        $path = join(DIRECTORY_SEPARATOR, [
+            $this->projectDir,
+            $storageDir,
+            $dt->format('Y-m'),
+            $file->getInternalName()
+        ]);
         if (file_exists($path)) {
             return $path;
         } else {

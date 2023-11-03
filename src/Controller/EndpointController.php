@@ -6,6 +6,7 @@ use App\Entity\StoredFile;
 use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
 use App\Service\FileService;
+use App\Service\ThumbnailService;
 use App\Service\UserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Tests\Compiler\J;
@@ -22,7 +23,7 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 class EndpointController extends AbstractController
 {
 
-    #[Route("/i/{customUrl}.{fileExtension}", name:"get_file_custom_legacy")]
+    #[Route("/i/{customUrl}.{fileExtension}", name: "get_file_custom_legacy")]
     public function serveFileLegacyAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
         return $this->forward('App\Controller\EndpointController::serveFileDirectAction', [
@@ -33,7 +34,36 @@ class EndpointController extends AbstractController
         ]);
     }
 
-    #[Route("/{customUrl}.{fileExtension}", name:"get_file_custom_url")]
+    #[Route("/thumb/{customUrl}.{fileExtension}", name: "serve_file_thumbnail")]
+    public function serveFileThumbnail(Request $request, string $customUrl, string $fileExtension, FileService $fileService, ThumbnailService $thumbnailService, LoggerInterface $logger)
+    {
+        try {
+            /** @var StoredFile $file */
+            [$file, $path] = $fileService->getFileByCustomURL($customUrl);
+
+            $thumbnailPath = $thumbnailService->tryGettingThumbnail($file, $path);
+            if ($thumbnailPath) {
+                $path = $thumbnailPath;
+            }
+            $response = new BinaryFileResponse($path);
+            $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
+            $response->setAutoEtag();
+            $response->setSharedMaxAge(86400);
+            $response->headers->addCacheControlDirective('must-revalidate', true);
+            $response->headers->set('Content-Type', $file->getInternalMimetype());
+            if ($file->shouldEmbed()) {
+                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
+            } else {
+                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
+            }
+            return $response;
+        } catch (\Exception $e) {
+            $logger->error('Error serving file: ' . $e->getMessage());
+            throw $this->createNotFoundException();
+        }
+    }
+
+    #[Route("/{customUrl}.{fileExtension}", name: "get_file_custom_url")]
     public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
     {
         try {
@@ -57,7 +87,7 @@ class EndpointController extends AbstractController
         }
     }
 
-    #[Route("/getfile/", name:"set_file_form")]
+    #[Route("/getfile/", name: "set_file_form")]
     public function formUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
         $user = $this->getUser();
@@ -73,7 +103,6 @@ class EndpointController extends AbstractController
                 $this->addFlash('global-danger', 'Internal error while saving file');
                 return $this->redirectToRoute('home');
             }
-
         } else if ($request->files->has('meowfile_remote')) {
             $file = $request->files->get('meowfile_remote');
             $remoteToken = $request->request->get('private_key');
@@ -107,8 +136,6 @@ class EndpointController extends AbstractController
                 $this->addFlash('global-danger', sprintf("Unable to mirror remote file: %s", $e->getMessage()));
                 return $this->redirectToRoute('home');
             }
-
-
         }
         $this->addFlash('global-danger', 'No input file specified');
         return $this->redirectToRoute('home');

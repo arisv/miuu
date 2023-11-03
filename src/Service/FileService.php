@@ -28,7 +28,8 @@ class FileService
         private LoggerInterface $logger,
         private RouterInterface $router,
         private ThumbnailService $thumbnailService,
-        private $projectDir
+        private string $projectDir,
+        private string $storageDir
     ) {
     }
 
@@ -47,15 +48,11 @@ class FileService
 
     public function buildFullFilePath(StoredFile $file)
     {
-        $storageDir = $_ENV['STORAGE_DIR'];
-        if (!$storageDir) {
-            throw new \Exception("Please configure STORAGE_DIR directory");
-        }
         $dt = new \DateTime();
         $dt->setTimestamp($file->getDate());
         $path = join(DIRECTORY_SEPARATOR, [
             $this->projectDir,
-            $storageDir,
+            $this->storageDir,
             $dt->format('Y-m'),
             $file->getInternalName()
         ]);
@@ -353,6 +350,13 @@ class FileService
             $path = $this->buildFullFilePath($file);
             $fs = new Filesystem();
             $fs->remove($path);
+
+            $thumbPath = join(DIRECTORY_SEPARATOR, [
+                $this->projectDir,
+                $this->storageDir,
+                $file->relativeThumbPath()
+            ]);
+            $fs->remove($thumbPath);
         } catch (FileNotInStorageException $fse) {
             $result['status'] = self::DELETED_NOT_ON_DISK;
         }

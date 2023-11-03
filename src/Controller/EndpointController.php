@@ -45,18 +45,7 @@ class EndpointController extends AbstractController
             if ($thumbnailPath) {
                 $path = $thumbnailPath;
             }
-            $response = new BinaryFileResponse($path);
-            $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
-            $response->setAutoEtag();
-            $response->setSharedMaxAge(86400);
-            $response->headers->addCacheControlDirective('must-revalidate', true);
-            $response->headers->set('Content-Type', $file->getInternalMimetype());
-            if ($file->shouldEmbed()) {
-                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
-            } else {
-                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
-            }
-            return $response;
+            return $this->generateThumbnailServeResponse($file, $path);
         } catch (\Exception $e) {
             $logger->error('Error serving file: ' . $e->getMessage());
             throw $this->createNotFoundException();
@@ -69,18 +58,7 @@ class EndpointController extends AbstractController
         try {
             /** @var StoredFile $file */
             [$file, $path] = $fileService->getFileByCustomURL($customUrl);
-            $response = new BinaryFileResponse($path);
-            $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
-            $response->setAutoEtag();
-            $response->setSharedMaxAge(86400);
-            $response->headers->addCacheControlDirective('must-revalidate', true);
-            $response->headers->set('Content-Type', $file->getInternalMimetype());
-            if ($file->shouldEmbed()) {
-                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
-            } else {
-                $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
-            }
-            return $response;
+            return $this->generateFileServeResponse($file, $path);
         } catch (\Exception $e) {
             $logger->error('Error serving file: ' . $e->getMessage());
             throw $this->createNotFoundException();
@@ -240,5 +218,41 @@ class EndpointController extends AbstractController
             $result['nextPageRequest'] = $this->generateUrl('user_next_files_page', $defaultParameters);
         }
         return new JsonResponse($result);
+    }
+
+    private function generateFileServeResponse(StoredFile $file, string $path): BinaryFileResponse
+    {
+        $response = new BinaryFileResponse($path);
+        $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
+        $response->setAutoEtag();
+        $response->setSharedMaxAge(86400);
+        $response->headers->addCacheControlDirective('must-revalidate', true);
+        $response->headers->set('Content-Type', $file->getInternalMimetype());
+        $response->trustXSendfileTypeHeader();
+        $response->headers->set('X-Accel-Redirect', sprintf("/protected-files/%s", $file->relativePath()));
+        if ($file->shouldEmbed()) {
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
+        } else {
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
+        }
+        return $response;
+    }
+
+    private function generateThumbnailServeResponse(StoredFile $file, string $path): BinaryFileResponse
+    {
+        $response = new BinaryFileResponse($path);
+        $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
+        $response->setAutoEtag();
+        $response->setSharedMaxAge(86400);
+        $response->headers->addCacheControlDirective('must-revalidate', true);
+        $response->headers->set('Content-Type', "image/webp");
+        $response->trustXSendfileTypeHeader();
+        $response->headers->set('X-Accel-Redirect', sprintf("/protected-files/%s", $file->relativeThumbPath()));
+        if ($file->shouldEmbed()) {
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
+        } else {
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
+        }
+        return $response;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-
+use App\Service\ThumbnailService;
 use App\Service\UserService;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Index;
@@ -39,6 +39,8 @@ class StoredFile
     private $markedForDeletionAt;
 
     private ?string $subdirectory = null;
+    private ?string $relativePath = null;
+    private ?string $relativeThumbPath = null;
 
     /**
      * @return mixed
@@ -201,8 +203,8 @@ class StoredFile
     {
         $dt = new \DateTime();
         $dt->setTimestamp($this->date);
-        $path = __DIR__.'/../storage/'.$dt->format('Y-m').'/'.$this->internalName;
-        if(file_exists($path))
+        $path = __DIR__ . '/../storage/' . $dt->format('Y-m') . '/' . $this->internalName;
+        if (file_exists($path))
             return $path;
         else
             return "";
@@ -235,4 +237,24 @@ class StoredFile
         })();
     }
 
+    public function relativePath(): string
+    {
+        return $this->relativePath ?? $this->relativePath = (function () {
+            return join(DIRECTORY_SEPARATOR, [
+                $this->storageSubdirectory(),
+                $this->getInternalName()
+            ]);
+        })();
+    }
+
+    public function relativeThumbPath(): string
+    {
+        return $this->relativeThumbPath ?? $this->relativeThumbPath = (function () {
+            return join(DIRECTORY_SEPARATOR, [
+                ThumbnailService::THUMBNAIL_SUB_DIRECTORY,
+                $this->storageSubdirectory(),
+                $this->getInternalName()
+            ]);
+        })();
+    }
 }

@@ -84,6 +84,11 @@ server {
     fastcgi_param DOCUMENT_ROOT $realpath_root;
   }
 
+  location /protected-files/ {
+    internal;
+    alias /app/storage/;
+  }
+
   error_log /var/log/nginx/project_error.log;
   access_log /var/log/nginx/project_access.log;
 }

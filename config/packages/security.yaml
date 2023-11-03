@@ -12,7 +12,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            pattern: ^(/$|/(login|logout|register|manage))
+            pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile))
             provider: users
             form_login:
                 login_path: auth_login

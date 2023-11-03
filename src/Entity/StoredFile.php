@@ -38,6 +38,8 @@ class StoredFile
     #[ORM\Column(type: 'datetime', nullable: true)]
     private $markedForDeletionAt;
 
+    private ?string $subdirectory = null;
+
     /**
      * @return mixed
      */
@@ -185,6 +187,11 @@ class StoredFile
         return false;
     }
 
+    public function isThumbnailable(): bool
+    {
+        return $this->isMimeType(["image", "video"]);
+    }
+
     public function shouldEmbed()
     {
         return $this->isMimeType(['image', 'audio', 'video/webm', 'video/mp4']);
@@ -217,6 +224,15 @@ class StoredFile
     public function setMarkedForDeletionAt(mixed $markedForDeletionAt): void
     {
         $this->markedForDeletionAt = $markedForDeletionAt;
+    }
+
+    public function storageSubdirectory(): string
+    {
+        return $this->subdirectory ?? $this->subdirectory = (function () {
+            $dt = new \DateTime();
+            $dt->setTimestamp($this->getDate());
+            return $dt->format('Y-m');
+        })();
     }
 
 }

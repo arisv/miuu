@@ -2,13 +2,11 @@
     <div class="itembox"
         {% if item.markedForDeletion == true %}
         style="background-image: url({{ asset("/static/hidden_image.png") }})"
-        {% elseif item.isMimeType(['image']) %}
-        style="background-image: url({{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }})"
-        {% elseif item.isMimeType(['video/webm']) %}
-        style="background-image: url({{ asset("/static/webm_file.png") }})"
+        {% elseif item.isThumbnailable %}
+        style="background-image: url({{ path('serve_file_thumbnail', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }})"
         {% elseif item.isMimeType(['audio']) %}
         style="background-image: url({{ asset("/static/audio_file.png") }})"
-        {% else %} 
+        {% else %}
         style="background-image: url({{ asset("/static/generic_file.png") }})"
         {% endif %}
         >

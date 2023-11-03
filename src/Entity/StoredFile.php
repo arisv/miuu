@@ -196,7 +196,7 @@ class StoredFile
 
     public function shouldEmbed()
     {
-        return $this->isMimeType(['image', 'audio', 'video/webm', 'video/mp4']);
+        return $this->isMimeType(['image', 'audio', 'video']);
     }
 
     public function getFullFilePath($projectRoot)

@@ -4,20 +4,27 @@ namespace App\Service;
 
 use App\Entity\StoredFile;
 use App\Message\GenerateThumbnailMessage;
+use App\Trait\CanDisableLeakingSqlFeaturesTrait;
+use App\Trait\HasFileRepositoryTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use FFMpeg\FFMpeg;
 use FFMpeg\Media\Video;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 class ThumbnailService
 {
+    use HasFileRepositoryTrait;
+    use CanDisableLeakingSqlFeaturesTrait;
+
     const THUMBNAIL_SUB_DIRECTORY = "thumbs";
     const THUMBNAIL_WIDTH = 350;
     const THUMBNAIL_QUALITY = 91;
     public function __construct(
         private string $projectDir,
         private string $storageDir,
+        private SymfonyStyle $io,
         private LoggerInterface $logger,
         private MessageBusInterface $bus,
         private EntityManagerInterface $em
@@ -152,7 +159,7 @@ class ThumbnailService
 
     public function handleGenerationMessage(GenerateThumbnailMessage $msg)
     {
-        $file = $this->em->getRepository(StoredFile::class)->findOneBy([
+        $file = $this->storedFileRepository()->findOneBy([
             'id' => $msg->fileId
         ]);
 
@@ -165,6 +172,31 @@ class ThumbnailService
             return;
         }
 
+        $this->generateThumbnail($file);
+    }
+
+    public function generateMissingThumbnails()
+    {
+        $this->disableSqlLoggers(["em"]);
+        $totalFiles = $this->storedFileRepository()->countTotalProducts();
+        $this->io->writeln(sprintf("Total files stored: %d", $totalFiles));
+        $this->io->progressStart($totalFiles);
+        $generator = $this->storedFileRepository()->allFilesGenerator();
+        foreach ($generator as $filePage) {
+            foreach ($filePage as $storedFile) {
+                $this->generateForSingleFile($storedFile);
+                $this->io->progressAdvance();
+            }
+        }
+        $this->io->progressFinish();
+    }
+
+    private function generateForSingleFile(StoredFile $file)
+    {
+        $thumbnailPath = $this->checkForExistingThumbnail($file);
+        if ($thumbnailPath) {
+            return;
+        }
         $this->generateThumbnail($file);
     }
 }

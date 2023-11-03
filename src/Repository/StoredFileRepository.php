@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
 use App\Entity\User;
 use Doctrine\ORM\EntityRepository;
@@ -100,6 +101,31 @@ class StoredFileRepository extends EntityRepository
         $qb->addOrderBy('log.uploadId', $firstSort['order']);
 
         return $qb->getQuery()->getResult();
+    }
 
+    public function allFilesGenerator()
+    {
+        $qb = $this->createQueryBuilder("file", "file.id");
+        $qb->addOrderBy("file.id")
+            ->andWhere("file.id > :lastId");
+        $query = $qb->getQuery();
+        $query->setMaxResults(300);
+        $lastId = 0;
+        do {
+            $query->setParameter('lastId', $lastId);
+            $batch = $query->getResult();
+            $ids = array_keys($batch);
+            $lastId = end($ids);
+            yield $batch;
+            $this->getEntityManager()->clear();
+        } while (!empty($batch));
+    }
+
+    public function countTotalProducts()
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select($qb->expr()->count("file"))
+            ->from(StoredFile::class, "file");
+        return $qb->getQuery()->getSingleScalarResult();
     }
 }

@@ -36,7 +36,9 @@ class ThumbnailsCreateMissingCommand extends Command
             $this->thumbnailService->generateMissingThumbnails();
             return Command::SUCCESS;
         } catch (\Throwable $e) {
+            $output->writeln("Command exited!");
             $output->writeln($e->getMessage());
+            $output->write($e->getTraceAsString());
             return Command::FAILURE;
         }
     }

@@ -203,7 +203,7 @@ class ThumbnailService
         try {
             $this->generateThumbnail($file);
         } catch (\Throwable $e) {
-            $this->io->warning(sprintf("File %d has uno problemo: %s", $e->getMessage()));
+            $this->io->warning(sprintf("File %d has uno problemo: %s", $file->getId(), $e->getMessage()));
             $this->io->warning($e->getTraceAsString());
         }
     }

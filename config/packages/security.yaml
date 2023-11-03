@@ -12,7 +12,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            pattern: ^/*
+            pattern: ^(/$|/(login|logout|register|manage))
             provider: users
             form_login:
                 login_path: auth_login
@@ -26,12 +26,16 @@ security:
             logout:
                 path: auth_logout
                 target: home
+        images:
+            pattern: ^/.+
+            security: false
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/manage/admin, roles: ROLE_ADMIN }
         - { path: ^/manage, roles: ROLE_USER }
+        - { path: ^/*, roles: PUBLIC_ACCESS }
 
 when@test:
     security:

@@ -1,0 +1,1295 @@
+/*
+ * Liquid Glass theme for MIU, minimal edition: translucent fills, rim light, sheen and grain.
+ *
+ * Scope contract: every selector starts with `body.glass-ui`; remove that class from <body>
+ * and this file is inert. assets/js/liquid-glass.js only adds the pointer glow.
+ *
+ * What is kept from the material language:
+ *  - a thin, nearly clear material that shows the content behind it undistorted
+ *  - no hairline borders: the edge is defined by light (inset rim highlights, brightest top-left)
+ *  - capsules and concentric rounded shapes, continuous where the browser can (corner-shape)
+ *  - the material illuminates from under the pointer and compresses on press with a spring
+ *  - glass only on the navigation layer: header pill, sticky toolbar, admin menu, mobile sidebar,
+ *    the hovered tile's control pill. Everything else is content and stays opaque.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Tokens                                                           */
+/* ------------------------------------------------------------------ */
+body.glass-ui {
+    color-scheme: dark;
+
+    --g-accent: #34e6a1;
+    --g-accent-hover: #4dedb0;
+    --g-accent-active: #1fcf8a;
+    --g-on-accent: #0f1d17;
+    --g-warm: #ffb547;
+    --g-text: #c9c9c9;
+    --g-text-strong: #f2f2f2;
+    --g-text-dim: #8f948f;
+
+    /* material: thin, neutral glass that takes its colour from what is behind it */
+    --g-fill: rgba(22, 26, 24, .55);
+    --g-fill-hover: rgba(40, 46, 42, .62);
+    --g-fill-strong: rgba(14, 17, 16, .84);
+    --g-fill-clear: rgba(18, 22, 20, .45);
+    --g-sheen: linear-gradient(135deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .015) 55%, rgba(255, 255, 255, .03));
+    --g-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+    /* edge light instead of borders */
+    --g-rim:
+        inset 0 0 0 .6px rgba(255, 255, 255, .16),
+        inset 1.5px 1.5px 1.5px -1px rgba(255, 255, 255, .45),
+        inset 0 -1px 2px rgba(0, 0, 0, .18),
+        inset -1px -1px 1.5px -1px rgba(255, 255, 255, .08);
+    --g-rim-soft:
+        inset 0 0 0 .6px rgba(255, 255, 255, .10),
+        inset 1px 1px 1px -.5px rgba(255, 255, 255, .22);
+    --g-drop: 0 14px 34px -10px rgba(0, 0, 0, .55), 0 2px 6px -2px rgba(0, 0, 0, .35);
+    --g-drop-lift: 0 22px 44px -12px rgba(0, 0, 0, .6), 0 4px 10px -3px rgba(0, 0, 0, .35);
+
+    /* content sheet: opaque layer under the glass */
+    --g-sheet: rgba(16, 20, 18, .58);
+    --g-flat: rgba(255, 255, 255, .06);
+    --g-flat-hover: rgba(255, 255, 255, .11);
+    --g-flat-active: rgba(255, 255, 255, .15);
+    --g-divider: rgba(255, 255, 255, .07);
+    --g-dim: linear-gradient(180deg, rgba(0, 0, 0, .30), rgba(0, 0, 0, .50));
+
+    /* shapes: capsules for controls, concentric rounded rects for containers */
+    --g-r-sheet: 28px;
+    --g-r-panel: 22px;
+    --g-r-item: 14px;
+    --g-r-capsule: 999px;
+
+    /* tint: only the primary action */
+    --g-accent-solid: rgba(52, 230, 161, .92);
+    --g-accent-tint: rgba(52, 230, 161, .14);
+    --g-accent-tint-strong: rgba(52, 230, 161, .28);
+    --g-selected: rgba(255, 255, 255, .13);
+    --g-selected-bar: inset 3px 0 0 var(--g-accent);
+    --g-focus: rgba(52, 230, 161, .55);
+    --g-danger-rgb: 255, 99, 112;
+    --g-warning-rgb: 255, 181, 71;
+    --g-success-rgb: 52, 230, 161;
+
+    /* motion: a short spring */
+    --g-dur: 320ms;
+    --g-spring: linear(0, .01, .06 3.8%, .25 9%, .55 15.6%, .78 21.6%, .93 27.4%, 1.02 33.4%, 1.05 40%, 1.04 48%, 1.01 60%, 1);
+    --g-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. World behind the glass                                           */
+/* ------------------------------------------------------------------ */
+body.glass-ui {
+    background: #0f1311;
+    color: var(--g-text);
+}
+
+body.glass-ui::before {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(36vw 32vh at 16% 10%, rgba(52, 230, 161, .20), rgba(52, 230, 161, 0) 70%),
+        radial-gradient(32vw 32vh at 84% 22%, rgba(255, 181, 71, .16), rgba(255, 181, 71, 0) 70%),
+        radial-gradient(40vw 36vh at 30% 70%, rgba(120, 140, 255, .14), rgba(120, 140, 255, 0) 70%),
+        radial-gradient(46vw 38vh at 70% 100%, rgba(255, 110, 150, .10), rgba(255, 110, 150, 0) 70%),
+        linear-gradient(180deg, #12171a 0%, #0f1312 55%, #0b0d0c 100%);
+    animation: lg-drift 70s ease-in-out infinite alternate;
+}
+
+@keyframes lg-drift {
+    from { transform: translate3d(-2%, -1%, 0) scale(1.02); }
+    to { transform: translate3d(2%, 2%, 0) scale(1.06); }
+}
+
+body.glass-ui .app {
+    background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. The material                                                     */
+/* ------------------------------------------------------------------ */
+
+/* Regular glass: header pill, sticky toolbar, admin menu, mobile sidebar, tile control pill. */
+body.glass-ui .glass,
+body.glass-ui #userheader,
+body.glass-ui #loginpanel,
+body.glass-ui #navpanel,
+body.glass-ui .admin-menu,
+body.glass-ui .profile-sidebar .list-group,
+body.glass-ui #sidebar,
+body.glass-ui .itembox-controls {
+    position: relative;
+    isolation: isolate;
+    background: var(--g-noise), var(--g-sheen), var(--g-fill);
+    background-blend-mode: overlay, normal, normal;
+    border: 0;
+    border-radius: var(--g-r-panel);
+    box-shadow: var(--g-rim), var(--g-drop);
+    color: var(--g-text-strong);
+    transition:
+        background-color var(--g-dur) var(--g-ease),
+        box-shadow var(--g-dur) var(--g-ease),
+        transform var(--g-dur) var(--g-spring);
+}
+
+/* Illumination from within: a glow that starts under the pointer (position set by liquid-glass.js). */
+body.glass-ui .glass::after,
+body.glass-ui #userheader::after,
+body.glass-ui #loginpanel::after,
+body.glass-ui #navpanel::after,
+body.glass-ui .admin-menu::after,
+body.glass-ui .profile-sidebar .list-group::after,
+body.glass-ui #sidebar::after,
+body.glass-ui .itembox-controls::after,
+body.glass-ui .btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(140px 140px at var(--lg-x, 50%) var(--lg-y, 0%), rgba(255, 255, 255, .20), rgba(255, 255, 255, 0) 70%);
+    opacity: 0;
+    transition: opacity 260ms var(--g-ease);
+}
+
+body.glass-ui :is(.glass, #userheader, #loginpanel, #navpanel, .admin-menu, .profile-sidebar .list-group, #sidebar, .itembox-controls, .btn):hover::after {
+    opacity: 1;
+}
+
+body.glass-ui .lg-pressed::after {
+    opacity: 1;
+    background: radial-gradient(180px 180px at var(--lg-x, 50%) var(--lg-y, 50%), rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 72%);
+}
+
+/* Capsules: the header nav and the toolbar read as floating pills. */
+body.glass-ui #userheader,
+body.glass-ui #loginpanel,
+body.glass-ui #navpanel,
+body.glass-ui .itembox-controls {
+    border-radius: var(--g-r-capsule);
+}
+
+/* Continuous corners where the browser has them. */
+@supports (corner-shape: squircle) {
+    body.glass-ui .admin-menu,
+    body.glass-ui .block-app,
+    body.glass-ui .profile-sidebar .list-group,
+    body.glass-ui .alert,
+    body.glass-ui .form-control,
+    body.glass-ui .form-select {
+        corner-shape: squircle;
+    }
+}
+
+/* Clear variant: only over media, always with a dimming layer under it. */
+body.glass-ui .itembox-controls {
+    background: var(--g-noise), var(--g-sheen), var(--g-fill-clear);
+    box-shadow:
+        inset 0 0 0 .6px rgba(255, 255, 255, .28),
+        inset 2px 2px 2px -1px rgba(255, 255, 255, .6),
+        inset 0 -1px 2px rgba(0, 0, 0, .25),
+        0 18px 30px -10px rgba(0, 0, 0, .65);
+}
+
+/* Strong variant: the mobile overlay needs more body behind its list. */
+body.glass-ui #sidebar {
+    background: var(--g-noise), var(--g-sheen), var(--g-fill-strong);
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Content layer                                                    */
+/* ------------------------------------------------------------------ */
+body.glass-ui .block-app {
+    background: var(--g-noise), var(--g-sheet);
+    background-blend-mode: overlay, normal;
+    border: 0;
+    border-radius: var(--g-r-sheet);
+    box-shadow: inset 0 0 0 .6px rgba(255, 255, 255, .05), 0 30px 60px -30px rgba(0, 0, 0, .6);
+}
+
+body.glass-ui #upload-box::before {
+    border-radius: var(--g-r-sheet) var(--g-r-sheet) 0 0;
+}
+
+body.glass-ui #upload-box {
+    border-bottom-color: var(--g-divider);
+}
+
+body.glass-ui .border-miu {
+    border-color: var(--g-divider);
+}
+
+body.glass-ui .border-right-miu {
+    border-right-color: var(--g-divider);
+}
+
+/* Drop target: a glass panel floating on the artwork, with a quiet inner dashed ring for affordance. */
+body.glass-ui .dropzone {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 240px;
+    padding: 16px;
+    border: 0;
+    border-radius: var(--g-r-panel);
+    background: var(--g-noise), var(--g-sheen), rgba(14, 17, 16, .66);
+    background-blend-mode: overlay, normal, normal;
+    box-shadow: var(--g-rim), var(--g-drop);
+    color: var(--g-text-strong);
+    text-shadow: none;
+    transition:
+        background-color var(--g-dur) var(--g-ease),
+        box-shadow var(--g-dur) var(--g-ease),
+        transform var(--g-dur) var(--g-spring);
+}
+
+body.glass-ui .dropzone::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    pointer-events: none;
+    border: 1px dashed rgba(255, 255, 255, .18);
+    border-radius: calc(var(--g-r-panel) - 10px);
+    transition: border-color var(--g-dur) var(--g-ease);
+}
+
+body.glass-ui .dropzone.dz-clickable:hover {
+    background: var(--g-noise), var(--g-sheen), rgba(24, 30, 27, .70);
+}
+
+body.glass-ui .dropzone.dz-clickable:hover::before {
+    border-color: rgba(255, 255, 255, .30);
+}
+
+body.glass-ui .dropzone.dz-drag-hover {
+    border-style: none;
+    transform: scale(1.01);
+    background: var(--g-noise), var(--g-sheen), rgba(52, 230, 161, .16);
+    box-shadow: inset 0 0 0 1.5px var(--g-accent), 0 0 32px rgba(52, 230, 161, .28), var(--g-drop);
+}
+
+body.glass-ui .dropzone.dz-drag-hover::before {
+    border-color: rgba(52, 230, 161, .55);
+}
+
+body.glass-ui .dropzone.dz-drag-hover .dz-message {
+    opacity: 1;
+}
+
+/* Empty state: icon in a round well, title, hint (markup from home.js dictDefaultMessage). */
+body.glass-ui .dropzone .dz-message {
+    margin: 0;
+    flex: 1 1 100%;
+}
+
+body.glass-ui .dropzone .dz-message .dz-flexitem {
+    padding: 8px;
+}
+
+body.glass-ui .dropzone .dz-message .dz-flexitem > span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+body.glass-ui .dz-icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    padding: 18px;
+    margin-bottom: 8px;
+    border-radius: 24px;
+    background: var(--g-flat-hover);
+    box-shadow: var(--g-rim-soft);
+    color: var(--g-accent);
+    font-size: 1.9rem;
+    line-height: 1;
+    transition: transform var(--g-dur) var(--g-spring), background-color var(--g-dur) var(--g-ease);
+}
+
+@supports (corner-shape: squircle) {
+    body.glass-ui .dz-icon {
+        corner-shape: squircle;
+        border-radius: 30px;
+    }
+}
+
+body.glass-ui .dz-icon svg {
+    width: 1em;
+    height: 1em;
+}
+
+body.glass-ui .dropzone.dz-clickable:hover .dz-icon,
+body.glass-ui .dropzone.dz-drag-hover .dz-icon {
+    transform: translateY(-3px) scale(1.06);
+    background: var(--g-accent-tint-strong);
+}
+
+body.glass-ui .dz-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .dz-hint {
+    font-size: .85rem;
+    font-weight: 400;
+    color: var(--g-text);
+}
+
+/* Preview cards: small flat wells holding the thumbnail, chips and the copy button. */
+body.glass-ui .dropzone .dz-preview {
+    width: auto;
+    margin: 6px;
+    padding: 6px;
+    min-height: 0;
+    border-radius: var(--g-r-item);
+    background: var(--g-flat);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .dropzone .dz-preview .dz-image {
+    width: 120px;
+    height: 120px;
+    border-radius: calc(var(--g-r-item) - 4px);
+}
+
+body.glass-ui .dropzone .dz-preview.dz-file-preview .dz-image {
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='.35' stroke-width='1.2' stroke-linejoin='round'%3E%3Cpath d='M7 3h7l5 5v13H7z'/%3E%3Cpath d='M14 3v5h5'/%3E%3C/svg%3E") center 14px / 44px no-repeat,
+        linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+}
+
+body.glass-ui .dropzone .dz-preview .dz-details {
+    padding: 1.4em .6em;
+    color: var(--g-text-strong);
+}
+
+/* Non-image files: glyph on top, chips underneath instead of on top of it. */
+body.glass-ui .dropzone .dz-preview.dz-file-preview .dz-details {
+    top: 6px;
+    padding: 62px .5em 0;
+}
+
+body.glass-ui .dropzone .dz-preview .dz-details .dz-filename {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Centre the result mark on the 120px thumbnail rather than on the taller card. */
+body.glass-ui .dropzone .dz-preview .dz-success-mark,
+body.glass-ui .dropzone .dz-preview .dz-error-mark {
+    top: 39px;
+    margin-top: 0;
+}
+
+body.glass-ui .dropzone .dz-preview .dz-details .dz-size {
+    margin-bottom: .6em;
+    font-size: 14px;
+}
+
+body.glass-ui .dropzone .dz-preview .dz-details .dz-filename span,
+body.glass-ui .dropzone .dz-preview .dz-details .dz-size span {
+    padding: .1em .6em;
+    border-radius: var(--g-r-capsule);
+    background: rgba(14, 17, 16, .72);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .dropzone .dz-preview .dz-details .dz-filename:hover span {
+    border: 0;
+    background: rgba(14, 17, 16, .9);
+    box-shadow: inset 0 0 0 1px var(--g-accent);
+}
+
+body.glass-ui .dropzone .dz-preview .dz-details .dz-filename:not(:hover) span {
+    border: 0;
+}
+
+body.glass-ui .dropzone .dz-preview .dz-progress {
+    height: 8px;
+    width: 88px;
+    margin-left: -44px;
+    margin-top: -4px;
+    border-radius: var(--g-r-capsule);
+    background: rgba(255, 255, 255, .22);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .dropzone .dz-preview .dz-progress .dz-upload {
+    background: linear-gradient(180deg, #5df0b9, var(--g-accent));
+}
+
+body.glass-ui .dropzone .dz-preview .dz-success-mark svg,
+body.glass-ui .dropzone .dz-preview .dz-error-mark svg {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .45));
+}
+
+body.glass-ui .dropzone .dz-preview .dz-error-message {
+    top: 136px;
+    left: 0;
+    width: 132px;
+    border-radius: var(--g-r-item);
+    background: rgba(220, 53, 69, .92);
+    color: #fff;
+    box-shadow: var(--g-drop);
+}
+
+body.glass-ui .dropzone .dz-preview .dz-error-message::after {
+    border-bottom-color: rgba(220, 53, 69, .92);
+}
+
+body.glass-ui .dropzone .dz-preview .clipbutton {
+    width: 100%;
+    margin-top: 6px;
+    --bs-btn-padding-y: .3rem;
+    --bs-btn-padding-x: .6rem;
+    --bs-btn-font-size: .8rem;
+}
+
+body.glass-ui .dropzone-border {
+    padding: 28px;
+}
+
+@media (max-width: 767.98px) {
+    body.glass-ui .dropzone-border {
+        padding: 14px;
+    }
+
+    body.glass-ui .dropzone {
+        min-height: 200px;
+        padding: 12px;
+    }
+}
+
+/* Footer is content, not glass: quiet text on the world. */
+body.glass-ui .footer {
+    background: transparent;
+    border: 0;
+    color: var(--g-text-dim);
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Navigation surfaces                                              */
+/* ------------------------------------------------------------------ */
+
+/* Header pill */
+body.glass-ui #userheader,
+body.glass-ui #loginpanel {
+    display: inline-block;
+    padding: 4px;
+}
+
+body.glass-ui #loginpanel {
+    padding: 8px 18px;
+}
+
+body.glass-ui #profilebox {
+    margin-bottom: 0;
+}
+
+body.glass-ui #userheader li {
+    background: transparent;
+    border: 0;
+    border-radius: var(--g-r-capsule);
+    padding: 6px 14px;
+    transition: background-color 200ms var(--g-ease);
+}
+
+body.glass-ui #profilebox li:hover {
+    background: var(--g-flat-hover);
+}
+
+body.glass-ui #profilebox a,
+body.glass-ui #profilebox a:hover,
+body.glass-ui .header a {
+    color: var(--g-text-strong);
+}
+
+/* Sticky order toolbar: floats over the scrolling tiles, the one place lensing really shows. */
+body.glass-ui #navpanel {
+    position: sticky;
+    top: 10px;
+    z-index: 10;
+    margin: 10px 10px 14px;
+    padding: 6px 8px 6px 18px;
+    border-bottom: 0;
+    contain: paint;
+    /* Sits over busy thumbnails: a touch more body keeps its labels legible. */
+    background: var(--g-noise), var(--g-sheen), var(--g-fill-strong);
+}
+
+body.glass-ui #navpanel label {
+    color: var(--g-text-strong);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .55);
+}
+
+/* Admin menu: a concentric rounded card of flat rows. */
+body.glass-ui .admin-menu {
+    padding: 6px;
+    overflow: hidden;
+    --bs-list-group-bg: transparent;
+    --bs-list-group-color: var(--g-text);
+    --bs-list-group-border-color: transparent;
+    --bs-list-group-active-border-color: transparent;
+    --bs-list-group-disabled-bg: transparent;
+    --bs-list-group-disabled-color: var(--g-text-strong);
+}
+
+body.glass-ui .admin-menu > li {
+    border: 0;
+    border-radius: var(--g-r-item);
+    transition: background-color 200ms var(--g-ease);
+}
+
+body.glass-ui .admin-menu a {
+    color: var(--g-text);
+    text-decoration: none;
+    display: block;
+}
+
+body.glass-ui .admin-menu > li:not(.active):hover {
+    background: var(--g-flat-hover);
+}
+
+body.glass-ui .admin-menu > li.active {
+    background: var(--g-selected);
+    box-shadow: var(--g-selected-bar);
+}
+
+body.glass-ui .admin-menu li.active > a {
+    color: var(--g-accent);
+}
+
+/* Mobile sidebar */
+body.glass-ui #sidebar {
+    position: fixed;
+    border-radius: 0 var(--g-r-sheet) var(--g-r-sheet) 0;
+    box-shadow: var(--g-rim), 0 24px 60px rgba(0, 0, 0, .55);
+    transition: transform .35s cubic-bezier(.32, .72, 0, 1);
+}
+
+@media (max-width: 767.98px) {
+    body.glass-ui .profile-sidebar .list-group {
+        background: var(--g-noise), var(--g-sheen), var(--g-fill-strong);
+        border-radius: var(--g-r-panel);
+        padding: 6px;
+    }
+
+    body.glass-ui .profile-sidebar .list-group a {
+        border-radius: var(--g-r-item);
+    }
+
+    body.glass-ui .profile-sidebar .list-group a.active {
+        border-top: 0;
+        box-shadow: inset 0 3px 0 var(--g-accent);
+    }
+}
+
+/* Calendar drawer (phones): strong glass from the right, mirroring the main sidebar. */
+@media (max-width: 767.98px) {
+    /* Drawers overlay busy tiles: near-opaque so the form and calendar stay legible. */
+    body.glass-ui #calendarPanel,
+    body.glass-ui #sidebar {
+        background: var(--g-noise), var(--g-sheen), rgba(14, 17, 16, .95);
+        background-blend-mode: overlay, normal, normal;
+    }
+
+    body.glass-ui #calendarPanel {
+        border-radius: var(--g-r-sheet) 0 0 var(--g-r-sheet);
+        box-shadow: var(--g-rim), 0 24px 60px rgba(0, 0, 0, .55);
+        padding-bottom: 12px;
+    }
+
+    body.glass-ui .calendar-drawer-head {
+        border-bottom-color: var(--g-divider);
+        color: var(--g-text-strong);
+    }
+
+    body.glass-ui #calendarShowBtn {
+        --bs-btn-border-radius: 50%;
+        box-shadow: var(--g-rim), 0 10px 24px rgba(0, 0, 0, .45), 0 0 18px rgba(52, 230, 161, .35);
+    }
+
+    body.glass-ui #calendarPanel #navpanel {
+        position: static;
+        margin: 10px 10px 4px;
+        padding: 12px;
+        border-radius: var(--g-r-item);
+        background: var(--g-flat);
+        box-shadow: none;
+        contain: none;
+    }
+
+    body.glass-ui #calendarPanel #navpanel label {
+        text-shadow: none;
+        color: var(--g-text);
+    }
+}
+
+body.glass-ui #hamburger-profilebox {
+    --bs-list-group-bg: transparent;
+    --bs-list-group-border-color: var(--g-divider);
+    margin-bottom: 0;
+}
+
+body.glass-ui #hamburger-userheader li {
+    background: transparent;
+    border-bottom-color: var(--g-divider);
+}
+
+body.glass-ui #hamburger-userheader li:hover {
+    background: var(--g-flat-hover);
+}
+
+/* Profile sidebar: flat rows inside the content sheet (no glass on the sheet). */
+body.glass-ui .profile-sidebar {
+    border-right: 0;
+    padding: 10px;
+}
+
+body.glass-ui .profile-sidebar .list-group {
+    border-radius: var(--g-r-panel);
+    padding: 6px;
+    gap: 2px;
+    overflow: hidden;
+}
+
+body.glass-ui .profile-sidebar .list-group a {
+    background: transparent;
+    color: var(--g-text);
+    border: 0;
+    border-radius: var(--g-r-item);
+    transition: background-color 200ms var(--g-ease), color 200ms var(--g-ease);
+}
+
+body.glass-ui .profile-sidebar .list-group a:hover {
+    background: var(--g-flat-hover);
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .profile-sidebar .list-group .active {
+    background: var(--g-selected);
+    border: 0;
+    box-shadow: var(--g-selected-bar);
+    color: var(--g-text-strong);
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Controls: capsules, flat tints, one accent                       */
+/* ------------------------------------------------------------------ */
+body.glass-ui .btn {
+    position: relative;
+    isolation: isolate;
+    --bs-btn-border-radius: var(--g-r-capsule);
+    --bs-btn-border-width: 0;
+    --bs-btn-padding-x: 1.1rem;
+    --bs-btn-focus-shadow-rgb: 52, 230, 161;
+    box-shadow: var(--g-rim-soft);
+    transition:
+        background-color 200ms var(--g-ease),
+        color 200ms var(--g-ease),
+        box-shadow var(--g-dur) var(--g-ease),
+        transform var(--g-dur) var(--g-spring);
+}
+
+body.glass-ui .btn-sm,
+body.glass-ui .btn-group-sm > .btn {
+    --bs-btn-padding-x: .7rem;
+    --bs-btn-padding-y: .25rem;
+    --bs-btn-font-size: .875rem;
+}
+
+/* Input groups keep their joined edges; the capsule radius applies to the group as a whole. */
+body.glass-ui .input-group {
+    border-radius: var(--g-r-capsule);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .input-group > .form-control,
+body.glass-ui .input-group > .btn {
+    box-shadow: none;
+}
+
+body.glass-ui .input-group > .form-control {
+    border-radius: var(--g-r-capsule) 0 0 var(--g-r-capsule);
+}
+
+body.glass-ui .input-group > .btn:last-child {
+    border-radius: 0 var(--g-r-capsule) var(--g-r-capsule) 0;
+    --bs-btn-border-radius: 0 var(--g-r-capsule) var(--g-r-capsule) 0;
+}
+
+body.glass-ui .input-group > .btn:hover {
+    transform: none;
+}
+
+body.glass-ui .btn-secondary,
+body.glass-ui .btn-info,
+body.glass-ui .btn-default,
+body.glass-ui .btn-outline-secondary {
+    --bs-btn-color: var(--g-text-strong);
+    --bs-btn-bg: var(--g-flat);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--g-flat-hover);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--g-flat-active);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: var(--g-text);
+    --bs-btn-disabled-bg: var(--g-flat);
+    --bs-btn-disabled-border-color: transparent;
+}
+
+body.glass-ui .btn-primary,
+body.glass-ui .btn-outline-primary,
+body.glass-ui .btn-outline-miu {
+    --bs-btn-color: var(--g-on-accent);
+    --bs-btn-bg: var(--g-accent-solid);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--g-on-accent);
+    --bs-btn-hover-bg: var(--g-accent-hover);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--g-on-accent);
+    --bs-btn-active-bg: var(--g-accent-active);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: var(--g-on-accent);
+    --bs-btn-disabled-bg: rgba(52, 230, 161, .5);
+    --bs-btn-disabled-border-color: transparent;
+    box-shadow:
+        inset 0 0 0 .6px rgba(255, 255, 255, .25),
+        inset 1.5px 1.5px 1.5px -1px rgba(255, 255, 255, .6),
+        0 8px 20px -8px rgba(52, 230, 161, .6);
+    font-weight: 600;
+}
+
+/* app.css paints .btn-outline-miu text mint directly; on the tinted capsule it must be dark. */
+body.glass-ui .btn-outline-miu,
+body.glass-ui .btn-outline-miu:hover {
+    color: var(--g-on-accent);
+    border-color: transparent;
+}
+
+body.glass-ui .btn-outline-miu:hover {
+    background-color: var(--g-accent-hover);
+}
+
+body.glass-ui .btn-danger {
+    --bs-btn-color: #ffc4ca;
+    --bs-btn-bg: rgba(var(--g-danger-rgb), .16);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgba(var(--g-danger-rgb), .34);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: rgba(var(--g-danger-rgb), .46);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-border-color: transparent;
+}
+
+body.glass-ui .btn-warning {
+    --bs-btn-color: #ffd89a;
+    --bs-btn-bg: rgba(var(--g-warning-rgb), .16);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgba(var(--g-warning-rgb), .34);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: rgba(var(--g-warning-rgb), .46);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-border-color: transparent;
+}
+
+body.glass-ui .btn-success {
+    --bs-btn-color: #a4f5d4;
+    --bs-btn-bg: rgba(var(--g-success-rgb), .16);
+    --bs-btn-hover-color: var(--g-on-accent);
+    --bs-btn-hover-bg: rgba(var(--g-success-rgb), .6);
+    --bs-btn-active-color: var(--g-on-accent);
+    --bs-btn-active-bg: rgba(var(--g-success-rgb), .75);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-border-color: transparent;
+}
+
+body.glass-ui .clipbutton {
+    background-color: var(--g-accent-solid);
+    color: var(--g-on-accent);
+    border: 0;
+    border-radius: var(--g-r-capsule);
+}
+
+/* Press: the material compresses, then springs back. */
+body.glass-ui .btn:not(:disabled):not(.disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: var(--g-rim-soft), 0 8px 18px -8px rgba(0, 0, 0, .5);
+}
+
+body.glass-ui .btn:not(:disabled):not(.disabled):active,
+body.glass-ui .btn.lg-pressed {
+    transform: scale(.95);
+    transition-duration: 90ms;
+}
+
+body.glass-ui :is(#userheader, #loginpanel, #navpanel, .admin-menu, #sidebar).lg-pressed {
+    transform: scale(.985);
+}
+
+/* Grouped and full-width buttons keep shared edges and do not lift. */
+body.glass-ui .btn-group {
+    border-radius: var(--g-r-capsule);
+    box-shadow: var(--g-rim-soft);
+    overflow: hidden;
+}
+
+body.glass-ui .btn-group .btn {
+    box-shadow: none;
+    --bs-btn-border-radius: 0;
+}
+
+body.glass-ui .btn-group .btn:hover,
+body.glass-ui .btn.w-100:hover {
+    transform: none;
+}
+
+body.glass-ui .btn.w-100 {
+    --bs-btn-border-radius: var(--g-r-panel);
+}
+
+/* Inputs: quiet flat wells, capsule for single-line fields, accent ring on focus. */
+body.glass-ui .form-control,
+body.glass-ui .form-select,
+body.glass-ui #mirrorfile {
+    background-color: var(--g-flat);
+    color: var(--g-text-strong);
+    border: 0;
+    border-radius: var(--g-r-item);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35), inset 0 0 0 .6px rgba(255, 255, 255, .08);
+    transition: background-color 200ms var(--g-ease), box-shadow 200ms var(--g-ease);
+}
+
+body.glass-ui .form-control::placeholder {
+    color: var(--g-text-dim);
+}
+
+body.glass-ui :is(.form-control, .form-select, #mirrorfile):hover {
+    background-color: var(--g-flat-hover);
+}
+
+body.glass-ui :is(.form-control, .form-select, #mirrorfile):focus {
+    background-color: var(--g-flat-hover);
+    color: #fff;
+    outline: 0;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35), 0 0 0 3px var(--g-focus);
+}
+
+body.glass-ui .form-select {
+    --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e6e6e6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+body.glass-ui .form-select.w-auto {
+    border-radius: var(--g-r-capsule);
+    padding-left: 1rem;
+}
+
+body.glass-ui .form-select option {
+    background: #1b201d;
+    color: var(--g-text);
+}
+
+body.glass-ui .form-check-input {
+    background-color: var(--g-flat);
+    border: 0;
+    box-shadow: inset 0 0 0 .6px rgba(255, 255, 255, .25);
+}
+
+body.glass-ui .form-check-input:checked {
+    background-color: var(--g-accent);
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%230f1d17' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+
+body.glass-ui .form-check-input:focus {
+    box-shadow: 0 0 0 3px var(--g-focus);
+}
+
+/* Badges, alerts, spinner */
+body.glass-ui .badge {
+    border: 0;
+    border-radius: var(--g-r-capsule);
+    font-weight: 600;
+    padding: .35em .7em;
+    box-shadow: inset 0 0 0 .6px rgba(255, 255, 255, .12);
+}
+
+body.glass-ui .badge.bg-success {
+    --bs-success-rgb: 52, 230, 161;
+    --bs-bg-opacity: .2;
+    color: #a4f5d4;
+}
+
+body.glass-ui .badge.bg-secondary {
+    --bs-secondary-rgb: 200, 200, 200;
+    --bs-bg-opacity: .14;
+    color: var(--g-text);
+}
+
+body.glass-ui .alert {
+    border: 0;
+    border-radius: var(--g-r-panel);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .alert-danger {
+    --bs-alert-color: #ffc4ca;
+    --bs-alert-bg: rgba(var(--g-danger-rgb), .14);
+    --bs-alert-link-color: #ffd0d5;
+}
+
+body.glass-ui .alert-success {
+    --bs-alert-color: #a4f5d4;
+    --bs-alert-bg: var(--g-accent-tint);
+}
+
+body.glass-ui .alert-info {
+    --bs-alert-color: var(--g-text-strong);
+    --bs-alert-bg: var(--g-flat);
+}
+
+body.glass-ui .spinner-grow {
+    color: var(--g-accent);
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Gallery content: calendar, tiles, tables                         */
+/* ------------------------------------------------------------------ */
+body.glass-ui .bg-miu {
+    background: transparent;
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .bg-secondary-miu {
+    background: transparent;
+    color: var(--g-text);
+}
+
+body.glass-ui .calendar-element {
+    border-radius: var(--g-r-capsule);
+    margin: 2px 8px;
+    transition: background-color 200ms var(--g-ease), color 200ms var(--g-ease);
+}
+
+body.glass-ui .hover-miu:hover {
+    background: var(--g-flat-hover);
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .calendar-highlight,
+body.glass-ui .calendar-highlight:hover {
+    background: var(--g-selected);
+    color: var(--g-accent);
+}
+
+body.glass-ui .calendar-range-start,
+body.glass-ui .calendar-range-start:hover {
+    background: var(--g-accent-solid);
+    color: var(--g-on-accent);
+}
+
+body.glass-ui .calendar-element .btn-secondary.disabled {
+    opacity: 1;
+    padding: 0 .6em;
+    min-width: 2em;
+    box-shadow: none;
+    --bs-btn-disabled-bg: var(--g-flat-hover);
+    --bs-btn-disabled-color: var(--g-text-strong);
+}
+
+body.glass-ui .calendar-range-start .btn-secondary.disabled {
+    --bs-btn-disabled-bg: rgba(15, 29, 23, .25);
+    --bs-btn-disabled-color: var(--g-on-accent);
+}
+
+/* Tiles are content: the thumbnail stays; hover dims and floats a clear capsule of controls. */
+body.glass-ui .itembox {
+    border-color: transparent;
+}
+
+body.glass-ui .itembox:hover {
+    border: 1px solid transparent;
+    outline: 2px solid rgba(52, 230, 161, .9);
+    outline-offset: -2px;
+}
+
+body.glass-ui .itembox-hover {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--g-dim);
+}
+
+body.glass-ui .itembox:hover .itembox-hover {
+    display: flex;
+}
+
+body.glass-ui .itembox-controls {
+    margin: 0;
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+}
+
+body.glass-ui .itembox-controls .btn {
+    box-shadow: none;
+}
+
+@media (max-width: 767.98px), (hover: none) {
+    body.glass-ui .itembox:hover .itembox-hover {
+        display: none;
+    }
+}
+
+body.glass-ui .itembox.is-selected {
+    outline: 3px solid var(--g-accent);
+    outline-offset: -3px;
+}
+
+body.glass-ui .itembox-check-mark {
+    background: rgba(14, 17, 16, .55);
+    border-color: rgba(255, 255, 255, .85);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+}
+
+body.glass-ui .itembox-check:checked + .itembox-check-mark {
+    background: var(--g-accent);
+    border-color: var(--g-accent);
+    color: var(--g-on-accent);
+}
+
+/* Selection action bar: a capsule of glass floating above the tab bar. */
+body.glass-ui #selectionBar {
+    border: 0;
+    border-radius: var(--g-r-capsule);
+    background: var(--g-noise), var(--g-sheen), rgba(14, 17, 16, .95);
+    background-blend-mode: overlay, normal, normal;
+    box-shadow: var(--g-rim), var(--g-drop-lift);
+    color: var(--g-text-strong);
+    font-size: .9rem;
+}
+
+body.glass-ui #selectionBar .btn-group .btn {
+    box-shadow: none;
+    --bs-btn-padding-x: .9rem;
+}
+
+body.glass-ui .itembox-text {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(to top, rgba(8, 10, 9, .88), rgba(8, 10, 9, .5));
+}
+
+body.glass-ui .itembox-text p {
+    color: var(--g-text-strong);
+}
+
+/* Admin lists: flat wells in a stack, concentric with the chips and buttons inside. */
+body.glass-ui .admin-row {
+    border: 0;
+    border-radius: var(--g-r-item);
+    background: var(--g-flat);
+    box-shadow: var(--g-rim-soft);
+    color: var(--g-text);
+    transition: background-color 200ms var(--g-ease);
+}
+
+body.glass-ui .admin-row:hover {
+    background: var(--g-flat-hover);
+}
+
+body.glass-ui .admin-avatar {
+    background: var(--g-accent-solid);
+    color: var(--g-on-accent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+body.glass-ui .admin-avatar.is-anon {
+    background: var(--g-flat-active);
+    color: var(--g-text);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .admin-ext {
+    background: var(--g-flat-hover);
+    color: var(--g-text-strong);
+    box-shadow: var(--g-rim-soft);
+    border-radius: 14px;
+}
+
+@supports (corner-shape: squircle) {
+    body.glass-ui .admin-ext {
+        corner-shape: squircle;
+        border-radius: 18px;
+    }
+}
+
+body.glass-ui .admin-thumb {
+    border-radius: 14px;
+    box-shadow: var(--g-rim-soft);
+    background: var(--g-flat-hover);
+}
+
+@supports (corner-shape: squircle) {
+    body.glass-ui .admin-thumb {
+        corner-shape: squircle;
+        border-radius: 18px;
+    }
+}
+
+body.glass-ui .admin-chip.admin-marked {
+    background: rgba(220, 53, 69, .2);
+    color: #ffb4bc;
+}
+
+body.glass-ui .admin-title,
+body.glass-ui .admin-file-link,
+body.glass-ui .admin-stat-value {
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .admin-file-link:hover {
+    color: var(--g-accent);
+}
+
+body.glass-ui .admin-sub,
+body.glass-ui .admin-stat-label {
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .admin-chip {
+    background: var(--g-flat-hover);
+    color: var(--g-text);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .admin-chip.role-admin {
+    background: rgba(255, 181, 71, .16);
+    color: var(--g-warm);
+}
+
+body.glass-ui .admin-chip.role-user {
+    background: var(--g-accent-tint);
+    color: var(--g-accent);
+}
+
+body.glass-ui .admin-list-head h4 {
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .table-dark {
+    --bs-table-color: var(--g-text);
+    --bs-table-bg: rgba(22, 26, 24, .82);
+    --bs-table-border-color: var(--g-divider);
+    --bs-table-striped-bg: rgba(255, 255, 255, .03);
+    --bs-table-striped-color: var(--g-text-strong);
+    --bs-table-hover-bg: rgba(255, 255, 255, .06);
+    --bs-table-hover-color: #fff;
+    border-radius: var(--g-r-panel);
+    overflow: hidden;
+}
+
+body.glass-ui .table-dark thead th {
+    background-color: rgba(22, 26, 24, .95);
+    border-bottom: 1px solid var(--g-divider);
+    color: var(--g-text-strong);
+}
+
+/* ------------------------------------------------------------------ */
+/* 8. Focus                                                            */
+/* ------------------------------------------------------------------ */
+body.glass-ui :is(.list-group-item-action, #profilebox a, .admin-menu a, .calendar-element):focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--g-focus);
+}
+
+/* ------------------------------------------------------------------ */
+/* 9. Fallbacks                                                        */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-transparency: reduce) {
+    body.glass-ui {
+        --g-noise: none;
+        --g-sheen: none;
+        --g-fill: #23272a;
+        --g-fill-hover: #2c3033;
+        --g-fill-strong: #23272a;
+        --g-fill-clear: rgba(20, 22, 21, .9);
+        --g-sheet: #181c1a;
+        --g-flat: #2a2e2c;
+        --g-flat-hover: #353936;
+        --g-flat-active: #3d413e;
+    }
+
+    body.glass-ui::before {
+        background: linear-gradient(180deg, #131a16, #0b0e0c);
+        animation: none;
+    }
+}
+
+@media (prefers-contrast: more) {
+    body.glass-ui {
+        --g-noise: none;
+        --g-sheen: none;
+        --g-selected: #3a3e3c;
+        --g-fill: #23272a;
+        --g-fill-hover: #2c3033;
+        --g-fill-strong: #23272a;
+        --g-fill-clear: #141614;
+        --g-sheet: #181c1a;
+        --g-flat: #2a2e2c;
+        --g-flat-hover: #353936;
+        --g-flat-active: #3d413e;
+        --g-rim: inset 0 0 0 1px #9a9a9a;
+        --g-rim-soft: inset 0 0 0 1px #9a9a9a;
+        --g-drop: 0 0 #0000;
+        --g-drop-lift: 0 0 #0000;
+        --g-text: #e0e0e0;
+        --g-accent-tint: rgba(52, 230, 161, .35);
+        --g-accent-tint-strong: rgba(52, 230, 161, .55);
+        --g-focus: #34e6a1;
+    }
+
+    body.glass-ui::before {
+        background: #121212;
+        animation: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.glass-ui {
+        --g-dur: 0ms;
+    }
+
+    body.glass-ui::before {
+        animation: none;
+    }
+
+    body.glass-ui .btn:hover,
+    body.glass-ui .btn:active,
+    body.glass-ui .lg-pressed {
+        transform: none;
+    }
+}

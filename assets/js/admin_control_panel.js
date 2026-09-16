@@ -4,12 +4,35 @@ $(document).ready(function () {
             this.obtainFileSizes();
             $('body').on('click', 'button[data-toggle-user]', this.toggleUserActive.bind(this));
             $('body').on('click', 'button[data-reset-password]', this.resetUserPassword.bind(this));
+            $('body').on('click', 'button[data-deleteaction]', this.toggleFileDeletion.bind(this));
+        },
+        toggleFileDeletion: function (e) {
+            var button = $(e.currentTarget);
+            var row = button.closest('[data-fileid]');
+            var action = button.data('deleteaction');
+            var fileId = button.data('deleteid');
+            button.prop('disabled', true);
+            this.postData('/endpoint/setdeletestatus/', {'id': fileId, 'action': action}).done(function (data) {
+                if (data.status !== 'ok') {
+                    alert('Unable to change file status');
+                    return;
+                }
+                var marked = action === 'del';
+                row.toggleClass('is-marked', marked);
+                row.find('[data-marked-chip]').prop('hidden', !marked);
+                row.find('button[data-deleteaction="del"]').prop('hidden', marked);
+                row.find('button[data-deleteaction="undo"]').prop('hidden', !marked);
+            }).fail(function () {
+                alert('Unable to change file status');
+            }).always(function () {
+                button.prop('disabled', false);
+            });
         },
         resetUserPassword: function (e) {
             var button = $(e.currentTarget);
-            var row = button.closest('tr');
+            var row = button.closest('[data-userid]');
             var userId = button.data('reset-password');
-            var login = row.children('td').eq(1).text();
+            var login = row.find('[data-user-login]').text();
             if (!window.confirm('Reset password for "' + login + '"? The current password stops working immediately.')) {
                 return;
             }
@@ -33,7 +56,7 @@ $(document).ready(function () {
         },
         toggleUserActive: function (e) {
             var button = $(e.currentTarget);
-            var row = button.closest('tr');
+            var row = button.closest('[data-userid]');
             var userId = button.data('toggle-user');
             var currentlyActive = parseInt(button.attr('data-active'), 10) === 1;
             button.prop('disabled', true);
@@ -47,10 +70,10 @@ $(document).ready(function () {
                 }
                 var active = data.active;
                 button.attr('data-active', active ? 1 : 0)
-                    .text(active ? 'Disable' : 'Enable')
+                    .html('<i class="fa-solid ' + (active ? 'fa-ban' : 'fa-check') + ' me-1" aria-hidden="true"></i>' + (active ? 'Disable' : 'Enable'))
                     .toggleClass('btn-warning', active)
                     .toggleClass('btn-success', !active);
-                row.find('td[data-userstatus]').html(active
+                row.find('[data-userstatus]').html(active
                     ? '<span class="badge bg-success">Active</span>'
                     : '<span class="badge bg-secondary">Disabled</span>');
             }).fail(function (xhr) {
@@ -61,14 +84,14 @@ $(document).ready(function () {
             });
         },
         obtainFileSizes: function () {
-            var cells = $('td[data-usersize]');
+            var cells = $('[data-usersize]');
 
             this.getData('/endpoint/getstoragestats/').done(function (data, status, xhr) {
                 if (data.status === "ok") {
                     var cellData = data.message;
                     $.each(cells, function () {
                         var cell = this;
-                        var row = $(this).parent();
+                        var row = $(this).closest('[data-userid]');
                         var userId = $(row).data("userid");
                         if (cellData[userId]) {
                             $(cell).html(cellData[userId]['total'] + ", " + cellData[userId]['amount'] + " files");

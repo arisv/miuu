@@ -15,9 +15,14 @@
     "11": "November",
     "12": "December",
 } %}
-	<div class="row" style="height: 1440px">
-		<div class="col-md-2 border-right-miu p-0 overflow-auto h-100">
+	<div class="row gallery-row" style="height: 1440px">
+		<div class="col-md-2 border-right-miu p-0 overflow-auto h-100" id="calendarPanel">
 			{% if dateTree is not empty %}
+				<div class="calendar-drawer-head d-flex d-md-none align-items-center justify-content-between">
+					<span class="fw-semibold"><i class="fa-regular fa-calendar me-2" aria-hidden="true"></i>Filters</span>
+					<button type="button" class="btn btn-secondary btn-sm" id="calendarCloseBtn" aria-label="Close calendar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+				</div>
+				<div id="calendarToolbarSlot"></div>
 				<ul class="list-group list-group-flush">
 					{% for year, monthdata in dateTree %}
 						<li class="list-group-item border-miu bg-miu p-0">
@@ -44,38 +49,57 @@
 				</ul>
 			{% endif %}
 		</div>
-		<div class="col-md-10  overflow-auto h-100">
+		<div class="d-md-none" id="calendarBackdrop" aria-hidden="true"></div>
+		{% if dateTree is not empty %}
+			<button type="button" class="btn btn-primary d-md-none" id="calendarShowBtn" aria-label="Open calendar" aria-controls="calendarPanel" aria-expanded="false"><i class="fa-regular fa-calendar" aria-hidden="true"></i></button>
+		{% endif %}
+		<div class="col-md-10 overflow-auto h-100 gallery-files">
 			{% if pageData.files is not empty %}
 				<div id="navpanel" class="d-flex justify-content-end">
 					<form id="order-form" class="d-flex align-items-center gap-2 m-2" action="">
-						<label class="mb-0 text-nowrap" for="order-size">File size:</label>
-						<select name="order-size" class="form-select w-auto" id="order-size">
-							<option hidden value="">Default</option>
-							<option value="big">Big</option>
-							<option value="small">Small</option>
-						</select>
-						<label class="mb-0 text-nowrap" for="order-date">Upload date:</label>
-						<select name="order-date" class="form-select w-auto" id="order-date">
-							<option hidden value="">Default</option>
-							<option value="new">Newest</option>
-							<option value="old">Oldest</option>
-						</select>
-						<label class="mb-0 text-nowrap" for="page-size">Per page:</label>
-						<select name="page-size" class="form-select w-auto" id="page-size">
-							{% set currentPageSize = app.request.query.get('page-size', 24) %}
-							{% for size in [24, 48, 72, 96] %}
-								<option value="{{ size }}"{% if currentPageSize == size %} selected{% endif %}>{{ size }}</option>
-							{% endfor %}
-						</select>
+						<div class="order-field">
+							<label class="mb-0 text-nowrap" for="order-size">File size:</label>
+							<select name="order-size" class="form-select w-auto" id="order-size">
+								<option hidden value="">Default</option>
+								<option value="big">Big</option>
+								<option value="small">Small</option>
+							</select>
+						</div>
+						<div class="order-field">
+							<label class="mb-0 text-nowrap" for="order-date">Upload date:</label>
+							<select name="order-date" class="form-select w-auto" id="order-date">
+								<option hidden value="">Default</option>
+								<option value="new">Newest</option>
+								<option value="old">Oldest</option>
+							</select>
+						</div>
+						<div class="order-field">
+							<label class="mb-0 text-nowrap" for="page-size">Per page:</label>
+							<select name="page-size" class="form-select w-auto" id="page-size">
+								{% set currentPageSize = app.request.query.get('page-size', 24) %}
+								{% for size in [24, 48, 72, 96] %}
+									<option value="{{ size }}"{% if currentPageSize == size %} selected{% endif %}>{{ size }}</option>
+								{% endfor %}
+							</select>
+						</div>
 						<input type="hidden" name="calendar-start">
 						<input type="hidden" name="calendar-end">
-						<button type="submit" class="btn btn-primary text-nowrap">Order</button>
+						<button type="submit" class="btn btn-primary text-nowrap order-submit"><i class="fa-solid fa-arrow-down-wide-short me-2" aria-hidden="true"></i>Order</button>
 					</form>
 				</div>
 				<div class="row g-0" id="file-container">
 					{% for item in pageData.files %}
 						{% include 'partials/control_panel_file.html.twig' with {'item': item.image is defined ? item.image : item} %}
 					{% endfor %}
+				</div>
+				<div id="selectionBar" role="toolbar" aria-label="Selected files">
+					<span class="selection-count"></span>
+					<div class="btn-group btn-group-sm">
+						<button type="button" class="btn btn-primary" data-selection-action="download" title="Download"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
+						<button type="button" class="btn btn-danger" data-selection-action="del" title="Delete"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+						<button type="button" class="btn btn-warning" data-selection-action="undo" title="Undelete"><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>
+						<button type="button" class="btn btn-secondary" data-selection-action="clear" title="Clear selection"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+					</div>
 				</div>
 				<div id="fetch-in-progress" style="display:none">
 					<div class="d-flex justify-content-center my-2">

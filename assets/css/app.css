@@ -321,8 +321,14 @@ a.btn:disabled {
     padding: 20px;
 }
 
+/* Order/page-size controls stay pinned at the top of the scrolling file column. */
 #navpanel {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     padding: 20px;
+    background-color: #1f1f1f;
+    border-bottom: 1px solid #3d3d3d;
 }
 
 .displayimage img {

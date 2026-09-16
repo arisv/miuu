@@ -1,0 +1,14 @@
+{# Form theme rendering field errors as a Bootstrap alert list. Shared by signup and admin user creation. #}
+{% block form_errors %}
+  {% apply spaceless %}
+  {% if errors is defined and errors|length > 0 %}
+    <div class="alert alert-danger">
+      <ul class="list-unstyled">
+        {% for error in errors %}
+          <li>{{ error.message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  {% endapply %}
+{% endblock form_errors %}

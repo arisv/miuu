@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\Type\UserLoginType;
+use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
 use App\Service\FileService;
 use App\Service\UserService;
@@ -55,7 +56,7 @@ class WebController extends AbstractController
             return $this->redirectToRoute('home');
         }
 
-        $form = $this->createForm('App\Form\Type\UserRegistrationType', null, [
+        $form = $this->createForm(UserRegistrationType::class, null, [
             'entity_manager' => $em
         ]);
 
@@ -140,6 +141,34 @@ class WebController extends AbstractController
             'dateTree' => $dateTree,
             'pivot' => $removalPivot,
             'filter' => json_encode($request->query->all())
+        ]);
+    }
+
+    #[Route("/manage/admin/users/new/", name: "admin_create_user")]
+    public function adminCreateUser(Request $request, EntityManagerInterface $em, UserService $userService, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $form = $this->createForm(UserRegistrationType::class, null, [
+            'entity_manager' => $em,
+            'with_role' => true
+        ]);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $newUser = $userService->createUser($form->getData());
+                $this->addFlash('global-success', "User " . $newUser->getLogin() . " created.");
+                return $this->redirectToRoute('admin_manage_users');
+            } catch (\Exception $e) {
+                $logger->error('Error creating user (admin): ' . $e->getMessage());
+                $form->addError(new FormError("Unexpected error has occured and has been logged, try again later or something"));
+            }
+        }
+
+        return $this->render('admin_create_user.html.twig', [
+            'form' => $form->createView()
         ]);
     }
 

@@ -1,0 +1,29 @@
+{% extends 'admin_layout.html.twig' %}
+
+{% form_theme form 'form/miu_errors.html.twig' %}
+
+{% block title %}
+    Create user - MIU
+{% endblock %}
+
+{% block managecontent %}
+    <div class="row">
+        <div class="col-md-4">
+            {{ form_start(form) }}
+
+            <h3 class="mb-3">Create user</h3>
+
+            {% include 'partials/user_form_fields.html.twig' %}
+
+            <div class="l-sign-inner">
+                {{ form_errors(form) }}
+                <div class="l-sign-btn">
+                    <button type="submit" class="btn btn-primary btn-wmid">Create</button>
+                    <a href="{{ path('admin_manage_users') }}" class="btn btn-outline-secondary ml-2">Cancel</a>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

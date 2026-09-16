@@ -31,7 +31,7 @@ class UserService
             $userData['password']
         ));
         $user->setRemoteToken($this->generateToken());
-        $user->setRole(User::ROLE_USER);
+        $user->setRole($userData['role'] ?? User::ROLE_USER);
         $user->setActive(true);
         $this->em->persist($user);
         $this->em->flush();

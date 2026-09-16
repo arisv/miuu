@@ -45,18 +45,18 @@
 			{% if pageData.files is not empty %}
 				<div class="row">
 					<div id="navpanel">
-						<div class="float-right m-2">
-							<form id="order-form" class="form-inline" action="">
-								<label class="mr-sm-2" for="order-size">File size:
+						<div class="float-end m-2">
+							<form id="order-form" class="d-flex align-items-center flex-wrap" action="">
+								<label class="me-sm-2" for="order-size">File size:
 								</label>
-								<select name="order-size" class="custom-select mr-sm-2" id="order-size">
+								<select name="order-size" class="form-select me-sm-2" id="order-size">
 									<option hidden value="">Default</option>
 									<option value="big">Big</option>
 									<option value="small">Small</option>
 								</select>
-								<label class="mr-sm-2" for="order-date">Upload date:
+								<label class="me-sm-2" for="order-date">Upload date:
 								</label>
-								<select name="order-date" class="custom-select mr-sm-2" id="order-date">
+								<select name="order-date" class="form-select me-sm-2" id="order-date">
 									<option hidden value="">Default</option>
 									<option value="new">Newest</option>
 									<option value="old">Oldest</option>
@@ -68,7 +68,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="row no-gutters" id="file-container">
+				<div class="row g-0" id="file-container">
 					{% for item in pageData.files %}
 						{% include 'partials/control_panel_file.html.twig' with {'item': item.image is defined ? item.image : item} %}
 					{% endfor %}
@@ -76,25 +76,25 @@
 				<div id="fetch-in-progress" style="display:none">
 					<div class="d-flex justify-content-center my-2">
 						<div class="spinner-grow" role="status">
-							<span class="sr-only">Loading...</span>
+							<span class="visually-hidden">Loading...</span>
 						</div>
 						<div class="spinner-grow" role="status">
-							<span class="sr-only">Loading...</span>
+							<span class="visually-hidden">Loading...</span>
 						</div>
 						<div class="spinner-grow" role="status">
-							<span class="sr-only">Loading...</span>
+							<span class="visually-hidden">Loading...</span>
 						</div>
 						<div class="spinner-grow" role="status">
-							<span class="sr-only">Loading...</span>
+							<span class="visually-hidden">Loading...</span>
 						</div>
 					</div>
 				</div>
 				<div class="row">
 					{% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
 					{% if pageData.hasNextPage %}
-						<button data-pagination-next="{{ path(nextPageRoute, defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg btn-block m-3">Get more!</button>
+						<button data-pagination-next="{{ path(nextPageRoute, defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg w-100 m-3">Get more!</button>
 					{% else %}
-						<button disabled type="button" class="btn btn-info btn-lg btn-block m-3">No more files!</button>
+						<button disabled type="button" class="btn btn-info btn-lg w-100 m-3">No more files!</button>
 					{% endif %}
 				</div>
 			{% else %}

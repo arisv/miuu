@@ -51,8 +51,8 @@ $(document).ready(function () {
                     .toggleClass('btn-warning', active)
                     .toggleClass('btn-success', !active);
                 row.find('td[data-userstatus]').html(active
-                    ? '<span class="badge badge-success">Active</span>'
-                    : '<span class="badge badge-secondary">Disabled</span>');
+                    ? '<span class="badge bg-success">Active</span>'
+                    : '<span class="badge bg-secondary">Disabled</span>');
             }).fail(function (xhr) {
                 var message = xhr.responseJSON && xhr.responseJSON.message;
                 alert(message || 'Unable to change user status');

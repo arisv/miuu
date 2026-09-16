@@ -1,32 +1,32 @@
 {# Username / email / password fields of the user registration form. Renders the role picker when present. #}
-<div class="form-group l-sign-form-group">
-  {{ form_label(form.login, "Username", {'label_attr': {'class':'sr-only'} }) }}
+<div class="mb-3 l-sign-mb-3">
+  {{ form_label(form.login, "Username", {'label_attr': {'class':'visually-hidden'} }) }}
   {{ form_widget(form.login, {'attr':{'class': 'form-control', 'placeholder': 'Username'}}) }}
   {{ form_errors(form.login) }}
 </div>
 
-<div class="form-group l-sign-form-group">
-  {{ form_label(form.email, "Email", {'label_attr': {'class':'sr-only'} }) }}
+<div class="mb-3 l-sign-mb-3">
+  {{ form_label(form.email, "Email", {'label_attr': {'class':'visually-hidden'} }) }}
   {{ form_widget(form.email, {'attr':{'class': 'form-control', 'placeholder': 'Email'}}) }}
   {{ form_errors(form.email) }}
 </div>
 
-<div class="form-group l-sign-form-group">
-  {{ form_label(form.password.first, "Password", {'label_attr': {'class':'sr-only'} }) }}
+<div class="mb-3 l-sign-mb-3">
+  {{ form_label(form.password.first, "Password", {'label_attr': {'class':'visually-hidden'} }) }}
   {{ form_widget(form.password.first, {'attr':{'class': 'form-control', 'placeholder': 'Password'}}) }}
   {{ form_errors(form.password.first) }}
 </div>
 
-<div class="form-group l-sign-form-group">
-  {{ form_label(form.password.second, "Repeat password", {'label_attr': {'class':'sr-only'} }) }}
+<div class="mb-3 l-sign-mb-3">
+  {{ form_label(form.password.second, "Repeat password", {'label_attr': {'class':'visually-hidden'} }) }}
   {{ form_widget(form.password.second, {'attr':{'class': 'form-control', 'placeholder': 'Repeat password'}}) }}
   {{ form_errors(form.password.second) }}
 </div>
 
 {% if form.role is defined %}
-<div class="form-group l-sign-form-group">
+<div class="mb-3 l-sign-mb-3">
   {{ form_label(form.role, "Role") }}
-  {{ form_widget(form.role, {'attr':{'class': 'custom-select'}}) }}
+  {{ form_widget(form.role, {'attr':{'class': 'form-select'}}) }}
   {{ form_errors(form.role) }}
 </div>
 {% endif %}

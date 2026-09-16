@@ -28,7 +28,10 @@
 								{% for month, count in monthdata %}
 									<li class="list-group-item border-miu hover-miu bg-secondary-miu calendar-element" data-date="{{ year ~ '-' ~ month ~ '-01' }}">
 										<div class="d-flex align-items-center">
-											<div class="w-100">{{ months[month] }}</div>
+											<div class="w-100">
+												{{ months[month] }}
+												<div class="small calendar-hint" hidden>Now click the end month</div>
+											</div>
 											<div class="ms-auto">
 												<a href="" class="btn btn-sm btn-secondary disabled">{{ count }}</a>
 											</div>

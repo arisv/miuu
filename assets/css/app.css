@@ -148,47 +148,35 @@ a:visited {
     border-radius: 8px;
 }
 
-/* Primary buttons use the app accent instead of Bootstrap blue. */
-.btn-primary,
-.btn-primary:disabled,
-.btn-primary.disabled {
-    background-color: #34e6a1;
-    border-color: #34e6a1;
-    color: #313131;
-}
-
-.btn-primary:hover,
-.btn-primary:focus,
-.btn-primary:not(:disabled):not(.disabled):active,
-.btn-primary:not(:disabled):not(.disabled).active,
-.show > .btn-primary.dropdown-toggle {
-    background-color: #1fcf8a;
-    border-color: #1fcf8a;
-    color: #313131;
-}
-
-.btn-primary:focus,
-.btn-primary:not(:disabled):not(.disabled):active:focus,
-.btn-primary:not(:disabled):not(.disabled).active:focus {
-    box-shadow: 0 0 0 0.2rem rgba(52, 230, 161, 0.5);
+/* Primary buttons use the app accent instead of Bootstrap blue (Bootstrap 5 button CSS variables). */
+.btn-primary {
+    --bs-btn-color: #313131;
+    --bs-btn-bg: #34e6a1;
+    --bs-btn-border-color: #34e6a1;
+    --bs-btn-hover-color: #313131;
+    --bs-btn-hover-bg: #1fcf8a;
+    --bs-btn-hover-border-color: #1fcf8a;
+    --bs-btn-focus-shadow-rgb: 52, 230, 161;
+    --bs-btn-active-color: #313131;
+    --bs-btn-active-bg: #1bbd7e;
+    --bs-btn-active-border-color: #1bbd7e;
+    --bs-btn-disabled-color: #313131;
+    --bs-btn-disabled-bg: #34e6a1;
+    --bs-btn-disabled-border-color: #34e6a1;
 }
 
 .btn-outline-primary {
-    border-color: #34e6a1;
-    color: #34e6a1;
-}
-
-.btn-outline-primary:hover,
-.btn-outline-primary:not(:disabled):not(.disabled):active,
-.btn-outline-primary:not(:disabled):not(.disabled).active {
-    background-color: #34e6a1;
-    border-color: #34e6a1;
-    color: #313131;
-}
-
-.btn-outline-primary:focus,
-.btn-outline-primary:not(:disabled):not(.disabled):active:focus {
-    box-shadow: 0 0 0 0.2rem rgba(52, 230, 161, 0.5);
+    --bs-btn-color: #34e6a1;
+    --bs-btn-border-color: #34e6a1;
+    --bs-btn-hover-color: #313131;
+    --bs-btn-hover-bg: #34e6a1;
+    --bs-btn-hover-border-color: #34e6a1;
+    --bs-btn-focus-shadow-rgb: 52, 230, 161;
+    --bs-btn-active-color: #313131;
+    --bs-btn-active-bg: #34e6a1;
+    --bs-btn-active-border-color: #34e6a1;
+    --bs-btn-disabled-color: #34e6a1;
+    --bs-btn-disabled-border-color: #34e6a1;
 }
 
 .btn-outline-miu {

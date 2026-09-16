@@ -28,19 +28,19 @@
 
                     <h1 class="text-center mrgb30">Login</h1>
 
-                    <div class="form-group l-sign-form-group">
-                        {{ form_label(form.username, "Login", {'label_attr': {'class':'sr-only'} }) }}
+                    <div class="mb-3 l-sign-mb-3">
+                        {{ form_label(form.username, "Login", {'label_attr': {'class':'visually-hidden'} }) }}
                         {{ form_widget(form.username, {'value': lastUsername, 'attr':{'class': 'form-control', 'placeholder': 'Email / Login'}}) }}
                         {{ form_errors(form.username) }}
                     </div>
 
-                    <div class="form-group l-sign-form-group">
-                        {{ form_label(form.password, "Password", {'label_attr': {'class':'sr-only'} }) }}
+                    <div class="mb-3 l-sign-mb-3">
+                        {{ form_label(form.password, "Password", {'label_attr': {'class':'visually-hidden'} }) }}
                         {{ form_widget(form.password, {'attr':{'class': 'form-control', 'placeholder': 'Password'}}) }}
                         {{ form_errors(form.password) }}
                     </div>
 
-                    <div class="form-group l-sign-form-group form-check">
+                    <div class="mb-3 l-sign-mb-3 form-check">
                         {{ form_widget(form._remember_me, {'attr': {'class': 'form-check-input'}}) }}
                         {{ form_label(form._remember_me, "Remember me for 30 days", {'label_attr': {'class': 'form-check-label'}}) }}
                     </div>

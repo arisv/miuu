@@ -25,7 +25,7 @@
                     </div>
                     <div class="d-md-none" id="sidebar" style="display: none;">
                         <div id="hamburger-userheader" class="">
-                            <ul id="hamburger-profilebox" class="list-unstyled text-left list-group">
+                            <ul id="hamburger-profilebox" class="list-unstyled text-start list-group">
                                 <li class="list-group-item"><span><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></span><span id="sidebarCloseBtn"><i class="fas fa-times"></i></span></li>
                                 {% if is_granted('ROLE_USER') %}
                                 <li class="list-group-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li>
@@ -41,7 +41,7 @@
                             </ul>
                         </div>
                     </div>
-					<div class="col text-right d-none d-md-block">
+					<div class="col text-end d-none d-md-block">
 						{% if not is_granted('ROLE_USER') %}
 							<div id="loginpanel" class="">
 								<a href="{{ path('auth_login') }}">Login</a>
@@ -53,7 +53,7 @@
 						{% endif %}
 						{% if is_granted('ROLE_USER') %}
 							<div id="userheader" class="">
-								<ul id="profilebox" class="list-unstyled list-inline text-left"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}">Pictures</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}">Logout</a>
+								<ul id="profilebox" class="list-unstyled list-inline text-start"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}">Pictures</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}">Logout</a>
 									</li>
 								</ul>
 							</div>

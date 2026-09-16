@@ -16,20 +16,20 @@
 
             <h4 class="mb-3">Change password</h4>
 
-            <div class="form-group l-sign-form-group">
-                {{ form_label(form.currentPassword, "Current password", {'label_attr': {'class':'sr-only'} }) }}
+            <div class="mb-3 l-sign-mb-3">
+                {{ form_label(form.currentPassword, "Current password", {'label_attr': {'class':'visually-hidden'} }) }}
                 {{ form_widget(form.currentPassword, {'attr':{'class': 'form-control', 'placeholder': 'Current password'}}) }}
                 {{ form_errors(form.currentPassword) }}
             </div>
 
-            <div class="form-group l-sign-form-group">
-                {{ form_label(form.newPassword.first, "New password", {'label_attr': {'class':'sr-only'} }) }}
+            <div class="mb-3 l-sign-mb-3">
+                {{ form_label(form.newPassword.first, "New password", {'label_attr': {'class':'visually-hidden'} }) }}
                 {{ form_widget(form.newPassword.first, {'attr':{'class': 'form-control', 'placeholder': 'New password'}}) }}
                 {{ form_errors(form.newPassword.first) }}
             </div>
 
-            <div class="form-group l-sign-form-group">
-                {{ form_label(form.newPassword.second, "Repeat new password", {'label_attr': {'class':'sr-only'} }) }}
+            <div class="mb-3 l-sign-mb-3">
+                {{ form_label(form.newPassword.second, "Repeat new password", {'label_attr': {'class':'visually-hidden'} }) }}
                 {{ form_widget(form.newPassword.second, {'attr':{'class': 'form-control', 'placeholder': 'Repeat new password'}}) }}
                 {{ form_errors(form.newPassword.second) }}
             </div>

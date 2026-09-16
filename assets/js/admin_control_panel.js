@@ -3,6 +3,33 @@ $(document).ready(function () {
         initialize: function () {
             this.obtainFileSizes();
             $('body').on('click', 'button[data-toggle-user]', this.toggleUserActive.bind(this));
+            $('body').on('click', 'button[data-reset-password]', this.resetUserPassword.bind(this));
+        },
+        resetUserPassword: function (e) {
+            var button = $(e.currentTarget);
+            var row = button.closest('tr');
+            var userId = button.data('reset-password');
+            var login = row.children('td').eq(1).text();
+            if (!window.confirm('Reset password for "' + login + '"? The current password stops working immediately.')) {
+                return;
+            }
+            button.prop('disabled', true);
+            this.postData('/endpoint/resetuserpassword/', {'id': userId}).done(function (data) {
+                if (data.status !== 'ok') {
+                    alert(data.message || 'Unable to reset password');
+                    return;
+                }
+                var result = row.find('[data-password-result]');
+                result.empty()
+                    .append('New password (shown once): ')
+                    .append($('<code>').text(data.password))
+                    .prop('hidden', false);
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON && xhr.responseJSON.message;
+                alert(message || 'Unable to reset password');
+            }).always(function () {
+                button.prop('disabled', false);
+            });
         },
         toggleUserActive: function (e) {
             var button = $(e.currentTarget);

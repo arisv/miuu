@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\Type\UserLoginType;
+use App\Form\Type\UserPasswordChangeType;
 use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
 use App\Service\FileService;
@@ -11,6 +12,7 @@ use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -79,11 +81,32 @@ class WebController extends AbstractController
     }
 
     #[Route("/manage/", name: "cabinet_home")]
-    public function userCabinetHomeAction(Request $request)
+    public function userCabinetHomeAction(Request $request, UserService $userService, Security $security, LoggerInterface $logger)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
-        return $this->render('manage_layout.html.twig', [
-            'page' => 'home'
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $form = $this->createForm(UserPasswordChangeType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $userService->changePassword($user, $form->getData()['newPassword']);
+                // The session token compares the stored password hash on every request,
+                // so re-login here to keep the user signed in after the change.
+                $security->login($user, 'form_login', 'main');
+                $this->addFlash('global-success', 'Password changed.');
+                return $this->redirectToRoute('cabinet_home');
+            } catch (\Exception $e) {
+                $logger->error('Error changing password for user ' . $user->getId() . ': ' . $e->getMessage());
+                $form->addError(new FormError("Unexpected error has occured and has been logged, try again later or something"));
+            }
+        }
+
+        return $this->render('manage_profile.html.twig', [
+            'page' => 'home',
+            'form' => $form->createView()
         ]);
     }
 

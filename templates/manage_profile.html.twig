@@ -1,0 +1,47 @@
+{% extends 'manage_layout.html.twig' %}
+
+{% form_theme form 'form/miu_errors.html.twig' %}
+
+{% block managecontent %}
+    <div id="profile">
+        <h3>Welcome, {{ app.user.login }}</h3>
+        <p>
+            Current API token: <strong>{{ app.user.remotetoken }}</strong>
+        </p>
+    </div>
+
+    <div class="row pt-3">
+        <div class="col-md-4">
+            {{ form_start(form) }}
+
+            <h4 class="mb-3">Change password</h4>
+
+            <div class="form-group l-sign-form-group">
+                {{ form_label(form.currentPassword, "Current password", {'label_attr': {'class':'sr-only'} }) }}
+                {{ form_widget(form.currentPassword, {'attr':{'class': 'form-control', 'placeholder': 'Current password'}}) }}
+                {{ form_errors(form.currentPassword) }}
+            </div>
+
+            <div class="form-group l-sign-form-group">
+                {{ form_label(form.newPassword.first, "New password", {'label_attr': {'class':'sr-only'} }) }}
+                {{ form_widget(form.newPassword.first, {'attr':{'class': 'form-control', 'placeholder': 'New password'}}) }}
+                {{ form_errors(form.newPassword.first) }}
+            </div>
+
+            <div class="form-group l-sign-form-group">
+                {{ form_label(form.newPassword.second, "Repeat new password", {'label_attr': {'class':'sr-only'} }) }}
+                {{ form_widget(form.newPassword.second, {'attr':{'class': 'form-control', 'placeholder': 'Repeat new password'}}) }}
+                {{ form_errors(form.newPassword.second) }}
+            </div>
+
+            <div class="l-sign-inner">
+                {{ form_errors(form) }}
+                <div class="l-sign-btn">
+                    <button type="submit" class="btn btn-primary btn-wmid">Change password</button>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

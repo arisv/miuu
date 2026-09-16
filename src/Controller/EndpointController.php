@@ -214,6 +214,31 @@ class EndpointController extends AbstractController
         return new JsonResponse($result);
     }
 
+    #[Route(path: '/endpoint/resetuserpassword/', name: 'admin_reset_user_password', methods: ['POST'])]
+    public function resetUserPassword(Request $request, UserService $userService, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $result = ['status' => 'ok'];
+        $userId = (int) $request->request->get('id');
+        /** @var User $actor */
+        $actor = $this->getUser();
+        if ($userId === (int) $actor->getId()) {
+            $result['status'] = 'error';
+            $result['message'] = 'Use your profile page to change your own password';
+            return new JsonResponse($result, 403);
+        }
+        try {
+            [$user, $plainPassword] = $userService->resetPassword($actor, $userId);
+            $result['password'] = $plainPassword;
+            $logger->info("Password for user {$user->getId()} reset by admin {$actor->getId()}");
+        } catch (\Exception $e) {
+            $logger->warning("Cannot reset password for user {$userId}: " . $e->getMessage());
+            $result['status'] = 'error';
+            $result['message'] = $e->getMessage();
+        }
+        return new JsonResponse($result);
+    }
+
     #[Route(path: '/endpoint/getstoragestats/', name: 'admin_storage_stats')]
     public function getStorageStats(Request $request, UserService $userService, LoggerInterface $logger)
     {

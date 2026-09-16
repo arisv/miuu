@@ -88,7 +88,7 @@ class EndpointController extends AbstractController
             }
         } else if ($request->files->has('meowfile_remote')) {
             $file = $request->files->get('meowfile_remote');
-            $remoteToken = $request->request->get('private_key');
+            $remoteToken = trim((string) $request->request->get('private_key', ''));
             try {
                 $storedFile = $fileService->storeRemoteUploadFile($file, $remoteToken);
                 $fullUrl = $fileService->generateFullURL($storedFile);

@@ -22,6 +22,7 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 
 class EndpointController extends AbstractController
 {
+    private const ANONYMOUS_UPLOADS_DISABLED_MESSAGE = 'Anonymous uploads are disabled, please log in to upload files';
 
     #[Route("/i/{customUrl}.{fileExtension}", name: "get_file_custom_legacy", stateless: true)]
     public function serveFileLegacyAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
@@ -70,6 +71,10 @@ class EndpointController extends AbstractController
     {
         $user = $this->getUser();
         if ($request->files->has('meowfile')) {
+            if (!$this->canUploadAnonymously($user)) {
+                $this->addFlash('global-danger', self::ANONYMOUS_UPLOADS_DISABLED_MESSAGE);
+                return $this->redirectToRoute('home');
+            }
             $file = $request->files->get('meowfile');
             try {
                 $storedFile = $fileService->storeFormUploadFile($file, $user);
@@ -104,6 +109,10 @@ class EndpointController extends AbstractController
     {
         $user = $this->getUser();
         if ($request->request->has('mirrorfile') && $path = $request->request->get('mirrorfile')) {
+            if (!$this->canUploadAnonymously($user)) {
+                $this->addFlash('global-danger', self::ANONYMOUS_UPLOADS_DISABLED_MESSAGE);
+                return $this->redirectToRoute('home');
+            }
             try {
                 $storedFile = $fileService->mirrorRemoteFile($path, $user);
                 return $this->render('uploadresult.html.twig', [
@@ -129,6 +138,10 @@ class EndpointController extends AbstractController
         ];
         $user = $this->getUser();
         $code = 400;
+        if (!$this->canUploadAnonymously($user)) {
+            $result['message'] = self::ANONYMOUS_UPLOADS_DISABLED_MESSAGE;
+            return new JsonResponse($result, 403);
+        }
         if ($request->files->has('meowfile')) {
             $file = $request->files->get('meowfile');
             try {
@@ -218,6 +231,11 @@ class EndpointController extends AbstractController
             $result['nextPageRequest'] = $this->generateUrl('user_next_files_page', $defaultParameters);
         }
         return new JsonResponse($result);
+    }
+
+    private function canUploadAnonymously($user): bool
+    {
+        return $user !== null || $this->getParameter('app.allow_anonymous_uploads');
     }
 
     private function generateFileServeResponse(StoredFile $file, string $path): BinaryFileResponse

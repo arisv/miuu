@@ -10,6 +10,17 @@ MIU
 {% endblock %}
 
 {% block maincontent %}
+{% set can_upload = is_granted('ROLE_USER') or allow_anonymous_uploads %}
+{% if not can_upload %}
+<div id="uploader" class="block-app container">
+    <div class="row sideblock justify-content-md-center" id="upload-box">
+        <div class="col-md-8 col-sm-12 text-center" id="upload-box-inner">
+            <h2>Anonymous uploads are disabled</h2>
+            <p>Please <a href="{{ path('auth_login') }}">log in</a>{% if allow_registration %} or <a href="{{ path('auth_register') }}">sign up</a>{% endif %} to upload files.</p>
+        </div>
+    </div>
+</div>
+{% else %}
 <div id="uploader" class="block-app container">
     <div class="row sideblock justify-content-md-center" id="upload-box">
         <div class="col-md-8 col-sm-12" id="upload-box-inner">
@@ -46,6 +57,7 @@ MIU
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block javascripts %}

@@ -33,7 +33,9 @@
                                 <li class="list-group-item"><a href="{{ path('auth_logout') }}">Logout</a>
                                 {% else %}
                                 <li class="list-group-item"><a href="{{ path('auth_login') }}">Login</a></li>
+                                {% if allow_registration %}
                                 <li class="list-group-item"><a href="{{ path('auth_register') }}">Sign up</a></li>
+                                {% endif %}
                                 {% endif %}
                                 </li>
                             </ul>
@@ -43,8 +45,10 @@
 						{% if not is_granted('ROLE_USER') %}
 							<div id="loginpanel" class="">
 								<a href="{{ path('auth_login') }}">Login</a>
+								{% if allow_registration %}
 								or
 								<a href="{{ path('auth_register') }}">Sign up</a>
+								{% endif %}
 							</div>
 						{% endif %}
 						{% if is_granted('ROLE_USER') %}

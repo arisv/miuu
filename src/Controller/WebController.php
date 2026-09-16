@@ -46,6 +46,10 @@ class WebController extends AbstractController
     #[Route("/register", name: "auth_register")]
     public function registerAction(Request $request, EntityManagerInterface $em, UserService $userService, LoggerInterface $logger)
     {
+        if (!$this->getParameter('app.allow_registration')) {
+            throw $this->createNotFoundException('Registration is disabled');
+        }
+
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {
             return $this->redirectToRoute('home');

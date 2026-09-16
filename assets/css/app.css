@@ -19,13 +19,230 @@ body {
 }
 
 #sidebar {
+    position: fixed;
     top: 0;
     left: 0;
-    width: 224px;
+    bottom: 0;
+    width: min(82vw, 320px);
     z-index: 9999;
     background: #1f1f1f;
-    position: absolute;
-    height: 100%;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform .35s cubic-bezier(.32, .72, 0, 1);
+}
+
+body.sidebar-open #sidebar {
+    transform: none;
+}
+
+#sidebarBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+
+body.sidebar-open #sidebarBackdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.profile-sidebar .nav-label-short {
+    display: none;
+}
+
+/* Content clears the sheet's rounded corners on every manage/admin page. */
+.manage-content {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+@media (min-width: 768px) {
+    .profile-sidebar {
+        padding-top: 16px;
+    }
+}
+
+.order-field {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+/* Phones: the calendar column becomes a drawer sliding in from the right, opened by a floating button. */
+#calendarShowBtn {
+    position: fixed;
+    right: 12px;
+    bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+    z-index: 1031;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    font-size: 1.25rem;
+    border-radius: 50%;
+}
+
+#calendarBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+
+body.calendar-open #calendarBackdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.calendar-open #calendarShowBtn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#calendarShowBtn {
+    transition: opacity .2s ease;
+}
+
+.calendar-drawer-head {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+@media (max-width: 767.98px) {
+    .gallery-row {
+        height: auto !important;
+    }
+
+    .gallery-files {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    #calendarPanel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(82vw, 320px);
+        z-index: 9999;
+        background: #1f1f1f;
+        border-right: 0;
+        overflow-y: auto;
+        transform: translateX(105%);
+        visibility: hidden;
+        transition: transform .35s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .35s;
+    }
+
+    body.calendar-open #calendarPanel {
+        transform: none;
+        visibility: visible;
+        transition-delay: 0s;
+    }
+
+    /* The order toolbar docks into the drawer (moved there by app.js) and stacks its fields. */
+    #calendarPanel #navpanel {
+        position: static;
+        padding: 12px;
+        border-bottom: 1px solid #3d3d3d;
+    }
+
+    #calendarPanel #order-form {
+        flex-wrap: wrap;
+        width: 100%;
+        margin: 0 !important;
+    }
+
+    #calendarPanel .order-field {
+        flex: 1 1 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .25rem;
+    }
+
+    #calendarPanel .order-field label {
+        font-size: .8rem;
+    }
+
+    #calendarPanel .order-field .form-select {
+        width: 100% !important;
+    }
+
+    #calendarPanel .order-submit {
+        flex: 1 1 100%;
+        margin-top: .25rem;
+    }
+}
+
+/* Phones: the manage sidebar becomes a fixed bottom tab bar, icon above label. */
+@media (max-width: 767.98px) {
+    .profile-sidebar {
+        position: fixed;
+        left: 12px;
+        right: auto;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        z-index: 1030;
+        width: calc(100% - 24px);
+        max-width: none;
+        padding: 0 !important;
+        border-right: 0;
+    }
+
+    #profile strong {
+        word-break: break-all;
+    }
+
+    .profile-sidebar .list-group {
+        flex-direction: row;
+        justify-content: space-around;
+        background-color: #1f1f1f;
+    }
+
+    .profile-sidebar .list-group a {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px 2px;
+        font-size: .68rem;
+        line-height: 1.15;
+        text-align: center;
+        min-width: 0;
+    }
+
+    .profile-sidebar .list-group a > i,
+    .profile-sidebar .list-group a > svg {
+        display: block;
+        margin: 0 !important;
+        font-size: 1.15rem;
+        width: 1.25em;
+        height: 1em;
+    }
+
+    .profile-sidebar .list-group a.active {
+        border-right: 0;
+        border-top: solid 2px #34e6a1;
+    }
+
+    .profile-sidebar .nav-label-full {
+        display: none;
+    }
+
+    .profile-sidebar .nav-label-short {
+        display: inline;
+    }
+
+    /* Leave room under the content for the bar. */
+    .app {
+        padding-bottom: 104px !important;
+    }
 }
 
 .app {
@@ -131,6 +348,9 @@ a.btn:disabled {
     width: 100%;
     height: 100%;
     background-image: url("../../public/static/miu_bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     overflow: hidden;
 }
 
@@ -215,7 +435,6 @@ a.btn:disabled {
 }
 
 .clipbutton {
-    margin-top: 4px;
     background-color: #34e6a1;
     color: #313131;
 }
@@ -381,6 +600,105 @@ a.btn:disabled {
     font-size: 40px;
 }
 
+/* Touch layouts: tiles get a round checkbox and a fixed action bar instead of hover controls. */
+.itembox-select {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.itembox-select input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+}
+
+.itembox-check-mark {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .9);
+    background: rgba(0, 0, 0, .4);
+    color: transparent;
+    font-size: 14px;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.itembox-check:checked + .itembox-check-mark {
+    background: #34e6a1;
+    border-color: #34e6a1;
+    color: #313131;
+}
+
+.itembox-check:focus-visible + .itembox-check-mark {
+    box-shadow: 0 0 0 3px rgba(52, 230, 161, .55);
+}
+
+.itembox.is-selected {
+    outline: 3px solid #34e6a1;
+    outline-offset: -3px;
+}
+
+#selectionBar {
+    display: none;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: var(--selection-bar-bottom, 12px);
+    z-index: 1031;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 8px 16px;
+    background: #1f1f1f;
+    border: 1px solid #3d3d3d;
+    border-radius: 8px;
+    color: #e6e6e6;
+}
+
+@media (max-width: 767.98px), (hover: none) {
+    .itembox-select {
+        display: block;
+    }
+
+    .itembox:hover .itembox-hover {
+        display: none;
+    }
+
+    body.has-selection #selectionBar {
+        display: flex;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #selectionBar {
+        --selection-bar-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.has-selection .app {
+        padding-bottom: 172px !important;
+    }
+
+    body.has-selection #calendarShowBtn {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
 .error-image {
     max-width: 90%;
 }
@@ -397,13 +715,304 @@ a.btn:disabled {
     width: 72px;
 }
 
-.uploadControls {
-    display: inline-block;
+/* Token / result fields live in an input group; never let the button wrap under the field. */
+.input-group:has(#uploadResult) {
+    flex-wrap: nowrap;
 }
 
-#uploadResult {
-    width: auto;
-    min-width: 238px;
+button[data-toggle-user] {
+    min-width: 5.75rem;
+}
+
+/* Admin lists: one flex row per user/file instead of a table. */
+.admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+    padding: 12px 16px;
+    background: #252526;
+    border: 1px solid #3d3d3d;
+    border-radius: 8px;
+    color: #b4b4b4;
+}
+
+.admin-avatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #34e6a1;
+    color: #313131;
+    font-weight: 700;
+    font-size: 1.15rem;
+    text-transform: uppercase;
+}
+
+.admin-avatar.is-anon {
+    background: #3d3d3d;
+    color: #b4b4b4;
+}
+
+.admin-avatar-sm {
+    display: inline-grid;
+    width: 22px;
+    height: 22px;
+    margin-right: 6px;
+    font-size: .7rem;
+    vertical-align: middle;
+}
+
+.admin-ext {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #3d3d3d;
+    color: #e6e6e6;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.admin-thumb {
+    flex: 0 0 auto;
+    display: block;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #3d3d3d;
+}
+
+.admin-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.admin-row.is-marked .admin-thumb img,
+.admin-row.is-marked .admin-ext {
+    opacity: .45;
+}
+
+.admin-row.is-marked .admin-title {
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, .5);
+}
+
+.admin-chip.admin-marked {
+    background: rgba(220, 53, 69, .2);
+    color: #ffb4bc;
+}
+
+.admin-identity {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.admin-title {
+    font-weight: 600;
+    color: #fff;
+    overflow-wrap: anywhere;
+}
+
+.admin-file-link {
+    color: #fff;
+    text-decoration: none;
+}
+
+.admin-file-link:hover {
+    color: #34e6a1;
+    text-decoration: underline;
+}
+
+.admin-sub {
+    color: #8f948f;
+    font-size: .875rem;
+    overflow-wrap: anywhere;
+}
+
+.admin-meta {
+    flex: 1 1 280px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 22px;
+}
+
+.admin-stat {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.admin-stat-label {
+    font-size: .68rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: #8f948f;
+}
+
+.admin-stat-value {
+    font-size: .9rem;
+    color: #e6e6e6;
+}
+
+.admin-owner {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 6px;
+}
+
+.admin-chip {
+    display: inline-block;
+    padding: .1em .6em;
+    border-radius: 999px;
+    font-size: .74rem;
+    font-weight: 500;
+    vertical-align: middle;
+    background: rgba(255, 255, 255, .08);
+    color: #c9c9c9;
+}
+
+.admin-chip.role-admin {
+    background: rgba(255, 181, 71, .18);
+    color: #ffb547;
+}
+
+.admin-chip.role-user {
+    background: rgba(52, 230, 161, .14);
+    color: #34e6a1;
+}
+
+.admin-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.admin-password-result {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+/* Tablet and up: fixed column widths per list so every row lines up. */
+.admin-list-users {
+    --admin-meta-cols: 10.5rem 4.5rem 5.5rem;
+    --admin-meta-w: calc(20.5rem + 44px);
+    --admin-actions-w: 16rem;
+}
+
+.admin-list-files {
+    --admin-meta-cols: 6.5rem 17rem;
+    --admin-meta-w: calc(23.5rem + 22px);
+    --admin-actions-w: 6rem;
+}
+
+@media (min-width: 768px) {
+    .admin-row {
+        display: grid;
+        column-gap: 18px;
+        row-gap: 8px;
+    }
+
+    .admin-avatar,
+    .admin-thumb,
+    .admin-ext {
+        grid-area: icon;
+        justify-self: center;
+    }
+
+    .admin-identity {
+        grid-area: identity;
+    }
+
+    .admin-meta {
+        grid-area: meta;
+        display: grid;
+        grid-template-columns: var(--admin-meta-cols);
+        column-gap: 22px;
+        width: var(--admin-meta-w);
+        flex: none;
+    }
+
+    .admin-actions {
+        grid-area: actions;
+        justify-self: end;
+        margin-left: 0;
+    }
+}
+
+/* Tablet: meta drops under the identity, actions stay on the right. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .admin-row {
+        grid-template-columns: 48px minmax(0, 1fr) var(--admin-actions-w, auto);
+        grid-template-areas:
+            "icon identity actions"
+            "icon meta actions";
+    }
+
+    .admin-avatar,
+    .admin-thumb,
+    .admin-ext {
+        align-self: start;
+    }
+}
+
+/* Desktop: one line. */
+@media (min-width: 1200px) {
+    .admin-row {
+        grid-template-columns: 48px minmax(0, 1fr) var(--admin-meta-w, auto) var(--admin-actions-w, auto);
+        grid-template-areas: "icon identity meta actions";
+    }
+}
+
+@media (max-width: 767.98px) {
+    .admin-identity {
+        flex: 1 1 0;
+    }
+
+    .admin-meta,
+    .admin-actions {
+        flex-basis: 100%;
+    }
+
+    .admin-actions {
+        align-items: stretch;
+        margin-left: 0;
+    }
+
+    .admin-actions .btn-group {
+        display: flex;
+    }
+
+    .admin-actions .btn-group .btn {
+        flex: 1 1 0;
+    }
+
+    .admin-password-result {
+        text-align: left;
+    }
 }
 
 .admin-menu>li.active {
@@ -425,7 +1034,36 @@ a.btn:disabled {
 }
 
 .calendar-element {
+    position: relative;
     user-select: none;
+}
+
+/* Range hint floats above the month instead of growing the row. */
+.calendar-hint {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding: .25rem .6rem;
+    border-radius: 6px;
+    background: #101311;
+    color: #e6e6e6;
+    font-size: .75rem;
+    line-height: 1.2;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .45);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.calendar-hint::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #101311;
 }
 
 /* First click of a range: darker primary shade until the end month is chosen. */
@@ -461,5 +1099,5 @@ a.btn:disabled {
 }
 
 #profile {
-    padding: 16px;
+    padding: 0;
 }

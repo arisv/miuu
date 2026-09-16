@@ -298,8 +298,8 @@ class FileService
     }
 
     /**
-     * A user may manage files they uploaded. An admin may additionally manage
-     * anonymous files, i.e. files with no upload record at all.
+     * A user may manage files they uploaded. An admin may manage any file,
+     * including anonymous ones with no upload record at all.
      */
     private function findFileManageableBy(User $user, $fileId): StoredFile
     {
@@ -314,8 +314,7 @@ class FileService
 
         if (in_array('ROLE_ADMIN', $user->getRoles())) {
             $file = $this->em->getRepository(StoredFile::class)->find($fileId);
-            $ownedByAnyone = $recordRepo->findOneBy(['image' => $fileId]);
-            if ($file && !$ownedByAnyone) {
+            if ($file) {
                 return $file;
             }
         }
@@ -385,7 +384,7 @@ class FileService
     {
         $limit = 50;
         $fileSql = <<<SQL
-SELECT id, custom_url, original_extension, original_name, internal_size, user_id
+SELECT id, custom_url, original_extension, original_name, internal_size, internal_mimetype, marked_for_deletion_at, user_id
 FROM filestorage
 LEFT JOIN uploadlog u on filestorage.id = u.image_id
 ORDER BY internal_size DESC LIMIT $limit
@@ -407,6 +406,9 @@ SQL;
             if (!$temp['extension']) {
                 $temp['extension'] = "bin";
             }
+            $mime = (string) $fileData['internal_mimetype'];
+            $temp['thumbnailable'] = str_starts_with($mime, 'image') || str_starts_with($mime, 'video');
+            $temp['marked_for_deletion'] = $fileData['marked_for_deletion_at'] !== null;
             $result[] = $temp;
         }
         $users = $this->em->getRepository(User::class)->findUsersByList(array_unique($userIdsEncountered));

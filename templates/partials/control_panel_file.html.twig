@@ -10,15 +10,19 @@
         style="background-image: url({{ asset("/static/generic_file.png") }})"
         {% endif %}
         >
+        <label class="itembox-select">
+            <input type="checkbox" class="itembox-check" data-fileid="{{ item.id }}" aria-label="Select {{ item.originalName }}">
+            <span class="itembox-check-mark"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
+        </label>
         <div class="itembox-text" >
                 <p>{{ item.originalName }}</p>
                 <p>{{ item.getDate|date("Y-m-d h:i:s") }}</p>
         </div>
         <div class="itembox-hover">
             <div class="itembox-controls">
-                <a href="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}" class="btn btn-primary"><i class="fas fa-file-download"></i></a>
-                <button data-deleteaction="del" data-deleteid="{{ item.id }}" data-bs-toggle="tooltip" title="Delete" class="btn btn-danger" {% if item.markedForDeletion == true %}style="display:none"{% endif %}><i class="fas fa-trash"></i></button>
-                <button data-deleteaction="undo" data-deleteid="{{ item.id }}" data-bs-toggle="tooltip" title="Undelete" class="btn btn-warning"  {% if item.markedForDeletion == false %}style="display:none"{% endif %}><i class="fas fa-trash-restore"></i></button>
+                <a href="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}" class="btn btn-primary"><i class="fa-solid fa-download" aria-hidden="true"></i></a>
+                <button data-deleteaction="del" data-deleteid="{{ item.id }}" data-bs-toggle="tooltip" title="Delete" class="btn btn-danger" {% if item.markedForDeletion == true %}style="display:none"{% endif %}><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button data-deleteaction="undo" data-deleteid="{{ item.id }}" data-bs-toggle="tooltip" title="Undelete" class="btn btn-warning"  {% if item.markedForDeletion == false %}style="display:none"{% endif %}><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>
             </div>
         </div>
     </div>

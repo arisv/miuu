@@ -10,7 +10,11 @@ $(function () {
         paramName: 'meowfile',
         maxFileSize: 100,
         maxFiles: 4,
-        timeout: 0
+        timeout: 0,
+        dictDefaultMessage:
+            '<span class="dz-icon"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i></span>' +
+            '<span class="dz-title">Drop files here</span>' +
+            '<span class="dz-hint">or click to browse \u00b7 up to 4 files at a time</span>'
     });
     $('#upload-legacy').hide();
     $('#upload-dropzone').show();

@@ -5,52 +5,59 @@
 {% endblock %}
 
 {% block managecontent %}
-<div class="mb-3 text-end">
-    <a href="{{ path('admin_create_user') }}" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Create user</a>
+<div class="admin-list-head d-flex align-items-center justify-content-between mb-3">
+    <h4 class="mb-0"><i class="fa-solid fa-users me-2" aria-hidden="true"></i>Users <span class="admin-chip ms-2">{{ userlist|length }}</span></h4>
+    <a href="{{ path('admin_create_user') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i>Create user</a>
 </div>
-<table class="table-responsive-sm table table-dark table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Storage usage</th>
-            <th>Status</th>
-            <th>Role</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for user in userlist %}
-        <tr data-userid="{{ user.id }}">
-            <td>{{ user.id }}</td>
-            <td>{{ user.login }}</td>
-            <td>{{ user.email }}</td>
-            <td data-usersize>Calculating...</td>
-            <td data-userstatus>
-                {% if user.active %}
-                    <span class="badge bg-success">Active</span>
-                {% else %}
-                    <span class="badge bg-secondary">Disabled</span>
-                {% endif %}
-            </td>
-            <td>{{ user.role }}</td>
-            <td>
-                {% if user.id and user.id != app.user.id %}
-                    <div class="btn-group btn-group-sm" role="group" aria-label="User actions">
-                        <button type="button" class="btn {{ user.active ? 'btn-warning' : 'btn-success' }}"
-                                data-toggle-user="{{ user.id }}" data-active="{{ user.active ? 1 : 0 }}">
-                            {{ user.active ? 'Disable' : 'Enable' }}
-                        </button>
-                        <button type="button" class="btn btn-danger" data-reset-password="{{ user.id }}">
-                            Reset password
-                        </button>
-                    </div>
-                    <div data-password-result class="mt-1 small text-nowrap" hidden></div>
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+<ul class="admin-list admin-list-users">
+{% for user in userlist %}
+    {% set anonymous = user.id == 0 %}
+    <li class="admin-row" data-userid="{{ user.id }}">
+        <div class="admin-avatar{% if anonymous %} is-anon{% endif %}" aria-hidden="true">
+            {% if anonymous %}<i class="fa-solid fa-user-secret"></i>{% else %}{{ user.login|first }}{% endif %}
+        </div>
+        <div class="admin-identity">
+            <div class="admin-title"><span data-user-login>{{ user.login }}</span> <span class="admin-chip admin-id">#{{ user.id }}</span></div>
+            <div class="admin-sub">{% if anonymous %}Uploads without an account{% else %}{{ user.email }}{% endif %}</div>
+        </div>
+        <div class="admin-meta">
+            <div class="admin-stat" data-stat="storage">
+                <span class="admin-stat-label">Storage</span>
+                <span class="admin-stat-value" data-usersize>Calculating&hellip;</span>
+            </div>
+            {% if not anonymous %}
+            <div class="admin-stat" data-stat="role">
+                <span class="admin-stat-label">Role</span>
+                {% set isAdmin = user.role == constant('App\\Entity\\User::ROLE_ADMIN') %}
+                <span class="admin-stat-value"><span class="admin-chip role-{{ isAdmin ? 'admin' : 'user' }}">{{ isAdmin ? 'Admin' : 'User' }}</span></span>
+            </div>
+            <div class="admin-stat" data-stat="status">
+                <span class="admin-stat-label">Status</span>
+                <span class="admin-stat-value" data-userstatus>
+                    {% if user.active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Disabled</span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% if user.id and user.id != app.user.id %}
+        <div class="admin-actions">
+            <div class="btn-group btn-group-sm" role="group" aria-label="User actions">
+                <button type="button" class="btn {{ user.active ? 'btn-warning' : 'btn-success' }}"
+                        data-toggle-user="{{ user.id }}" data-active="{{ user.active ? 1 : 0 }}">
+                    <i class="fa-solid {{ user.active ? 'fa-ban' : 'fa-check' }} me-1" aria-hidden="true"></i>{{ user.active ? 'Disable' : 'Enable' }}
+                </button>
+                <button type="button" class="btn btn-danger" data-reset-password="{{ user.id }}">
+                    <i class="fa-solid fa-key me-1" aria-hidden="true"></i>Reset password
+                </button>
+            </div>
+            <div data-password-result class="small admin-password-result" hidden></div>
+        </div>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
 {% endblock %}

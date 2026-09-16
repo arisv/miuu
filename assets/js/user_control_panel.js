@@ -18,6 +18,79 @@ $(document).ready(function () {
                 return true;
             }.bind(this));
             this.applyExistingFilter(__filter);
+            this.initializeSelection();
+        },
+        // Touch layouts: hover controls are unreachable, so tiles are selected and acted on from a fixed bar.
+        initializeSelection: function () {
+            this.selectionMedia = window.matchMedia('(max-width: 767.98px), (hover: none)');
+            this.selectionMedia.addEventListener('change', this.updateSelectionBar.bind(this));
+            $('body').on('change', '.itembox-check', this.onSelectionChange.bind(this));
+            $('body').on('click', '.itembox', this.onTileTap.bind(this));
+            $('#selectionBar').on('click', '[data-selection-action]', this.onSelectionAction.bind(this));
+        },
+        onTileTap: function (e) {
+            if (!this.selectionMedia.matches) {
+                return;
+            }
+            if ($(e.target).closest('.itembox-controls, .itembox-select').length) {
+                return;
+            }
+            var box = $(e.currentTarget).find('.itembox-check');
+            box.prop('checked', !box.prop('checked')).trigger('change');
+        },
+        onSelectionChange: function (e) {
+            $(e.target).closest('.itembox').toggleClass('is-selected', e.target.checked);
+            this.updateSelectionBar();
+        },
+        selectedTiles: function () {
+            return $('.itembox-check:checked').closest('.itembox');
+        },
+        visibleDeleteButtons: function (tiles, action) {
+            return tiles.find('button[data-deleteaction="' + action + '"]').filter(function () {
+                return this.style.display !== 'none';
+            });
+        },
+        updateSelectionBar: function () {
+            var tiles = this.selectedTiles();
+            var count = tiles.length;
+            $('body').toggleClass('has-selection', count > 0 && this.selectionMedia.matches);
+            var bar = $('#selectionBar');
+            bar.find('.selection-count').text(count + (count === 1 ? ' file' : ' files'));
+            bar.find('[data-selection-action="del"]').prop('disabled', this.visibleDeleteButtons(tiles, 'del').length === 0);
+            bar.find('[data-selection-action="undo"]').prop('disabled', this.visibleDeleteButtons(tiles, 'undo').length === 0);
+        },
+        clearSelection: function () {
+            $('.itembox-check:checked').prop('checked', false);
+            $('.itembox.is-selected').removeClass('is-selected');
+            this.updateSelectionBar();
+        },
+        onSelectionAction: function (e) {
+            var action = $(e.currentTarget).data('selectionAction');
+            var tiles = this.selectedTiles();
+            if (action === 'clear') {
+                this.clearSelection();
+            } else if (action === 'download') {
+                var urls = tiles.find('.itembox-controls a').map(function () {
+                    return this.href;
+                }).get();
+                if (urls.length === 1) {
+                    window.location.href = urls[0];
+                } else {
+                    urls.forEach(function (url) {
+                        var link = document.createElement('a');
+                        link.href = url;
+                        link.download = '';
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                    });
+                }
+            } else if (action === 'del' || action === 'undo') {
+                // Reuses the per-tile buttons so the endpoint call and state toggle stay in one place.
+                this.visibleDeleteButtons(tiles, action).each(function () {
+                    $(this).trigger('click');
+                });
+            }
         },
         calendarHighlight: function (e) {
             var el = e.currentTarget;
@@ -88,6 +161,7 @@ $(document).ready(function () {
                 newAction = 'undo';
             }
             var newButton = $('button[data-deleteid="' + itemId + '"][data-deleteaction="' + newAction + '"]');
+            var self = this;
             $(pressed).prop('disabled', true);
             this.postData('/endpoint/setdeletestatus/', {
                     'id': itemId,
@@ -98,6 +172,7 @@ $(document).ready(function () {
                         $(pressed).prop('disabled', false);
                         $(pressed).hide();
                         $(newButton).show();
+                        self.updateSelectionBar();
                     }
                 });
         },

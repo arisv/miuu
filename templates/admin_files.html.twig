@@ -5,31 +5,53 @@
 {% endblock %}
 
 {% block managecontent %}
-    <table class="table-responsive-sm table table-dark table-striped">
-        <thead>
-        <tr>
-            <th>File id</th>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Owner user</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for file in files %}
-            <tr>
-                <td>{{ file.file_id }}</td>
-                <td><a href="{{ path('get_file_custom_url', {'customUrl': file.url, 'fileExtension': file.extension}) }}">{{ file.name }}</a></td>
-                <td>{{ file.size }}</td>
-                <td>
+<div class="admin-list-head d-flex align-items-center justify-content-between mb-3">
+    <h4 class="mb-0"><i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Largest files <span class="admin-chip ms-2">{{ files|length }}</span></h4>
+</div>
+<ul class="admin-list admin-list-files">
+{% for file in files %}
+    {% set fileUrl = path('get_file_custom_url', {'customUrl': file.url, 'fileExtension': file.extension}) %}
+    <li class="admin-row{% if file.marked_for_deletion %} is-marked{% endif %}" data-fileid="{{ file.file_id }}">
+        {% if file.thumbnailable %}
+            <a href="{{ fileUrl }}" class="admin-thumb" aria-hidden="true" tabindex="-1">
+                <img src="{{ path('serve_file_thumbnail', {'customUrl': file.url, 'fileExtension': file.extension}) }}" alt="" loading="lazy">
+            </a>
+        {% else %}
+            <div class="admin-ext" aria-hidden="true">{{ file.extension|slice(0, 4) }}</div>
+        {% endif %}
+        <div class="admin-identity">
+            <div class="admin-title"><a href="{{ fileUrl }}" class="admin-file-link">{{ file.name }}</a></div>
+            <div class="admin-sub">
+                <span class="admin-chip admin-id">#{{ file.file_id }}</span>
+                {{ file.url }}.{{ file.extension }}
+                <span class="admin-chip admin-marked" data-marked-chip {% if not file.marked_for_deletion %}hidden{% endif %}><i class="fa-solid fa-trash me-1" aria-hidden="true"></i>Marked for deletion</span>
+            </div>
+        </div>
+        <div class="admin-meta">
+            <div class="admin-stat" data-stat="size">
+                <span class="admin-stat-label">Size</span>
+                <span class="admin-stat-value">{{ file.size }}</span>
+            </div>
+            <div class="admin-stat" data-stat="owner">
+                <span class="admin-stat-label">Owner</span>
+                <span class="admin-stat-value">
                     {% if users[file.user_id] is defined %}
                         {% set user = users[file.user_id] %}
-                        {{ user.id ~ ' / ' ~ user.login ~ ' / ' ~ user.email  }}
+                        <span class="admin-owner"><span class="admin-avatar admin-avatar-sm" aria-hidden="true">{{ user.login|first }}</span>{{ user.login }} <span class="admin-sub">{{ user.email }}</span></span>
                     {% else %}
-                        {{ "Anonymous upload" }}
+                        <span class="admin-owner"><span class="admin-avatar admin-avatar-sm is-anon" aria-hidden="true"><i class="fa-solid fa-user-secret"></i></span>Anonymous</span>
                     {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                </span>
+            </div>
+        </div>
+        <div class="admin-actions">
+            <div class="btn-group btn-group-sm" role="group" aria-label="File actions">
+                <a href="{{ fileUrl }}" class="btn btn-primary" title="Download"><i class="fa-solid fa-download" aria-hidden="true"></i></a>
+                <button type="button" class="btn btn-danger" data-deleteaction="del" data-deleteid="{{ file.file_id }}" title="Delete" {% if file.marked_for_deletion %}hidden{% endif %}><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-warning" data-deleteaction="undo" data-deleteid="{{ file.file_id }}" title="Undelete" {% if not file.marked_for_deletion %}hidden{% endif %}><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>
+            </div>
+        </div>
+    </li>
+{% endfor %}
+</ul>
 {% endblock %}

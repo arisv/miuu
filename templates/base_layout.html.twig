@@ -13,7 +13,7 @@
 			{% block title %}{% endblock %}
 		</title>
 	</head>
-	<body>
+	<body class="glass-ui">
 		<div class="app p-4">
 			<div class="header">
 				<div class="row align-items-start">
@@ -21,20 +21,21 @@
 						<a href="/"><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></a>
 					</div>
                     <div class="d-md-none" id="sidebarShowBtn">
-                    <i class="fas fa-bars"></i>
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
                     </div>
-                    <div class="d-md-none" id="sidebar" style="display: none;">
+                    <div class="d-md-none" id="sidebarBackdrop" aria-hidden="true"></div>
+                    <div class="d-md-none" id="sidebar" aria-hidden="true">
                         <div id="hamburger-userheader" class="">
                             <ul id="hamburger-profilebox" class="list-unstyled text-start list-group">
-                                <li class="list-group-item"><span><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></span><span id="sidebarCloseBtn"><i class="fas fa-times"></i></span></li>
+                                <li class="list-group-item"><span><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></span><span id="sidebarCloseBtn"><i class="fa-solid fa-xmark" aria-hidden="true"></i></span></li>
                                 {% if is_granted('ROLE_USER') %}
-                                <li class="list-group-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li>
-                                <li class="list-group-item"><a href="{{ path('cabinet_mypics') }}">Pictures</a></li>
-                                <li class="list-group-item"><a href="{{ path('auth_logout') }}">Logout</a>
+                                <li class="list-group-item"><a href="{{ path('cabinet_home') }}"><i class="fa-solid fa-user fa-fw me-2" aria-hidden="true"></i>{{ app.user.login }}</a></li>
+                                <li class="list-group-item"><a href="{{ path('cabinet_mypics') }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i>Pictures</a></li>
+                                <li class="list-group-item"><a href="{{ path('auth_logout') }}"><i class="fa-solid fa-right-from-bracket fa-fw me-2" aria-hidden="true"></i>Logout</a>
                                 {% else %}
-                                <li class="list-group-item"><a href="{{ path('auth_login') }}">Login</a></li>
+                                <li class="list-group-item"><a href="{{ path('auth_login') }}"><i class="fa-solid fa-right-to-bracket fa-fw me-2" aria-hidden="true"></i>Login</a></li>
                                 {% if allow_registration %}
-                                <li class="list-group-item"><a href="{{ path('auth_register') }}">Sign up</a></li>
+                                <li class="list-group-item"><a href="{{ path('auth_register') }}"><i class="fa-solid fa-user-plus fa-fw me-2" aria-hidden="true"></i>Sign up</a></li>
                                 {% endif %}
                                 {% endif %}
                                 </li>
@@ -44,16 +45,16 @@
 					<div class="col text-end d-none d-md-block">
 						{% if not is_granted('ROLE_USER') %}
 							<div id="loginpanel" class="">
-								<a href="{{ path('auth_login') }}">Login</a>
+								<a href="{{ path('auth_login') }}"><i class="fa-solid fa-right-to-bracket fa-fw me-2" aria-hidden="true"></i>Login</a>
 								{% if allow_registration %}
 								or
-								<a href="{{ path('auth_register') }}">Sign up</a>
+								<a href="{{ path('auth_register') }}"><i class="fa-solid fa-user-plus fa-fw me-2" aria-hidden="true"></i>Sign up</a>
 								{% endif %}
 							</div>
 						{% endif %}
 						{% if is_granted('ROLE_USER') %}
 							<div id="userheader" class="">
-								<ul id="profilebox" class="list-unstyled list-inline text-start"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}">{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}">Pictures</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}">Logout</a>
+								<ul id="profilebox" class="list-unstyled list-inline text-start"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}"><i class="fa-solid fa-user fa-fw me-2" aria-hidden="true"></i>{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i>Pictures</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}"><i class="fa-solid fa-right-from-bracket fa-fw me-2" aria-hidden="true"></i>Logout</a>
 									</li>
 								</ul>
 							</div>

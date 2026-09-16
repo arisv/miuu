@@ -94,7 +94,7 @@ class UserService
         $sql = 'SELECT YEAR(FROM_UNIXTIME(filestorage.date)) as dyear, MONTH(FROM_UNIXTIME(filestorage.date)) as dmonth, COUNT(filestorage.id) as dcount FROM uploadlog
 JOIN filestorage ON uploadlog.image_id = filestorage.id AND uploadlog.user_id = :user
 GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.date))
-ORDER BY dyear DESC, dmonth ASC';
+ORDER BY dyear DESC, dmonth DESC';
         $stmt = $this->em->getConnection()->prepare($sql);
         $stmt->bindValue("user", $user->getId());
 
@@ -107,15 +107,15 @@ ORDER BY dyear DESC, dmonth ASC';
 LEFT JOIN uploadlog ON uploadlog.image_id = filestorage.id
 WHERE uploadlog.user_id IS NULL
 GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.date))
-ORDER BY dyear DESC, dmonth ASC';
+ORDER BY dyear DESC, dmonth DESC';
         $stmt = $this->em->getConnection()->prepare($sql);
 
         return $this->buildDateTree($stmt->executeQuery()->fetchAllAssociative());
     }
 
     /**
-     * Rows arrive ordered by the queries (years newest first, months January to December);
-     * insertion order is kept so the calendar renders in that same order.
+     * Rows arrive newest first (ORDER BY in the queries); insertion order is kept
+     * so the calendar lists recent years and months at the top.
      */
     private function buildDateTree(array $report)
     {

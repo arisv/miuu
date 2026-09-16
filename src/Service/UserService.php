@@ -36,6 +36,21 @@ class UserService
         return $user;
     }
 
+    public function setUserActive(User $actor, int $userId, bool $active): User
+    {
+        /** @var User|null $user */
+        $user = $this->em->getRepository(User::class)->find($userId);
+        if (!$user) {
+            throw new \Exception("User {$userId} not found");
+        }
+        if ($user->getId() === $actor->getId()) {
+            throw new \Exception("You cannot change your own active status");
+        }
+        $user->setActive($active);
+        $this->em->flush();
+        return $user;
+    }
+
     public function generateToken()
     {
         do {

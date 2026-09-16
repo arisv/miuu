@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\StoredFile;
+use App\Entity\User;
 use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
 use App\Service\FileService;
@@ -185,6 +186,31 @@ class EndpointController extends AbstractController
             $logger->warning("Cannot delete marked files: " . $e->getFile());
             return new JsonResponse(['error' => $e->getMessage()]);
         }
+    }
+
+    #[Route(path: '/endpoint/setuseractive/', name: 'admin_set_user_active', methods: ['POST'])]
+    public function setUserActive(Request $request, UserService $userService, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $result = ['status' => 'ok'];
+        $userId = (int) $request->request->get('id');
+        $active = filter_var($request->request->get('active'), FILTER_VALIDATE_BOOLEAN);
+        /** @var User $actor */
+        $actor = $this->getUser();
+        if ($userId === (int) $actor->getId()) {
+            $result['status'] = 'error';
+            $result['message'] = 'You cannot change your own active status';
+            return new JsonResponse($result, 403);
+        }
+        try {
+            $user = $userService->setUserActive($actor, $userId, $active);
+            $result['active'] = (bool) $user->getActive();
+        } catch (\Exception $e) {
+            $logger->warning("Cannot set active={$active} for user {$userId}: " . $e->getMessage());
+            $result['status'] = 'error';
+            $result['message'] = $e->getMessage();
+        }
+        return new JsonResponse($result);
     }
 
     #[Route(path: '/endpoint/getstoragestats/', name: 'admin_storage_stats')]

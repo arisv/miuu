@@ -73,6 +73,10 @@ class EndpointController extends AbstractController
     {
         $user = $this->getUser();
         if ($request->files->has('meowfile')) {
+            if ($request->request->has('private_key')) {
+                $logger->warning('Rejected meowfile upload carrying private_key: remote clients must use meowfile_remote');
+                return new Response('Token uploads must use the meowfile_remote field', 400);
+            }
             if (!$this->canUploadAnonymously($user)) {
                 $this->addFlash('global-danger', self::ANONYMOUS_UPLOADS_DISABLED_MESSAGE);
                 return $this->redirectToRoute('home');

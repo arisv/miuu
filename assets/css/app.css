@@ -412,9 +412,14 @@ a.btn:disabled {
     color: black;
 }
 
-.calendar-highlight {
+.calendar-highlight,
+.calendar-highlight:hover {
     background-color: #34e6a1;
     color: #ffa800;
+}
+
+.calendar-element {
+    user-select: none;
 }
 
 /* First click of a range: darker primary shade until the end month is chosen. */

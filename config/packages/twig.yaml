@@ -1,5 +1,8 @@
 twig:
     default_path: '%kernel.project_dir%/templates'
+    globals:
+        allow_registration: '%app.allow_registration%'
+        allow_anonymous_uploads: '%app.allow_anonymous_uploads%'
 
 when@test:
     twig:

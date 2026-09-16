@@ -53,6 +53,31 @@ class UserService
         return $user;
     }
 
+    public function changePassword(User $user, string $plainPassword): void
+    {
+        $user->setPassword($this->uphi->hashPassword($user, $plainPassword));
+        $this->em->flush();
+    }
+
+    /**
+     * Admin-side reset: replaces the password with a random one and returns it in plain text
+     * so it can be shown to the admin exactly once.
+     */
+    public function resetPassword(User $actor, int $userId): array
+    {
+        /** @var User|null $user */
+        $user = $this->em->getRepository(User::class)->find($userId);
+        if (!$user) {
+            throw new \Exception("User {$userId} not found");
+        }
+        if ($user->getId() === $actor->getId()) {
+            throw new \Exception("Use your profile page to change your own password");
+        }
+        $plainPassword = bin2hex(random_bytes(6));
+        $this->changePassword($user, $plainPassword);
+        return [$user, $plainPassword];
+    }
+
     public function generateToken()
     {
         do {

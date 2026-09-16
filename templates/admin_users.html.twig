@@ -41,6 +41,10 @@
                             data-toggle-user="{{ user.id }}" data-active="{{ user.active ? 1 : 0 }}">
                         {{ user.active ? 'Disable' : 'Enable' }}
                     </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-reset-password="{{ user.id }}">
+                        Reset password
+                    </button>
+                    <div data-password-result class="mt-1 small" hidden></div>
                 {% endif %}
             </td>
         </tr>

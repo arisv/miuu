@@ -1,5 +1,10 @@
+{% set previewKind = item.markedForDeletion ? 'hidden' : (item.isMimeType(['image']) ? 'image' : (item.isMimeType(['video']) ? 'video' : (item.isMimeType(['audio']) ? 'audio' : 'file'))) %}
 <div class="col">
-    <div class="itembox"
+    <div class="itembox" tabindex="0"
+        data-preview-kind="{{ previewKind }}"
+        data-preview-url="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"
+        data-preview-name="{{ item.originalName }}"
+        data-preview-date="{{ item.getDate|date("Y-m-d H:i:s") }}"
         {% if item.markedForDeletion == true %}
         style="background-image: url({{ asset("/static/hidden_image.png") }})"
         {% elseif item.isThumbnailable %}
@@ -20,6 +25,7 @@
         </div>
         <div class="itembox-hover">
             <div class="itembox-controls">
+                <button type="button" class="btn btn-secondary" data-preview title="Preview"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 <a href="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}" class="btn btn-primary"><i class="fa-solid fa-download" aria-hidden="true"></i></a>
                 <button data-deleteaction="del" data-deleteid="{{ item.id }}" data-bs-toggle="tooltip" title="Delete" class="btn btn-danger" {% if item.markedForDeletion == true %}style="display:none"{% endif %}><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
                 <button data-deleteaction="undo" data-deleteid="{{ item.id }}" data-bs-toggle="tooltip" title="Undelete" class="btn btn-warning"  {% if item.markedForDeletion == false %}style="display:none"{% endif %}><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>

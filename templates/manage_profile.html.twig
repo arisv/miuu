@@ -1,17 +1,47 @@
 {% extends 'manage_layout.html.twig' %}
 
 {% form_theme form 'form/miu_errors.html.twig' %}
+{% form_theme emailForm 'form/miu_errors.html.twig' %}
 
 {% block managecontent %}
     <div class="p-3">
         <div id="profile" class="mb-4">
             <h3>Welcome, {{ app.user.login }}</h3>
             <p class="mb-0">
+                Email: <strong>{{ app.user.email }}</strong>
+            </p>
+            <p class="mb-0">
                 Current API token: <strong>{{ app.user.remotetoken }}</strong>
             </p>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3 g-4">
+            <div class="col-md-5 col-lg-4">
+            {{ form_start(emailForm) }}
+
+            <h4 class="mb-3">Change email</h4>
+
+            <div class="mb-3 l-sign-mb-3">
+                {{ form_label(emailForm.email, "New email", {'label_attr': {'class':'visually-hidden'} }) }}
+                {{ form_widget(emailForm.email, {'attr':{'class': 'form-control', 'placeholder': 'New email', 'autocomplete': 'email'}}) }}
+                {{ form_errors(emailForm.email) }}
+            </div>
+
+            <div class="mb-3 l-sign-mb-3">
+                {{ form_label(emailForm.currentPassword, "Current password", {'label_attr': {'class':'visually-hidden'} }) }}
+                {{ form_widget(emailForm.currentPassword, {'attr':{'class': 'form-control', 'placeholder': 'Current password', 'autocomplete': 'current-password'}}) }}
+                {{ form_errors(emailForm.currentPassword) }}
+            </div>
+
+            <div class="l-sign-inner">
+                {{ form_errors(emailForm) }}
+                <div class="l-sign-btn">
+                    <button type="submit" class="btn btn-primary btn-wmid"><i class="fa-solid fa-envelope fa-fw me-2" aria-hidden="true"></i>Change email</button>
+                </div>
+            </div>
+
+            {{ form_end(emailForm) }}
+            </div>
             <div class="col-md-5 col-lg-4">
             {{ form_start(form) }}
 

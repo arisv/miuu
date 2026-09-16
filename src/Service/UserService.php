@@ -57,6 +57,12 @@ class UserService
         $this->em->flush();
     }
 
+    public function changeEmail(User $user, string $email): void
+    {
+        $user->setEmail(trim($email));
+        $this->em->flush();
+    }
+
     /**
      * Admin-side reset: replaces the password with a random one and returns it in plain text
      * so it can be shown to the admin exactly once.
@@ -74,6 +80,15 @@ class UserService
         $plainPassword = bin2hex(random_bytes(6));
         $this->changePassword($user, $plainPassword);
         return [$user, $plainPassword];
+    }
+
+    /** Replaces the remote upload token; the previous one stops working immediately. */
+    public function regenerateToken(User $user): string
+    {
+        $token = $this->generateToken();
+        $user->setRemoteToken($token);
+        $this->em->flush();
+        return $token;
     }
 
     public function generateToken()

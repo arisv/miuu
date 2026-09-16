@@ -222,12 +222,21 @@ body.glass-ui #upload-box {
     border-bottom-color: var(--g-divider);
 }
 
-body.glass-ui .border-miu {
-    border-color: var(--g-divider);
+/* Calendar column: no hairlines between years or months, the capsules and spacing do the grouping. */
+body.glass-ui .border-miu,
+body.glass-ui #calendarPanel .list-group-item {
+    border: 0;
 }
 
 body.glass-ui .border-right-miu {
-    border-right-color: var(--g-divider);
+    border-right: 0;
+}
+
+/* The tile grid is content inside the sheet: rounded concentrically and clipped. */
+body.glass-ui #file-container {
+    border-radius: var(--g-r-panel);
+    overflow: hidden;
+    margin: 0 10px;
 }
 
 /* Drop target: a glass panel floating on the artwork, with a quiet inner dashed ring for affordance. */
@@ -1105,6 +1114,79 @@ body.glass-ui .itembox-text {
 
 body.glass-ui .itembox-text p {
     color: var(--g-text-strong);
+}
+
+/* Preview modal: a sheet of strong glass over a darkened world. */
+body.glass-ui .modal-backdrop {
+    --bs-backdrop-bg: #05070680;
+    --bs-backdrop-opacity: 1;
+    background: rgba(5, 7, 6, .78);
+}
+
+body.glass-ui .preview-content {
+    border: 0;
+    border-radius: var(--g-r-sheet);
+    background: var(--g-noise), var(--g-sheen), rgba(14, 17, 16, .96);
+    background-blend-mode: overlay, normal, normal;
+    box-shadow: var(--g-rim), 0 40px 90px -20px rgba(0, 0, 0, .8);
+    color: var(--g-text-strong);
+    overflow: hidden;
+}
+
+body.glass-ui .preview-content .modal-header,
+body.glass-ui .preview-content .modal-footer {
+    border-color: var(--g-divider);
+}
+
+body.glass-ui .preview-body {
+    background: rgba(0, 0, 0, .45);
+}
+
+body.glass-ui .preview-meta,
+body.glass-ui .preview-counter,
+body.glass-ui .preview-placeholder {
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .itembox.is-cursor,
+body.glass-ui .itembox:focus-visible {
+    border: 1px solid transparent;
+    outline: 3px solid rgba(255, 255, 255, .92);
+    outline-offset: -3px;
+    box-shadow: inset 0 0 0 5px rgba(0, 0, 0, .45);
+}
+
+body.glass-ui .itembox.is-cursor.is-selected {
+    outline-color: var(--g-accent);
+    box-shadow: inset 0 0 0 5px rgba(255, 255, 255, .9);
+}
+
+body.glass-ui .player-controls {
+    border: 0;
+    background: var(--g-noise), var(--g-sheen), rgba(14, 17, 16, .82);
+    background-blend-mode: overlay, normal, normal;
+    box-shadow: var(--g-rim), var(--g-drop);
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .player-btn[data-player="toggle"] {
+    background: var(--g-accent-solid);
+    color: var(--g-on-accent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+body.glass-ui .player-btn:not([data-player="toggle"]):hover {
+    background: var(--g-flat-hover);
+}
+
+body.glass-ui .player-artwork {
+    background: var(--g-flat-hover);
+    box-shadow: var(--g-rim-soft);
+    color: var(--g-accent);
+}
+
+body.glass-ui .player-time {
+    color: var(--g-text);
 }
 
 /* Admin lists: flat wells in a stack, concentric with the chips and buttons inside. */

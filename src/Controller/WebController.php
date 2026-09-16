@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\Type\UserLoginType;
+use App\Form\Type\UserEmailChangeType;
 use App\Form\Type\UserPasswordChangeType;
 use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
@@ -81,11 +82,31 @@ class WebController extends AbstractController
     }
 
     #[Route("/manage/", name: "cabinet_home")]
-    public function userCabinetHomeAction(Request $request, UserService $userService, Security $security, LoggerInterface $logger)
+    public function userCabinetHomeAction(Request $request, UserService $userService, Security $security, LoggerInterface $logger, EntityManagerInterface $em)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         /** @var User $user */
         $user = $this->getUser();
+
+        // Two independent forms on one page: each only submits when its own name is in the request.
+        $emailForm = $this->createForm(UserEmailChangeType::class, null, [
+            'entity_manager' => $em,
+            'current_user' => $user
+        ]);
+        $emailForm->handleRequest($request);
+
+        if ($emailForm->isSubmitted() && $emailForm->isValid()) {
+            try {
+                $userService->changeEmail($user, $emailForm->getData()['email']);
+                // The email is the session's user identifier, so refresh the token like after a password change.
+                $security->login($user, 'form_login', 'main');
+                $this->addFlash('global-success', 'Email changed.');
+                return $this->redirectToRoute('cabinet_home');
+            } catch (\Exception $e) {
+                $logger->error('Error changing email for user ' . $user->getId() . ': ' . $e->getMessage());
+                $emailForm->addError(new FormError("Unexpected error has occured and has been logged, try again later or something"));
+            }
+        }
 
         $form = $this->createForm(UserPasswordChangeType::class);
         $form->handleRequest($request);
@@ -106,7 +127,8 @@ class WebController extends AbstractController
 
         return $this->render('manage_profile.html.twig', [
             'page' => 'home',
-            'form' => $form->createView()
+            'form' => $form->createView(),
+            'emailForm' => $emailForm->createView()
         ]);
     }
 

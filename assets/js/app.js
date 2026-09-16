@@ -28,6 +28,26 @@ $(document).ready(() => {
     });
     $(document).on('keydown', (e) => { if (e.key === 'Escape') drawers.forEach((d) => setOpen(d, false)); });
 
+    // Security page: replace the remote upload token in place.
+    $('body').on('click', 'button[data-refresh-token]', (e) => {
+        const button = $(e.currentTarget);
+        if (!window.confirm('Generate a new API token? Remote uploaders using the current token stop working immediately.')) {
+            return;
+        }
+        const result = $('[data-refresh-token-result]');
+        button.prop('disabled', true);
+        $.ajax({ type: 'POST', url: button.data('refreshUrl') })
+            .done((data) => {
+                $('#uploadResult').val(data.token);
+                result.text('New token generated. Update your uploader configuration.').removeClass('text-danger').prop('hidden', false);
+            })
+            .fail((xhr) => {
+                const message = xhr.responseJSON && xhr.responseJSON.message;
+                result.text(message || 'Unable to generate a new token').addClass('text-danger').prop('hidden', false);
+            })
+            .always(() => button.prop('disabled', false));
+    });
+
     // Gallery: on phones the order toolbar lives inside the calendar drawer, on wider screens above the tiles.
     const navpanel = document.getElementById('navpanel');
     const slot = document.getElementById('calendarToolbarSlot');

@@ -3,6 +3,7 @@
 namespace App\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -20,6 +21,10 @@ class UserLoginType extends AbstractType
             ])
             ->add('password', PasswordType::class, [
                 'constraints' => new NotBlank()
+            ])
+            ->add('_remember_me', CheckboxType::class, [
+                'label' => 'Remember me',
+                'required' => false
             ]);
     }
 

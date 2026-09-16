@@ -618,6 +618,12 @@ a.btn:disabled {
     border: 1px solid #3d3d3d;
 }
 
+/* Title grows so the counter and close button sit at the top right. */
+.preview-content .modal-title {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .preview-body {
     display: flex;
     align-items: center;

@@ -594,7 +594,7 @@ a.btn:disabled {
 /* Gallery: the page grows with the tiles; no inner scrollers, no horizontal overflow. */
 #file-container.row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     margin: 0;
 }
 

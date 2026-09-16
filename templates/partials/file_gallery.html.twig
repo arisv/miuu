@@ -95,10 +95,33 @@
 				<div id="selectionBar" role="toolbar" aria-label="Selected files">
 					<span class="selection-count"></span>
 					<div class="btn-group btn-group-sm">
+						<button type="button" class="btn btn-secondary" data-selection-action="preview" title="Preview"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-primary" data-selection-action="download" title="Download"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-danger" data-selection-action="del" title="Delete"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-warning" data-selection-action="undo" title="Undelete"><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-secondary" data-selection-action="clear" title="Clear selection"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+					</div>
+				</div>
+				<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewTitle" aria-hidden="true">
+					<div class="modal-dialog modal-xl modal-dialog-centered">
+						<div class="modal-content preview-content">
+							<div class="modal-header">
+								<h5 class="modal-title text-truncate" id="previewTitle"></h5>
+								<span class="preview-counter ms-3 text-nowrap"></span>
+								<button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
+							</div>
+							<div class="modal-body preview-body"></div>
+							<div class="modal-footer">
+								<span class="preview-meta me-auto"></span>
+								<div class="btn-group" role="group" aria-label="Previous and next file">
+									<button type="button" class="btn btn-secondary" data-preview-nav="-1" title="Previous (←)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+									<button type="button" class="btn btn-secondary" data-preview-nav="1" title="Next (→)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+								</div>
+								<button type="button" class="btn clipbutton" data-preview-copy data-clipboard-text=""><i class="fa-solid fa-link me-2" aria-hidden="true"></i><span>Copy link</span></button>
+								<a href="#" class="btn btn-primary" data-preview-download><i class="fa-solid fa-download me-2" aria-hidden="true"></i>Download</a>
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-xmark me-2" aria-hidden="true"></i>Close</button>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div id="fetch-in-progress" style="display:none">

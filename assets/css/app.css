@@ -600,6 +600,190 @@ a.btn:disabled {
     font-size: 40px;
 }
 
+/* Keyboard cursor: arrows move it, Space opens the preview. */
+.itembox:focus {
+    outline: none;
+}
+
+.itembox.is-cursor,
+.itembox:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: -3px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .5) inset;
+}
+
+.preview-content {
+    background: #1f1f1f;
+    color: #e6e6e6;
+    border: 1px solid #3d3d3d;
+}
+
+.preview-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    max-height: 76vh;
+    padding: 0;
+    background: rgba(0, 0, 0, .35);
+    overflow: hidden;
+}
+
+.preview-body img,
+.preview-body video {
+    display: block;
+    max-width: 100%;
+    max-height: 76vh;
+    object-fit: contain;
+}
+
+.preview-body audio {
+    width: min(100%, 32rem);
+    margin: 3rem 1rem;
+}
+
+.preview-player {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.preview-player video {
+    width: 100%;
+    max-height: 76vh;
+    background: #000;
+    cursor: pointer;
+}
+
+.preview-player.is-audio {
+    padding: 2.5rem 1rem 4.5rem;
+}
+
+.player-artwork {
+    display: grid;
+    place-items: center;
+    width: 120px;
+    height: 120px;
+    border-radius: 28px;
+    background: #3d3d3d;
+    color: #34e6a1;
+    font-size: 3rem;
+}
+
+.player-artwork svg,
+.player-artwork i {
+    width: 1em;
+    height: 1em;
+}
+
+.player-controls {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(20, 22, 21, .85);
+    border: 1px solid #3d3d3d;
+    color: #e6e6e6;
+    transition: opacity .25s ease;
+}
+
+.preview-player.is-video:not(.is-paused):not(:hover) .player-controls {
+    opacity: 0;
+}
+
+.player-btn {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #e6e6e6;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.player-btn:hover {
+    background: rgba(255, 255, 255, .12);
+}
+
+.player-btn svg,
+.player-btn i {
+    width: 1em;
+    height: 1em;
+}
+
+.player-btn[data-player="toggle"] {
+    background: #34e6a1;
+    color: #313131;
+}
+
+.player-time {
+    flex: 0 0 auto;
+    min-width: 2.6rem;
+    text-align: center;
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.player-seek {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: #34e6a1;
+    height: 4px;
+    cursor: pointer;
+}
+
+.preview-placeholder {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #8f948f;
+}
+
+.preview-placeholder i,
+.preview-placeholder svg {
+    font-size: 3.5rem;
+    display: block;
+    margin: 0 auto .75rem;
+    width: 1em;
+    height: 1em;
+}
+
+.preview-meta,
+.preview-counter {
+    color: #8f948f;
+    font-size: .875rem;
+}
+
+@media (max-width: 767.98px) {
+    .preview-body {
+        min-height: 30vh;
+        max-height: 60vh;
+    }
+
+    .preview-body img,
+    .preview-body video {
+        max-height: 60vh;
+    }
+
+    .modal-footer {
+        justify-content: flex-end;
+    }
+
+    .modal-footer .preview-meta {
+        flex-basis: 100%;
+    }
+}
+
 /* Touch layouts: tiles get a round checkbox and a fixed action bar instead of hover controls. */
 .itembox-select {
     display: none;

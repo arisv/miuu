@@ -9,6 +9,10 @@
             <button id="clipboardbtn" type="button" class="btn btn-success clipbutton" data-clipboard-target="#uploadResult" title="Copy to clipboard">
                 <img src="{{ asset('static/clippy.svg') }}" alt="Copy to clipboard" width="15">
             </button>
+            <button type="button" class="btn btn-warning" data-refresh-token data-refresh-url="{{ path('user_regenerate_token') }}" title="Generate a new token">
+                <i class="fa-solid fa-rotate" aria-hidden="true"></i><span class="visually-hidden">Generate a new token</span>
+            </button>
         </div>
+        <div data-refresh-token-result class="small mb-4" hidden></div>
     </div>
 {% endblock %}

@@ -9,6 +9,18 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CursorService
 {
+    public const DEFAULT_PAGE_SIZE = 24;
+    public const PAGE_SIZES = [24, 48, 72, 96];
+
+    /**
+     * Page size from the "page-size" query parameter, restricted to the allowed multiples of 24.
+     */
+    public function getPageSizeFromRequest(Request $request): int
+    {
+        $requested = (int) $request->query->get('page-size');
+        return in_array($requested, self::PAGE_SIZES, true) ? $requested : self::DEFAULT_PAGE_SIZE;
+    }
+
     public function getOrderFromRequest(Request $request)
     {
         $result = [];

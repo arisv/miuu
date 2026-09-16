@@ -127,7 +127,8 @@ class WebController extends AbstractController
         $orderBy = $cursorService->getOrderFromRequest($request);
         $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
-        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
+        $pageSize = $cursorService->getPageSizeFromRequest($request);
+        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter, $pageSize);
         $dateTree = $userService->getUploadDateTree($user);
         $removalPivot = $fileService->getDeletionPivotDate();
         return $this->render('manage_mypics.html.twig', [
@@ -156,7 +157,8 @@ class WebController extends AbstractController
         $orderBy = $cursorService->getOrderFromRequest($request);
         $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
-        $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter);
+        $pageSize = $cursorService->getPageSizeFromRequest($request);
+        $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter, $pageSize);
         $dateTree = $userService->getAnonymousUploadDateTree();
         $removalPivot = $fileService->getDeletionPivotDate();
         return $this->render('admin_anonymous.html.twig', [

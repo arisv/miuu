@@ -10,6 +10,7 @@
             <ul class="list-group admin-menu">
                 {% set route = app.request.attributes.get('_route') %}
                 <li class="list-group-item {% if route == "admin_manage_users" %}active disabled{% endif %}"><a href="{{ path('admin_manage_users') }}">User list</a></li>
+                <li class="list-group-item {% if route == "admin_create_user" %}active disabled{% endif %}"><a href="{{ path('admin_create_user') }}">Create user</a></li>
                 <li class="list-group-item {% if route == "admin_manage_files" %}active disabled{% endif %}"><a href="{{ path('admin_manage_files') }}">Manage files</a></li>
                 <li class="list-group-item {% if route == "admin_manage_anonymous" %}active disabled{% endif %}"><a href="{{ path('admin_manage_anonymous') }}">Anonymous uploads</a></li>
             </ul>

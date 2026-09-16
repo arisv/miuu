@@ -2,6 +2,7 @@
 
 namespace App\Form\Type;
 
+use App\Entity\User;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -57,11 +58,24 @@ class UserRegistrationType extends AbstractType
                 ]
             ));
 
+        if ($options['with_role']) {
+            $builder->add('role', Type\ChoiceType::class, [
+                'label' => 'Role',
+                'choices' => [
+                    'User' => User::ROLE_USER,
+                    'Admin' => User::ROLE_ADMIN
+                ],
+                'data' => User::ROLE_USER
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setRequired('entity_manager');
+        // Admin-side user creation exposes the role picker; public signup does not.
+        $resolver->setDefault('with_role', false);
+        $resolver->setAllowedTypes('with_role', 'bool');
     }
 
     public function getBlockPrefix(): string

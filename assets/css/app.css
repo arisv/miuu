@@ -148,6 +148,49 @@ a:visited {
     border-radius: 8px;
 }
 
+/* Primary buttons use the app accent instead of Bootstrap blue. */
+.btn-primary,
+.btn-primary:disabled,
+.btn-primary.disabled {
+    background-color: #34e6a1;
+    border-color: #34e6a1;
+    color: #313131;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #1fcf8a;
+    border-color: #1fcf8a;
+    color: #313131;
+}
+
+.btn-primary:focus,
+.btn-primary:not(:disabled):not(.disabled):active:focus,
+.btn-primary:not(:disabled):not(.disabled).active:focus {
+    box-shadow: 0 0 0 0.2rem rgba(52, 230, 161, 0.5);
+}
+
+.btn-outline-primary {
+    border-color: #34e6a1;
+    color: #34e6a1;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:not(:disabled):not(.disabled):active,
+.btn-outline-primary:not(:disabled):not(.disabled).active {
+    background-color: #34e6a1;
+    border-color: #34e6a1;
+    color: #313131;
+}
+
+.btn-outline-primary:focus,
+.btn-outline-primary:not(:disabled):not(.disabled):active:focus {
+    box-shadow: 0 0 0 0.2rem rgba(52, 230, 161, 0.5);
+}
+
 .btn-outline-miu {
     border-color: #34e6a1;
     color: #34e6a1;

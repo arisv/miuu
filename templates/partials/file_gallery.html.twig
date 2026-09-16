@@ -62,8 +62,9 @@
 						</select>
 						<label class="mb-0 text-nowrap" for="page-size">Per page:</label>
 						<select name="page-size" class="form-select w-auto" id="page-size">
+							{% set currentPageSize = app.request.query.get('page-size', 24) %}
 							{% for size in [24, 48, 72, 96] %}
-								<option value="{{ size }}">{{ size }}</option>
+								<option value="{{ size }}"{% if currentPageSize == size %} selected{% endif %}>{{ size }}</option>
 							{% endfor %}
 						</select>
 						<input type="hidden" name="calendar-start">

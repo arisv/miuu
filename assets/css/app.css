@@ -46,16 +46,20 @@ a:visited {
     border-right: 1px solid #3d3d3d;
 }
 
+/* Bootstrap 5 list-group items set their own text color, so dark backgrounds need a light one. */
 .bg-miu {
     background: #1f1f1f;
+    color: #b4b4b4;
 }
 
 .bg-secondary-miu {
     background: #353535;
+    color: #b4b4b4;
 }
 
 .hover-miu:hover {
     background: #5a5a5a;
+    color: #ffffff;
 }
 
 .block-app {

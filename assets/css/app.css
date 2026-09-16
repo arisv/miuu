@@ -115,15 +115,6 @@ body.calendar-open #calendarShowBtn {
 }
 
 @media (max-width: 767.98px) {
-    .gallery-row {
-        height: auto !important;
-    }
-
-    .gallery-files {
-        height: auto !important;
-        overflow: visible !important;
-    }
-
     #calendarPanel {
         position: fixed;
         top: 0;
@@ -598,6 +589,34 @@ a.btn:disabled {
     margin-left: 20px;
     font-weight: 600;
     font-size: 40px;
+}
+
+/* Gallery: the page grows with the tiles; no inner scrollers, no horizontal overflow. */
+#file-container.row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+    margin: 0;
+}
+
+#file-container > .col {
+    min-width: 0;
+    padding: 0;
+}
+
+.itembox {
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .calendar-column {
+        position: sticky;
+        top: 8px;
+        align-self: flex-start;
+        max-height: calc(100vh - 16px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+    }
 }
 
 /* Keyboard cursor: arrows move it, Space opens the preview. */

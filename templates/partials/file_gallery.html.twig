@@ -15,8 +15,8 @@
     "11": "November",
     "12": "December",
 } %}
-	<div class="row gallery-row" style="height: 1440px">
-		<div class="col-md-2 border-right-miu p-0 overflow-auto h-100" id="calendarPanel">
+	<div class="row gallery-row">
+		<div class="col-md-2 p-0 calendar-column" id="calendarPanel">
 			{% if dateTree is not empty %}
 				<div class="calendar-drawer-head d-flex d-md-none align-items-center justify-content-between">
 					<span class="fw-semibold"><i class="fa-regular fa-calendar me-2" aria-hidden="true"></i>Filters</span>
@@ -53,7 +53,7 @@
 		{% if dateTree is not empty %}
 			<button type="button" class="btn btn-primary d-md-none" id="calendarShowBtn" aria-label="Open calendar" aria-controls="calendarPanel" aria-expanded="false"><i class="fa-regular fa-calendar" aria-hidden="true"></i></button>
 		{% endif %}
-		<div class="col-md-10 overflow-auto h-100 gallery-files">
+		<div class="col-md-10 gallery-files">
 			{% if pageData.files is not empty %}
 				<div id="navpanel" class="d-flex justify-content-end">
 					<form id="order-form" class="d-flex align-items-center gap-2 m-2" action="">
@@ -140,12 +140,12 @@
 						</div>
 					</div>
 				</div>
-				<div class="row">
+				<div class="p-3 gallery-pager">
 					{% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
 					{% if pageData.hasNextPage %}
-						<button data-pagination-next="{{ path(nextPageRoute, defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg w-100 m-3">Get more!</button>
+						<button data-pagination-next="{{ path(nextPageRoute, defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg w-100">Get more!</button>
 					{% else %}
-						<button disabled type="button" class="btn btn-info btn-lg w-100 m-3">No more files!</button>
+						<button disabled type="button" class="btn btn-info btn-lg w-100">No more files!</button>
 					{% endif %}
 				</div>
 			{% else %}

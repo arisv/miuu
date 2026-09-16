@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Form\Extension\Core\Type as Type;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -27,6 +28,17 @@ class UserRegistrationType extends AbstractType
                 'label' => 'Username',
                 'constraints' => [
                     new NotBlank(),
+                    new Length([
+                        'min' => 3,
+                        'max' => 32,
+                        'minMessage' => 'Username should be at least {{ limit }} characters',
+                        'maxMessage' => 'Username should be at most {{ limit }} characters'
+                    ]),
+                    // No "@" so a username can never be mistaken for an email at login.
+                    new Regex([
+                        'pattern' => '/^[A-Za-z0-9_.-]+$/',
+                        'message' => 'Username may only contain letters, digits, dots, dashes and underscores'
+                    ]),
                     new Callback([$this, 'checkUniqueLogin'])
                 ]
             ])
@@ -83,14 +95,12 @@ class UserRegistrationType extends AbstractType
         return 'user_registration_type';
     }
 
+    /**
+     * Both identifiers are accepted at login, so each must be unique across both columns.
+     */
     public function checkUniqueEmail($data, ExecutionContextInterface $context)
     {
-        $existing = $this->em->getRepository('App\Entity\User')->findOneBy([
-            'email' => $data
-        ]);
-
-        if($existing)
-        {
+        if ($this->identifierTaken($data)) {
             $context->buildViolation('Email already in use')
                 ->atPath('email')
                 ->addViolation();
@@ -99,15 +109,23 @@ class UserRegistrationType extends AbstractType
 
     public function checkUniqueLogin($data, ExecutionContextInterface $context)
     {
-        $existing = $this->em->getRepository('App\Entity\User')->findOneBy([
-            'login' => $data
-        ]);
-
-        if($existing)
-        {
-            $context->buildViolation('Login already in use')
+        if ($this->identifierTaken($data)) {
+            $context->buildViolation('Username already in use')
                 ->atPath('login')
                 ->addViolation();
         }
+    }
+
+    private function identifierTaken($value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+        return (bool) $this->em->getRepository(User::class)->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.login = :value OR u.email = :value')
+            ->setParameter('value', $value)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

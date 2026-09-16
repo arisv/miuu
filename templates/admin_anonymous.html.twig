@@ -1,0 +1,20 @@
+{% extends 'admin_layout.html.twig' %}
+
+{% block title %}
+    Anonymous uploads - MIU
+{% endblock %}
+
+{% block managecontent %}
+    {% include 'partials/file_gallery.html.twig' with {
+        'nextPageRoute': 'admin_next_anonymous_page',
+        'emptyMessage': 'No anonymous uploads yet.'
+    } %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        __filter = {{ filter | raw }}
+    </script>
+    {{ encore_entry_script_tags('manage_user') }}
+{% endblock %}

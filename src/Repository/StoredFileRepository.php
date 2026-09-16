@@ -7,6 +7,7 @@ use App\Entity\UploadRecord;
 use App\Entity\User;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query\Expr;
+use Doctrine\ORM\QueryBuilder;
 
 class StoredFileRepository extends EntityRepository
 {
@@ -21,6 +22,36 @@ class StoredFileRepository extends EntityRepository
 
     public function getUserUploadHistoryPage(User $user, $cursor, $limit, $orderBy, $filter)
     {
+        $qb = $this->getEntityManager()->createQueryBuilder()
+            ->select('log, file')
+            ->from('App\Entity\UploadRecord', 'log')
+            ->leftJoin('log.image', 'file')
+            ->where('log.user = :user')
+            ->setParameter('user', $user);
+
+        return $this->fetchHistoryPage($qb, $cursor, $limit, $orderBy, $filter, 'log.uploadId');
+    }
+
+    /**
+     * Files that have no upload record at all, i.e. were uploaded without being logged in.
+     */
+    public function getAnonymousUploadHistoryPage($cursor, $limit, $orderBy, $filter)
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder()
+            ->select('file')
+            ->from('App\Entity\StoredFile', 'file')
+            ->leftJoin('App\Entity\UploadRecord', 'log', Expr\Join::WITH, 'log.image = file')
+            ->where('log.uploadId IS NULL');
+
+        return $this->fetchHistoryPage($qb, $cursor, $limit, $orderBy, $filter, 'file.id');
+    }
+
+    /**
+     * Shared cursor pagination, ordering and calendar filtering. The query builder must expose
+     * the file under the "file" alias; $tieBreaker is the unique column used to break ordering ties.
+     */
+    private function fetchHistoryPage(QueryBuilder $qb, $cursor, $limit, $orderBy, $filter, string $tieBreaker)
+    {
         $resolve = function ($symbol) {
             if ($symbol == "<") {
                 return ["lt", "lte"];
@@ -31,12 +62,6 @@ class StoredFileRepository extends EntityRepository
             }
         };
 
-        $qb = $this->getEntityManager()->createQueryBuilder()
-            ->select('log, file')
-            ->from('App\Entity\UploadRecord', 'log')
-            ->leftJoin('log.image', 'file')
-            ->where('log.user = :user')
-            ->setParameter('user', $user);
         $qb->setMaxResults($limit + 1);
 
         if (!$orderBy) {
@@ -59,7 +84,7 @@ class StoredFileRepository extends EntityRepository
         $firstSort = $orderBy[$firstSortColumn];
 
         if ($cursor) {
-            $apply = function ($orderBy) use (&$apply, &$qb, $cursor, $resolve, $firstSortColumn, $firstSort) {
+            $apply = function ($orderBy) use (&$apply, &$qb, $cursor, $resolve, $firstSort, $tieBreaker) {
                 $column = array_key_first($orderBy);
                 $columnData = array_shift($orderBy);
                 $placeholder = str_replace('.', '', $column);
@@ -71,12 +96,12 @@ class StoredFileRepository extends EntityRepository
                         $qb->expr()->andX(
                             $qb->expr()->orX(
                                 $qb->expr()->$strict($column, ':col_' . $placeholder),
-                                $qb->expr()->$firstStrict('log.uploadId', ':col_log_upload_id')
+                                $qb->expr()->$firstStrict($tieBreaker, ':col_tiebreaker')
                             )
                         )
                     );
                     $qb->setParameter('col_' . $placeholder, $cursor[$column]);
-                    $qb->setParameter('col_log_upload_id', $cursor['log.uploadId']);
+                    $qb->setParameter('col_tiebreaker', $cursor[$tieBreaker]);
                 } else {
                     $expr = $qb->expr()->andX(
                         $qb->expr()->$equals($column, ':col_' . $placeholder),
@@ -94,11 +119,10 @@ class StoredFileRepository extends EntityRepository
             $qb->andWhere($apply($orderBy));
         }
 
-
         foreach ($orderBy as $column => $orderDirective) {
             $qb->addOrderBy($column, $orderDirective['order']);
         }
-        $qb->addOrderBy('log.uploadId', $firstSort['order']);
+        $qb->addOrderBy($tieBreaker, $firstSort['order']);
 
         return $qb->getQuery()->getResult();
     }

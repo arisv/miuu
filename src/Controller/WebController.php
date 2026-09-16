@@ -125,6 +125,24 @@ class WebController extends AbstractController
         ]);
     }
 
+    #[Route("/manage/admin/anonymous/", name: "admin_manage_anonymous")]
+    public function adminManageAnonymousFiles(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $orderBy = $cursorService->getOrderFromRequest($request);
+        $filter = $cursorService->getFilterFromRequest($request);
+        $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
+        $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter);
+        $dateTree = $userService->getAnonymousUploadDateTree();
+        $removalPivot = $fileService->getDeletionPivotDate();
+        return $this->render('admin_anonymous.html.twig', [
+            'pageData' => $pageData,
+            'dateTree' => $dateTree,
+            'pivot' => $removalPivot,
+            'filter' => json_encode($request->query->all())
+        ]);
+    }
+
     #[Route("/manage/admin/files/", name: "admin_manage_files")]
     public function adminManageFiles(Request $request, FileService $fileService)
     {

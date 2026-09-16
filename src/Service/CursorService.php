@@ -3,6 +3,7 @@
 namespace App\Service;
 
 
+use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -67,17 +68,29 @@ class CursorService
         return [
             'file.internalSize' => $data['s'],
             'log.uploadId' => $data['i'],
+            'file.id' => $data['i'],
             'file.date' => $data['d']
         ];
 
     }
 
-    public function encodeCursor(UploadRecord $record)
+    /**
+     * Accepts an upload record (user history, tie-breaker is the record id)
+     * or a bare stored file (anonymous history, tie-breaker is the file id).
+     */
+    public function encodeCursor(UploadRecord|StoredFile $record)
     {
+        if ($record instanceof UploadRecord) {
+            $file = $record->getImage();
+            $tieBreaker = $record->getUploadId();
+        } else {
+            $file = $record;
+            $tieBreaker = $record->getId();
+        }
         $data = [
-            's' => $record->getImage()->getInternalSize(),
-            'i' => $record->getUploadId(),
-            'd' => $record->getImage()->getDate()
+            's' => $file->getInternalSize(),
+            'i' => $tieBreaker,
+            'd' => $file->getDate()
         ];
         return base64_encode(json_encode($data));
     }

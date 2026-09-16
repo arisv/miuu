@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\StoredFile;
+use App\Entity\UploadRecord;
 use App\Entity\User;
 use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
@@ -236,11 +237,32 @@ class EndpointController extends AbstractController
         $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
+        return $this->renderHistoryPageResponse($request, $pageData, 'user_next_files_page', $fileService, $twig);
+    }
+
+    #[Route(path: '/endpoint/admin_next_anonymous_page/', name: 'admin_next_anonymous_page')]
+    public function fetchNextAnonymousFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $orderBy = $cursorService->getOrderFromRequest($request);
+        $filter = $cursorService->getFilterFromRequest($request);
+        $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
+        $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter);
+        return $this->renderHistoryPageResponse($request, $pageData, 'admin_next_anonymous_page', $fileService, $twig);
+    }
+
+    /**
+     * Renders one page of file cards for infinite scrolling. Page items may be
+     * upload records (user history) or bare stored files (anonymous history).
+     */
+    private function renderHistoryPageResponse(Request $request, array $pageData, string $nextPageRoute, FileService $fileService, \Twig\Environment $twig): JsonResponse
+    {
+        $result = [];
         $rendered = [];
         $removalPivot = $fileService->getDeletionPivotDate();
-        foreach ($pageData['files'] as $file) {
+        foreach ($pageData['files'] as $item) {
             $rendered[] = $twig->render('partials/control_panel_file.html.twig', [
-                'item' => $file->getImage(),
+                'item' => $item instanceof UploadRecord ? $item->getImage() : $item,
                 'pivot' => $removalPivot
             ]);
         }
@@ -254,7 +276,7 @@ class EndpointController extends AbstractController
         }
         if (!empty($pageData['files'])) {
             $defaultParameters['cursor'] = $pageData['cursor'];
-            $result['nextPageRequest'] = $this->generateUrl('user_next_files_page', $defaultParameters);
+            $result['nextPageRequest'] = $this->generateUrl($nextPageRoute, $defaultParameters);
         }
         return new JsonResponse($result);
     }

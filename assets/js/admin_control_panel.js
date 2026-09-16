@@ -48,8 +48,8 @@ $(document).ready(function () {
                 var active = data.active;
                 button.attr('data-active', active ? 1 : 0)
                     .text(active ? 'Disable' : 'Enable')
-                    .toggleClass('btn-outline-warning', active)
-                    .toggleClass('btn-outline-success', !active);
+                    .toggleClass('btn-warning', active)
+                    .toggleClass('btn-success', !active);
                 row.find('td[data-userstatus]').html(active
                     ? '<span class="badge badge-success">Active</span>'
                     : '<span class="badge badge-secondary">Disabled</span>');

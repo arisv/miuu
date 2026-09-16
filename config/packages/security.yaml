@@ -24,6 +24,13 @@ security:
                 use_referer: true
                 enable_csrf: true
                 csrf_parameter: _token
+            remember_me:
+                secret: '%kernel.secret%'
+                # 30 days
+                lifetime: 2592000
+                path: /
+                remember_me_parameter: _remember_me
+                signature_properties: [password]
             logout:
                 path: auth_logout
                 target: home

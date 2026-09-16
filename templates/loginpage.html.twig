@@ -40,6 +40,11 @@
                         {{ form_errors(form.password) }}
                     </div>
 
+                    <div class="form-group l-sign-form-group form-check">
+                        {{ form_widget(form._remember_me, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form._remember_me, "Remember me for 30 days", {'label_attr': {'class': 'form-check-label'}}) }}
+                    </div>
+
                     <div class="l-sign-inner">
                         {% if error is not null %}
                         <div class="alert alert-danger">

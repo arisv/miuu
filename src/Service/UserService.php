@@ -11,6 +11,8 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class UserService
 {
+    private const HISTORY_PAGE_SIZE = 12;
+
     public function __construct(
         private EntityManagerInterface $em,
         private CursorService $cursorService,
@@ -70,8 +72,22 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
         $stmt = $this->em->getConnection()->prepare($sql);
         $stmt->bindValue("user", $user->getId());
 
-        $report = $stmt->executeQuery()->fetchAllAssociative();
+        return $this->buildDateTree($stmt->executeQuery()->fetchAllAssociative());
+    }
 
+    public function getAnonymousUploadDateTree()
+    {
+        $sql = 'SELECT YEAR(FROM_UNIXTIME(filestorage.date)) as dyear, MONTH(FROM_UNIXTIME(filestorage.date)) as dmonth, COUNT(filestorage.id) as dcount FROM filestorage
+LEFT JOIN uploadlog ON uploadlog.image_id = filestorage.id
+WHERE uploadlog.user_id IS NULL
+GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.date))';
+        $stmt = $this->em->getConnection()->prepare($sql);
+
+        return $this->buildDateTree($stmt->executeQuery()->fetchAllAssociative());
+    }
+
+    private function buildDateTree(array $report)
+    {
         $result = [];
         foreach ($report as $dateTreeReport) {
             $result[$dateTreeReport['dyear']][$dateTreeReport['dmonth']] = $dateTreeReport['dcount'];
@@ -82,12 +98,30 @@ GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.
 
     public function getUserUploadHistoryPage(User $user, $cursor, $orderBy, $filter)
     {
+        $limit = self::HISTORY_PAGE_SIZE;
+        $fileRepo = $this->em->getRepository(StoredFile::class);
+        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy, $filter);
+
+        return $this->buildHistoryPage($pageFiles, $limit);
+    }
+
+    public function getAnonymousUploadHistoryPage($cursor, $orderBy, $filter)
+    {
+        $limit = self::HISTORY_PAGE_SIZE;
+        $fileRepo = $this->em->getRepository(StoredFile::class);
+        $pageFiles = $fileRepo->getAnonymousUploadHistoryPage($cursor, $limit, $orderBy, $filter);
+
+        return $this->buildHistoryPage($pageFiles, $limit);
+    }
+
+    /**
+     * @param array $pageFiles UploadRecord[] or StoredFile[], one more than $limit when a next page exists
+     */
+    private function buildHistoryPage(array $pageFiles, int $limit)
+    {
         $result = [
             'files' => []
         ];
-        $limit = 12;
-        $fileRepo = $this->em->getRepository(StoredFile::class);
-        $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy, $filter);
 
         if (count($pageFiles) > $limit) {
             $result['hasNextPage'] = true;

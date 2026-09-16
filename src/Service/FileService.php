@@ -286,17 +286,7 @@ class FileService
 
     public function setDeleteStatus(User $user, $fileId, $action)
     {
-        $record = $this->em->getRepository(UploadRecord::class)->findOneBy([
-            'user' => $user,
-            'image' => $fileId
-        ]);
-
-        if (!$record) {
-            throw new \Exception("File not found");
-        }
-
-        /** @var StoredFile $file */
-        $file = $record->getImage();
+        $file = $this->findFileManageableBy($user, $fileId);
         if ($action == 'del') {
             $file->setVisibilityStatus(false);
             $file->setMarkedForDeletionAt(new \DateTime());
@@ -305,6 +295,32 @@ class FileService
             $file->setMarkedForDeletionAt(null);
         }
         $this->em->flush();
+    }
+
+    /**
+     * A user may manage files they uploaded. An admin may additionally manage
+     * anonymous files, i.e. files with no upload record at all.
+     */
+    private function findFileManageableBy(User $user, $fileId): StoredFile
+    {
+        $recordRepo = $this->em->getRepository(UploadRecord::class);
+        $record = $recordRepo->findOneBy([
+            'user' => $user,
+            'image' => $fileId
+        ]);
+        if ($record) {
+            return $record->getImage();
+        }
+
+        if (in_array('ROLE_ADMIN', $user->getRoles())) {
+            $file = $this->em->getRepository(StoredFile::class)->find($fileId);
+            $ownedByAnyone = $recordRepo->findOneBy(['image' => $fileId]);
+            if ($file && !$ownedByAnyone) {
+                return $file;
+            }
+        }
+
+        throw new \Exception("File not found");
     }
 
     public function deleteMarkedFiles($token)

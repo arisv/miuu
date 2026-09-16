@@ -7,11 +7,26 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 class UserRepository extends EntityRepository implements UserLoaderInterface
 {
+    /**
+     * Login form accepts either the username or the email. Username is matched first so the
+     * lookup is deterministic even if some email happened to equal another account's username.
+     */
     public function loadUserByIdentifier(string $usernameOrEmail): ?UserInterface
     {
-        return $this->createQueryBuilder('u')
-            ->where('u.login = :query OR u.email = :query')
+        $byLogin = $this->createQueryBuilder('u')
+            ->where('u.login = :query')
             ->setParameter('query', $usernameOrEmail)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+        if ($byLogin) {
+            return $byLogin;
+        }
+
+        return $this->createQueryBuilder('u')
+            ->where('u.email = :query')
+            ->setParameter('query', $usernameOrEmail)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }

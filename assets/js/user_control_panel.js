@@ -25,12 +25,24 @@ $(document).ready(function () {
 
             if (this.calendarPointer === 'start') {
                 this.calendarRangeStart = date;
+                this.calendarRangeEnd = null;
                 this.calendarPointer = 'end';
+                this.markRangeStart(el);
             } else if (this.calendarPointer === 'end') {
                 this.calendarRangeEnd = date;
                 this.calendarPointer = 'start';
+                this.clearRangeStart();
             }
             this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
+        },
+        markRangeStart: function (el) {
+            this.clearRangeStart();
+            $(el).addClass('calendar-range-start')
+                .find('.calendar-hint').prop('hidden', false);
+        },
+        clearRangeStart: function () {
+            $('[data-date]').removeClass('calendar-range-start')
+                .find('.calendar-hint').prop('hidden', true);
         },
         repaintCalendar: function (rangeStart, rangeEnd) {
             var months = $('[data-date]');

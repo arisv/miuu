@@ -261,7 +261,8 @@ class EndpointController extends AbstractController
         $orderBy = $cursorService->getOrderFromRequest($request);
         $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
-        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter);
+        $pageSize = $cursorService->getPageSizeFromRequest($request);
+        $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter, $pageSize);
         return $this->renderHistoryPageResponse($request, $pageData, 'user_next_files_page', $fileService, $twig);
     }
 
@@ -272,7 +273,8 @@ class EndpointController extends AbstractController
         $orderBy = $cursorService->getOrderFromRequest($request);
         $filter = $cursorService->getFilterFromRequest($request);
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
-        $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter);
+        $pageSize = $cursorService->getPageSizeFromRequest($request);
+        $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter, $pageSize);
         return $this->renderHistoryPageResponse($request, $pageData, 'admin_next_anonymous_page', $fileService, $twig);
     }
 

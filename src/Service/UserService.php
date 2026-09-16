@@ -11,8 +11,6 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class UserService
 {
-    private const HISTORY_PAGE_SIZE = 12;
-
     public function __construct(
         private EntityManagerInterface $em,
         private CursorService $cursorService,
@@ -127,18 +125,16 @@ ORDER BY dyear DESC, dmonth DESC';
         return $result;
     }
 
-    public function getUserUploadHistoryPage(User $user, $cursor, $orderBy, $filter)
+    public function getUserUploadHistoryPage(User $user, $cursor, $orderBy, $filter, int $limit = CursorService::DEFAULT_PAGE_SIZE)
     {
-        $limit = self::HISTORY_PAGE_SIZE;
         $fileRepo = $this->em->getRepository(StoredFile::class);
         $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy, $filter);
 
         return $this->buildHistoryPage($pageFiles, $limit);
     }
 
-    public function getAnonymousUploadHistoryPage($cursor, $orderBy, $filter)
+    public function getAnonymousUploadHistoryPage($cursor, $orderBy, $filter, int $limit = CursorService::DEFAULT_PAGE_SIZE)
     {
-        $limit = self::HISTORY_PAGE_SIZE;
         $fileRepo = $this->em->getRepository(StoredFile::class);
         $pageFiles = $fileRepo->getAnonymousUploadHistoryPage($cursor, $limit, $orderBy, $filter);
 

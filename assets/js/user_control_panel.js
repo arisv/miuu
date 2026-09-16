@@ -75,6 +75,9 @@ $(document).ready(function () {
             if (filter['order-date']) {
                 $(form).find('select[name="order-date"]').val(filter['order-date']);
             }
+            if (filter['page-size']) {
+                $(form).find('select[name="page-size"]').val(filter['page-size']);
+            }
         },
         manageDeletion: function (e) {
             var pressed = e.currentTarget;

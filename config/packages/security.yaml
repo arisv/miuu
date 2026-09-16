@@ -14,6 +14,7 @@ security:
         main:
             pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile))
             provider: users
+            user_checker: App\Security\UserChecker
             form_login:
                 login_path: auth_login
                 check_path: auth_login

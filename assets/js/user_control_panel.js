@@ -41,33 +41,6 @@ $(document).ready(function () {
             $(modalEl).on('click', '[data-preview-nav]', function (e) {
                 this.moveCursor(parseInt($(e.currentTarget).data('previewNav'), 10));
             }.bind(this));
-            // clipboard.js (v1) copies through a textarea appended to <body>; the modal's focus trap
-            // steals focus from it and the copy silently fails, so the modal copies on its own.
-            $(modalEl).on('click', '[data-preview-copy]', function (e) {
-                var button = $(e.currentTarget);
-                var text = button.data('copyText') || '';
-                var label = button.find('span');
-                var feedback = function (ok) {
-                    label.text(ok ? 'Copied!' : 'Copy failed');
-                    setTimeout(function () { label.text('Copy link'); }, 1500);
-                };
-                var fallback = function () {
-                    var area = $('<textarea readonly aria-hidden="true">').css({position: 'fixed', opacity: 0, left: 0, top: 0}).val(text);
-                    $(modalEl).find('.modal-content').append(area);
-                    area[0].focus();
-                    area[0].select();
-                    var ok = false;
-                    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
-                    area.remove();
-                    button.trigger('focus');
-                    feedback(ok);
-                };
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(text).then(function () { feedback(true); }, fallback);
-                } else {
-                    fallback();
-                }
-            });
             $(modalEl).on('hidden.bs.modal', function () {
                 $(modalEl).find('.preview-body').empty();
                 if (this.cursor) {
@@ -246,7 +219,7 @@ $(document).ready(function () {
             modal.find('[data-preview-download]').attr('href', url);
             modal.find('[data-preview-open]').attr('href', tile.data('previewView'));
             var isMedia = kind === 'image' || kind === 'video' || kind === 'audio';
-            modal.find('[data-preview-copy]').data('copyText', new URL(isMedia ? url : tile.data('previewView'), window.location.href).href);
+            modal.find('[data-preview-copy]').attr('data-clipboard-text', new URL(isMedia ? url : tile.data('previewView'), window.location.href).href);
             modal.find('[data-preview-nav="-1"]').prop('disabled', tiles.index(tile) === 0);
             modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1 && !this.hasMorePages());
             var placeholder = function (icon, text) {

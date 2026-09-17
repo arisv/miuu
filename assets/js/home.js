@@ -29,7 +29,7 @@ $(function () {
             }
             const actions = $('<div class="btn-group btn-group-sm dz-actions" role="group" aria-label="Uploaded file actions">');
             actions.append(
-                $('<button type="button" class="btn clipbutton" title="Copy link"><i class="fa-solid fa-link me-1" aria-hidden="true"></i>Copy</button>').attr('data-clipboard-text', reply.copy || reply.download),
+                $('<button type="button" class="btn clipbutton" title="Copy link"><i class="fa-solid fa-link me-1" aria-hidden="true"></i><span class="clip-label">Copy</span></button>').attr('data-clipboard-text', reply.copy || reply.download),
                 $('<a class="btn btn-secondary" title="Open the file page"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span class="visually-hidden">Open</span></a>').attr('href', reply.view)
             );
             $(file.previewTemplate).append($('<div class="text-center">').append(actions));

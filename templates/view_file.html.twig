@@ -12,7 +12,6 @@
 {% set shownExt = '.' in file.originalName ? file.originalName|split('.')|last : extension %}
 {% set description = (shownExt|upper) ~ ' · ' ~ size ~ ' · ' ~ file.getDate|date("Y-m-d H:i") ~ ' UTC' %}
     <meta name="description" content="{{ description }}">
-    <meta name="theme-color" content="#34e6a1">
     <meta property="og:site_name" content="MIU">
     <meta property="og:title" content="{{ file.originalName }}">
     <meta property="og:description" content="{{ description }}">

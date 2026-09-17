@@ -13,7 +13,7 @@ security:
             security: false
         main:
             # The trailing (/|$) keeps raw file URLs such as /vxyz.png in the stateless images firewall.
-            pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile|v)(/|$))
+            pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile|share|v)(/|$))
             provider: users
             user_checker: App\Security\UserChecker
             form_login:

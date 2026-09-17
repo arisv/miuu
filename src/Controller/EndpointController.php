@@ -12,7 +12,6 @@ use App\Service\FileService;
 use App\Service\ThumbnailService;
 use App\Service\UserService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Tests\Compiler\J;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -184,6 +183,65 @@ class EndpointController extends AbstractController
             return $this->render('delete_file.html.twig', $viewData + ['done' => true]);
         }
         return $this->render('delete_file.html.twig', $viewData + ['done' => false]);
+    }
+
+    /**
+     * Web Share Target (Android): the OS posts shared files and/or a link here. There is no CSRF
+     * token in a share sheet POST, so only authenticated sessions are accepted.
+     */
+    #[Route('/share', name: 'share_target', methods: ['GET', 'POST'])]
+    public function shareTargetAction(Request $request, FileService $fileService, LoggerInterface $logger)
+    {
+        if (!$this->isGranted('ROLE_USER')) {
+            $this->addFlash('global-danger', 'Log in once in the installed app, then share to MIU again.');
+            return $this->redirectToRoute('auth_login');
+        }
+        if (!$request->isMethod('POST')) {
+            return $this->redirectToRoute('home');
+        }
+        /** @var User $user */
+        $user = $this->getUser();
+        $stored = [];
+        $failed = 0;
+        $files = $request->files->get('meowfile');
+        foreach (is_array($files) ? $files : array_filter([$files]) as $file) {
+            try {
+                $stored[] = $fileService->storeFormUploadFile($file, $user);
+            } catch (\Exception $e) {
+                $failed++;
+                $logger->error('Share target: cannot store file: ' . $e->getMessage());
+            }
+        }
+        // A shared link arrives in "url", or sometimes only inside "text"; mirror it.
+        $link = trim((string) $request->request->get('url', ''));
+        if ($link === '' && preg_match('#https?://\S+#', (string) $request->request->get('text', ''), $m)) {
+            $link = $m[0];
+        }
+        if ($link !== '') {
+            try {
+                $stored[] = $fileService->mirrorRemoteFile($link, $user);
+            } catch (\Exception $e) {
+                $failed++;
+                $logger->error('Share target: cannot mirror ' . $link . ': ' . $e->getMessage());
+            }
+        }
+        if ($failed > 0) {
+            $this->addFlash('global-danger', $failed === 1 ? 'One shared item could not be stored.' : "{$failed} shared items could not be stored.");
+        }
+        if (count($stored) === 1) {
+            return $this->redirectToRoute('view_file', [
+                'customUrl' => $stored[0]->getCustomUrl(),
+                'fileExtension' => $stored[0]->getOriginalExtension(),
+            ]);
+        }
+        if (count($stored) > 1) {
+            $this->addFlash('global-success', count($stored) . ' files uploaded.');
+            return $this->redirectToRoute('cabinet_mypics');
+        }
+        if ($failed === 0) {
+            $this->addFlash('global-danger', 'Nothing to upload was shared.');
+        }
+        return $this->redirectToRoute('home');
     }
 
     #[Route(path: '/endpoint/dropzone/', name: 'set_file_ajax')]

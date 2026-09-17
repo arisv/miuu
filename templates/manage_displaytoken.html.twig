@@ -120,6 +120,23 @@
 
             <article class="api-endpoint">
                 <header class="api-endpoint-head">
+                    <span class="api-method api-method-get">App</span>
+                    <span class="api-summary">Install MIU and share to it</span>
+                </header>
+                <div class="api-endpoint-body">
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <tbody>
+                            <tr><th>Android</th><td>Open MIU in Chrome, log in, then <em>Install app</em> from the browser menu. The installed app appears in the system share sheet: shared photos, videos and files upload to your account, shared links are mirrored, and you land on the file page with its copy button.</td></tr>
+                            <tr><th>iPhone / iPad</th><td>Safari does not support share targets. Add MIU to the home screen for the app feel, and use a Shortcut for sharing: <em>Receive</em> images/files from the share sheet, then <em>Get Contents of URL</em> to <code>{{ uploadUrl }}</code> as <code>POST</code>, form body with <code>meowfile_remote</code> = the shortcut input, <code>private_key</code> = your token, <code>api_ver</code> = <code>v2</code>, <code>plaintext</code> = <code>1</code>. Finish with <em>Copy to Clipboard</em> on the result.</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </article>
+
+            <article class="api-endpoint">
+                <header class="api-endpoint-head">
                     <span class="api-method api-method-get">ShareX</span>
                     <span class="api-summary">Custom uploader settings</span>
                 </header>

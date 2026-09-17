@@ -8,6 +8,13 @@
 		{% block stylesheets %}
 			{{ encore_entry_link_tags('app') }}
 			<link rel="icon" type="image/png" href="{{ asset('static/miu_favicon.png') }}">
+			<link rel="manifest" href="{{ path('pwa_manifest') }}">
+			<link rel="apple-touch-icon" href="{{ asset('static/icons/apple-touch-icon.png') }}">
+			<meta name="theme-color" content="#34e6a1">
+			<meta name="mobile-web-app-capable" content="yes">
+			<meta name="apple-mobile-web-app-capable" content="yes">
+			<meta name="apple-mobile-web-app-title" content="MIU">
+			<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 		{% endblock %}
 		<title>
 			{% block title %}{% endblock %}

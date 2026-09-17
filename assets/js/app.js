@@ -12,6 +12,12 @@ import { enhancePlayers } from './media-player';
 
 setupClipboard();
 
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => { /* not installable here; the site still works */ });
+    });
+}
+
 $(document).ready(() => {
     enhancePlayers(document);
 

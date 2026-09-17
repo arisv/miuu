@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -27,6 +28,48 @@ class WebController extends AbstractController
     public function homeAction(Request $request)
     {
         return $this->render('homepage.html.twig');
+    }
+
+    /** Served by a route (not a static file) so paths, colours and the share target stay in one place. */
+    #[Route("/manifest.webmanifest", name: "pwa_manifest", priority: 10)]
+    public function manifestAction()
+    {
+        $manifest = [
+            'name' => 'MIU',
+            'short_name' => 'MIU',
+            'description' => 'Upload and share files',
+            'id' => '/',
+            'start_url' => $this->generateUrl('home'),
+            'scope' => '/',
+            'display' => 'standalone',
+            'orientation' => 'any',
+            'background_color' => '#131715',
+            'theme_color' => '#34e6a1',
+            'icons' => [
+                ['src' => '/static/icons/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png'],
+                ['src' => '/static/icons/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png'],
+                ['src' => '/static/icons/maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ],
+            // Android share sheet: files and links shared to the installed app land on the share endpoint.
+            'share_target' => [
+                'action' => $this->generateUrl('share_target'),
+                'method' => 'POST',
+                'enctype' => 'multipart/form-data',
+                'params' => [
+                    'title' => 'title',
+                    'text' => 'text',
+                    'url' => 'url',
+                    'files' => [
+                        ['name' => 'meowfile', 'accept' => ['image/*', 'video/*', 'audio/*', 'application/*', 'text/*']],
+                    ],
+                ],
+            ],
+        ];
+        $response = new JsonResponse($manifest);
+        $response->headers->set('Content-Type', 'application/manifest+json');
+        $response->setPublic();
+        $response->setMaxAge(3600);
+        return $response;
     }
 
     #[Route("/v/{customUrl}.{fileExtension}", name: "view_file")]

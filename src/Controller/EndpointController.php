@@ -7,6 +7,7 @@ use App\Entity\UploadRecord;
 use App\Entity\User;
 use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
+use App\Service\FileIconResolver;
 use App\Service\FileService;
 use App\Service\ThumbnailService;
 use App\Service\UserService;
@@ -180,7 +181,7 @@ class EndpointController extends AbstractController
     }
 
     #[Route(path: '/endpoint/dropzone/', name: 'set_file_ajax')]
-    public function ajaxUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
+    public function ajaxUploadAction(Request $request, FileService $fileService, FileIconResolver $iconResolver, LoggerInterface $logger)
     {
         $result = [
             'success' => false,
@@ -199,6 +200,8 @@ class EndpointController extends AbstractController
                 $result['success'] = true;
                 $result['download'] = $fileService->generateFullURL($storedFile);
                 $result['view'] = $fileService->generateViewURL($storedFile);
+                $result['icon'] = $iconResolver->resolve($storedFile->getInternalMimetype(), $storedFile->getOriginalExtension(), $storedFile->getOriginalName());
+                $result['thumbnailable'] = $storedFile->isThumbnailable();
                 $code = 200;
             } catch (\Exception $e) {
                 $logger->error('Error saving dropzone file: ' . $e->getMessage());

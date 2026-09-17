@@ -9,7 +9,7 @@
 <div class="block-app container view-sheet delete-sheet">
     <div class="view-stage">
         <div class="view-ext{% if done or alreadyMarked %} view-ext-hidden{% endif %}" aria-hidden="true">
-            {% if done or alreadyMarked %}<i class="fa-solid fa-trash"></i>{% else %}{{ extension|slice(0, 4) }}{% endif %}
+            {% if done or alreadyMarked %}<i class="fa-solid fa-trash"></i>{% else %}<i class="fa-solid {{ file_icon(file.internalMimetype, file.originalExtension, file.originalName) }}"></i><span class="view-ext-label">{{ ('.' in file.originalName ? file.originalName|split('.')|last : extension)|slice(0, 7) }}</span>{% endif %}
         </div>
     </div>
     <div class="view-caption">

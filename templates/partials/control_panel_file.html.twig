@@ -1,4 +1,4 @@
-{% set previewKind = item.markedForDeletion ? 'hidden' : (item.isMimeType(['image']) ? 'image' : (item.isMimeType(['video']) ? 'video' : (item.isMimeType(['audio']) ? 'audio' : 'file'))) %}
+{% set previewKind = item.markedForDeletion ? 'hidden' : (item.isMimeType(['image']) ? 'image' : (item.isMimeType(['video']) ? 'video' : (item.isMimeType(['audio']) ? 'audio' : (item.isTextual ? 'text' : 'file')))) %}
 <div class="col">
     <div class="itembox" tabindex="0"
         data-preview-kind="{{ previewKind }}"
@@ -7,16 +7,17 @@
         data-preview-date="{{ item.getDate|date("Y-m-d H:i:s") }}"
         data-preview-view="{{ path('view_file', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"
         {% if not item.markedForDeletion and item.isThumbnailable %}data-preview-thumb="{{ path('serve_file_thumbnail', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"{% endif %}
-        {% if item.markedForDeletion == true %}
-        style="background-image: url({{ asset("/static/hidden_image.png") }})"
-        {% elseif item.isThumbnailable %}
+        data-preview-icon="{{ item.markedForDeletion ? 'fa-trash' : file_icon(item.internalMimetype, item.originalExtension, item.originalName) }}"
+        {% if not item.markedForDeletion and item.isThumbnailable %}
         style="background-image: url({{ path('serve_file_thumbnail', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }})"
-        {% elseif item.isMimeType(['audio']) %}
-        style="background-image: url({{ asset("/static/audio_file.png") }})"
-        {% else %}
-        style="background-image: url({{ asset("/static/generic_file.png") }})"
         {% endif %}
         >
+        {% if item.markedForDeletion %}
+            <div class="itembox-icon is-hidden-file" aria-hidden="true"><i class="fa-solid fa-trash"></i><span class="itembox-ext">deleted</span></div>
+        {% elseif not item.isThumbnailable %}
+            {% set shownExt = '.' in item.originalName ? item.originalName|split('.')|last : item.originalExtension %}
+            <div class="itembox-icon" aria-hidden="true"><i class="fa-solid {{ file_icon(item.internalMimetype, item.originalExtension, item.originalName) }}"></i><span class="itembox-ext">{{ (shownExt ?: 'bin')|slice(0, 7) }}</span></div>
+        {% endif %}
         <label class="itembox-select">
             <input type="checkbox" class="itembox-check" data-fileid="{{ item.id }}" aria-label="Select {{ item.originalName }}">
             <span class="itembox-check-mark"><i class="fa-solid fa-check" aria-hidden="true"></i></span>

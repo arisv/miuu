@@ -45,6 +45,16 @@ class DevSeedCommand extends Command
     // Shares sum to 1.0; the empty key means anonymous (no UploadRecord).
     private const OWNER_SHARES = ['admin' => .30, 'sysop' => .10, 'alice' => .25, 'bob' => .15, 'mallory' => .05, '' => .15];
     private const KIND_SHARES = ['png' => .45, 'jpeg' => .40, 'webp' => .05, 'gif' => .04, 'txt' => .02, 'pdf' => .02, 'zip' => .02];
+
+    /** One file of each kind the icon resolver distinguishes, appended to the newest month for the admin. */
+    private const SHOWCASE = [
+        'pdf' => 'manual.pdf', 'zip' => 'backup.zip', '7z' => 'photos.7z', 'gz' => 'logs.tar.gz', 'iso' => 'rescue-disk.iso',
+        'docx' => 'letter.docx', 'xlsx' => 'budget.xlsx', 'csv' => 'export.csv', 'pptx' => 'pitch.pptx', 'epub' => 'novel.epub',
+        'json' => 'config.json', 'html' => 'index.html', 'py' => 'script.py', 'sh' => 'deploy.sh', 'md' => 'README.md', 'txt' => 'notes.txt',
+        'ttf' => 'Inter-Regular.ttf', 'woff2' => 'Inter.woff2', 'sqlite' => 'app.sqlite', 'deb' => 'miu_1.0_amd64.deb', 'exe' => 'setup.exe',
+        'so' => 'libmiu.so', 'blend' => 'scene.blend', 'obj' => 'model.obj', 'wav' => 'voice-memo.wav', 'pem' => 'server.pem',
+        'torrent' => 'linux.iso.torrent', 'xyz' => 'mystery.xyz',
+    ];
     private const HIDDEN_COUNT = 8;
     private const FIRST_MONTH = '2017-01';
     private const RECENT_MONTHS = 12;
@@ -230,8 +240,21 @@ class DevSeedCommand extends Command
             }
         }
 
+        [$start, $end] = $this->monthBounds(end($months), $now);
+        foreach (self::SHOWCASE as $kind => $name) {
+            $specs[] = [
+                'index' => $index++,
+                'month' => end($months),
+                'ts' => $this->rng->getInt($start, $end),
+                'owner' => 'admin',
+                'kind' => $kind,
+                'hidden' => false,
+                'name' => $name,
+            ];
+        }
+
         foreach ($specs as &$spec) {
-            $spec['name'] = $this->originalName($spec);
+            $spec['name'] = $spec['name'] ?? $this->originalName($spec);
             $spec['customUrl'] = $this->customUrl();
             $spec['serviceUrl'] = bin2hex($this->rng->getBytes(16));
         }
@@ -331,7 +354,7 @@ class DevSeedCommand extends Command
         $this->writeBytes($spec, $tmp);
 
         $mime = $this->mimeTypes->guessMimeType($tmp) ?? 'application/octet-stream';
-        $ext = $this->mimeTypes->getExtensions($mime)[0] ?? 'bin';
+        $ext = $this->mimeTypes->getExtensions($mime)[0] ?? pathinfo($spec['name'], PATHINFO_EXTENSION) ?: 'bin';
 
         $file = new StoredFile();
         $file->setOriginalName($spec['name']);
@@ -389,7 +412,91 @@ class DevSeedCommand extends Command
                 (new Process(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', "color=c={$color}:s=128x128:d=1", '-pix_fmt', 'yuv420p', '-f', 'mp4', $path]))->mustRun();
                 return;
         }
+        if (array_key_exists($spec['kind'], self::SHOWCASE)) {
+            file_put_contents($path, $this->showcaseBytes($spec['kind'], $spec['ts']));
+            return;
+        }
         throw new \RuntimeException('Unknown seed kind ' . $spec['kind']);
+    }
+
+    /**
+     * Small but genuine-looking bytes for each showcase kind: enough magic for mime sniffing to
+     * classify them the way real uploads would be classified.
+     */
+    private function showcaseBytes(string $kind, int $ts): string
+    {
+        $officeZip = function (string $part, string $contentType) use ($ts): string {
+            $tmp = tempnam(sys_get_temp_dir(), 'seedzip');
+            $zip = new \ZipArchive();
+            $zip->open($tmp, \ZipArchive::OVERWRITE);
+            $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/' . $part . '" ContentType="' . $contentType . '"/></Types>');
+            $zip->addFromString($part, '<?xml version="1.0" encoding="UTF-8"?><root/>');
+            foreach (['[Content_Types].xml', $part] as $name) {
+                $zip->setMtimeName($name, $ts);
+            }
+            $zip->close();
+            $bytes = file_get_contents($tmp);
+            unlink($tmp);
+            return $bytes;
+        };
+        $zipWith = function (array $entries, bool $storedFirst = false) use ($ts): string {
+            $tmp = tempnam(sys_get_temp_dir(), 'seedzip');
+            $zip = new \ZipArchive();
+            $zip->open($tmp, \ZipArchive::OVERWRITE);
+            $first = true;
+            foreach ($entries as $name => $content) {
+                $zip->addFromString($name, $content);
+                if ($first && $storedFirst) {
+                    $zip->setCompressionName($name, \ZipArchive::CM_STORE);
+                }
+                $zip->setMtimeName($name, $ts);
+                $first = false;
+            }
+            $zip->close();
+            $bytes = file_get_contents($tmp);
+            unlink($tmp);
+            return $bytes;
+        };
+        switch ($kind) {
+            case 'pdf': return $this->minimalPdf('Showcase PDF');
+            case 'zip': return $zipWith(['readme.txt' => "Showcase archive\n"]);
+            case '7z': return "7z\xBC\xAF\x27\x1C\x00\x04" . str_repeat("\x00", 64);
+            case 'gz': return gzencode(str_repeat("log line\n", 200), 9);
+            case 'iso': return str_repeat("\x00", 0x8000) . "\x01CD001\x01\x00" . str_pad('MIU RESCUE', 2040, "\x20");
+            case 'docx': return $officeZip('word/document.xml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml');
+            case 'xlsx': return $officeZip('xl/workbook.xml', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml');
+            case 'pptx': return $officeZip('ppt/presentation.xml', 'application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml');
+            case 'csv': return "id,name,size\n" . implode('', array_map(fn ($i) => "{$i},file{$i}," . ($i * 1024) . "\n", range(1, 50)));
+            case 'epub': return $zipWith(['mimetype' => 'application/epub+zip', 'META-INF/container.xml' => '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'], true);
+            case 'json': return json_encode(['name' => 'miu', 'seed' => true, 'items' => range(1, 20)], JSON_PRETTY_PRINT);
+            case 'html': return "<!DOCTYPE html>\n<html><head><title>Showcase</title></head><body><h1>Hello</h1></body></html>\n";
+            case 'py': return "#!/usr/bin/env python3\nimport sys\n\nprint('showcase', sys.argv)\n";
+            case 'sh': return "#!/bin/sh\nset -e\necho showcase\n";
+            case 'md': return "# Showcase\n\nA *markdown* document with a list.\n\n- one\n- two\n";
+            case 'txt': return str_repeat("Plain text showcase line.\n", 40);
+            case 'ttf': return "\x00\x01\x00\x00\x00\x01\x00\x10\x00\x00\x00\x00" . 'cmap' . str_repeat("\x00", 128);
+            case 'woff2': return 'wOF2' . "\x00\x01\x00\x00" . str_repeat("\x00", 40);
+            case 'sqlite': return str_pad("SQLite format 3\x00\x10\x00\x01\x01\x00\x40\x20\x20", 4096, "\x00");
+            case 'deb':
+                $ar = function (string $name, string $body) use ($ts): string {
+                    return str_pad($name, 16) . str_pad((string) $ts, 12) . str_pad('0', 6) . str_pad('0', 6) . str_pad('100644', 8) . str_pad((string) strlen($body), 10) . "`\n" . $body . (strlen($body) % 2 ? "\n" : '');
+                };
+                return "!<arch>\n" . $ar('debian-binary', "2.0\n") . $ar('control.tar.gz', gzencode("package: miu\n")) . $ar('data.tar.gz', gzencode("payload\n"));
+            case 'exe': return 'MZ' . str_repeat("\x90", 62) . str_repeat("\x00", 448);
+            case 'so': return "\x7fELF\x02\x01\x01\x00" . str_repeat("\x00", 8) . "\x03\x00\x3e\x00\x01\x00\x00\x00" . str_repeat("\x00", 40) . str_repeat("\x00", 512);
+            case 'blend': return 'BLENDER-v300RENDH' . str_repeat("\x00", 256);
+            case 'obj': return "# Showcase mesh\nv 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n";
+            case 'wav':
+                $samples = '';
+                for ($i = 0; $i < 8000; $i++) {
+                    $samples .= pack('v', (int) (sin($i / 8000 * 2 * M_PI * 440) * 12000) & 0xFFFF);
+                }
+                return 'RIFF' . pack('V', 36 + strlen($samples)) . 'WAVEfmt ' . pack('VvvVVvv', 16, 1, 1, 8000, 16000, 2, 16) . 'data' . pack('V', strlen($samples)) . $samples;
+            case 'pem': return "-----BEGIN CERTIFICATE-----\n" . chunk_split(base64_encode(str_repeat("\x30\x82", 120)), 64, "\n") . "-----END CERTIFICATE-----\n";
+            case 'torrent': return 'd8:announce33:http://tracker.example/announce4:infod6:lengthi1024e4:name8:linux.iso12:piece lengthi16384e6:pieces20:' . str_repeat('a', 20) . 'ee';
+            case 'xyz': return "\xDE\xAD\xBE\xEF" . str_repeat("\x7f\x00\xa5", 200);
+        }
+        throw new \RuntimeException('Unknown showcase kind ' . $kind);
     }
 
     private function writeImage(array $spec, string $path): void

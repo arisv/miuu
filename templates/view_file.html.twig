@@ -100,7 +100,7 @@
     <div class="view-actions">
         <div class="btn-group" role="group" aria-label="File actions">
             <a href="{{ fileUrl }}" class="btn btn-primary" download><i class="fa-solid fa-download me-2" aria-hidden="true"></i>Download</a>
-            <button type="button" class="btn btn-secondary clipbutton" data-clipboard-text="{{ fileUrl }}"><i class="fa-solid fa-link me-2" aria-hidden="true"></i>Copy link</button>
+            <button type="button" class="btn btn-secondary clipbutton" data-clipboard-text="{{ kind in ['image', 'video', 'audio'] ? fileUrl : url('view_file', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) }}"><i class="fa-solid fa-link me-2" aria-hidden="true"></i>Copy link</button>
             {% if canManage %}
                 <button type="button" class="btn {{ hidden ? 'btn-warning' : 'btn-danger' }}" data-view-delete="{{ file.id }}" data-action="{{ hidden ? 'undo' : 'del' }}">
                     <i class="fa-solid {{ hidden ? 'fa-trash-arrow-up' : 'fa-trash' }} me-2" aria-hidden="true"></i><span>{{ hidden ? 'Undelete' : 'Delete' }}</span>

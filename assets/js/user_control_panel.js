@@ -245,7 +245,8 @@ $(document).ready(function () {
             modal.find('.preview-meta').text(tile.data('previewDate'));
             modal.find('[data-preview-download]').attr('href', url);
             modal.find('[data-preview-open]').attr('href', tile.data('previewView'));
-            modal.find('[data-preview-copy]').data('copyText', new URL(url, window.location.href).href);
+            var isMedia = kind === 'image' || kind === 'video' || kind === 'audio';
+            modal.find('[data-preview-copy]').data('copyText', new URL(isMedia ? url : tile.data('previewView'), window.location.href).href);
             modal.find('[data-preview-nav="-1"]').prop('disabled', tiles.index(tile) === 0);
             modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1 && !this.hasMorePages());
             var placeholder = function (icon, text) {

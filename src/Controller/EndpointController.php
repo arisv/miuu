@@ -208,6 +208,7 @@ class EndpointController extends AbstractController
                 $result['view'] = $fileService->generateViewURL($storedFile);
                 $result['icon'] = $iconResolver->resolve($storedFile->getInternalMimetype(), $storedFile->getOriginalExtension(), $storedFile->getOriginalName());
                 $result['thumbnailable'] = $storedFile->isThumbnailable();
+                $result['copy'] = $storedFile->shouldEmbed() ? $result['download'] : $result['view'];
                 $code = 200;
             } catch (\Exception $e) {
                 $logger->error('Error saving dropzone file: ' . $e->getMessage());

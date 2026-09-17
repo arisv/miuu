@@ -146,7 +146,7 @@ $(document).ready(function () {
             }
             var last = tiles.length - 1;
             var target = index + delta;
-            if (delta > 0 && target > last && this.isPreviewOpen()) {
+            if (delta > 0 && target > last) {
                 // Past the loaded set: fetch the next page and land on the target tile (or the new last one).
                 var self = this;
                 var request = this.loadNextPage();
@@ -164,7 +164,7 @@ $(document).ready(function () {
             }
             var next = Math.min(Math.max(index + delta, 0), last);
             this.setCursor(tiles.eq(next));
-            if (next === last && this.isPreviewOpen()) {
+            if (next === last) {
                 this.pendingLoad = this.loadNextPage() || this.pendingLoad;
             }
         },

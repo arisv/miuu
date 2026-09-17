@@ -239,6 +239,14 @@ class EndpointController extends AbstractController
             return $this->redirectToRoute('cabinet_mypics');
         }
         if ($failed === 0) {
+            // Share sheets differ between Android versions; record what actually arrived when it was unusable.
+            $logger->error('Share target received nothing usable', [
+                'content_type' => $request->headers->get('Content-Type'),
+                'content_length' => $request->headers->get('Content-Length'),
+                'fields' => $request->request->all(),
+                'files' => array_map(fn ($f) => is_array($f) ? count($f) : ($f ? $f->getClientOriginalName() . ' ' . $f->getSize() . 'B err=' . $f->getError() : null), $request->files->all()),
+                'user_agent' => $request->headers->get('User-Agent'),
+            ]);
             $this->addFlash('global-danger', 'Nothing to upload was shared.');
         }
         return $this->redirectToRoute('home');

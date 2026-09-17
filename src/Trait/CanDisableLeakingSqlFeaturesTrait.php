@@ -9,7 +9,6 @@ trait CanDisableLeakingSqlFeaturesTrait
     {
         foreach ($managers as $manager) {
             if (property_exists($this, $manager)){
-                $this->$manager?->getConnection()->getConfiguration()->setSQLLogger(null);
                 $this->$manager?->getConnection()->getConfiguration()->setMiddlewares([]);
             }
         }

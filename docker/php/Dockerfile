@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.4-fpm
 
 # ffmpeg/ffprobe for php-ffmpeg video thumbnails; git + unzip for composer.
 RUN apt-get update \

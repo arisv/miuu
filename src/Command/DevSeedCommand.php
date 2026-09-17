@@ -153,6 +153,8 @@ class DevSeedCommand extends Command
         $targets[] = $root . '/' . ThumbnailService::THUMBNAIL_SUB_DIRECTORY;
         $this->fs->remove(array_filter($targets, 'is_dir'));
         $this->io->text('Database tables truncated and storage cleared.');
+        // The seeded-check above loaded users; after truncation their ids get reused, so forget them.
+        $this->em->clear();
     }
 
     /** @return array<string, User> */

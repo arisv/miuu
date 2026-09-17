@@ -46,6 +46,7 @@
         </div>
         <div class="admin-actions">
             <div class="btn-group btn-group-sm" role="group" aria-label="File actions">
+                <a href="{{ path('view_file', {'customUrl': file.url, 'fileExtension': file.extension}) }}" class="btn btn-secondary" title="Open"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
                 <a href="{{ fileUrl }}" class="btn btn-primary" title="Download"><i class="fa-solid fa-download" aria-hidden="true"></i></a>
                 <button type="button" class="btn btn-danger" data-deleteaction="del" data-deleteid="{{ file.file_id }}" title="Delete" {% if file.marked_for_deletion %}hidden{% endif %}><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
                 <button type="button" class="btn btn-warning" data-deleteaction="undo" data-deleteid="{{ file.file_id }}" title="Undelete" {% if not file.marked_for_deletion %}hidden{% endif %}><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>

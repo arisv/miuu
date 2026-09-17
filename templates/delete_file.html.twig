@@ -1,0 +1,42 @@
+{% extends 'base_layout.html.twig' %}
+
+{% block title %}
+    Delete {{ file.originalName }} - MIU
+{% endblock %}
+
+{% block maincontent %}
+{% set alreadyMarked = file.markedForDeletion %}
+<div class="block-app container view-sheet delete-sheet">
+    <div class="view-stage">
+        <div class="view-ext{% if done or alreadyMarked %} view-ext-hidden{% endif %}" aria-hidden="true">
+            {% if done or alreadyMarked %}<i class="fa-solid fa-trash"></i>{% else %}{{ extension|slice(0, 4) }}{% endif %}
+        </div>
+    </div>
+    <div class="view-caption">
+        <h1 class="view-title">{{ file.originalName }}</h1>
+        <div class="view-meta">
+            <span class="admin-chip">{{ extension|upper }}</span>
+            <span>{{ size }}</span>
+            <span>{{ file.getDate|date("Y-m-d H:i") }}</span>
+        </div>
+        {% if done %}
+            <p class="view-note mt-3 mb-0">The file is marked for deletion and is no longer served. Its owner can undelete it from their gallery.</p>
+        {% elseif alreadyMarked %}
+            <p class="view-note mt-3 mb-0">This file is already marked for deletion.</p>
+        {% else %}
+            <p class="view-note mt-3 mb-0">Mark this file for deletion? It stops being served immediately.</p>
+        {% endif %}
+    </div>
+    <div class="view-actions">
+        {% if not done and not alreadyMarked %}
+            <form method="post" action="{{ path('delete_file', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) }}" class="btn-group" role="group" aria-label="Confirm deletion">
+                <input type="hidden" name="key" value="{{ key }}">
+                <a href="{{ path('view_file', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) }}" class="btn btn-secondary"><i class="fa-solid fa-xmark me-2" aria-hidden="true"></i>Cancel</a>
+                <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash me-2" aria-hidden="true"></i>Delete</button>
+            </form>
+        {% else %}
+            <a href="{{ path('home') }}" class="btn btn-secondary"><i class="fa-solid fa-house me-2" aria-hidden="true"></i>Home</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

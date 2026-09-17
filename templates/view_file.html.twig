@@ -1,0 +1,52 @@
+{% extends 'base_layout.html.twig' %}
+
+{% block title %}
+    {{ file.originalName }} - MIU
+{% endblock %}
+
+{% block maincontent %}
+{% set fileUrl = url('get_file_custom_url', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) %}
+{% set hidden = file.markedForDeletion %}
+<div class="block-app container view-sheet{% if hidden %} is-marked{% endif %}" data-fileid="{{ file.id }}">
+    <div class="view-stage view-stage-{{ kind }}">
+        {% if hidden %}
+            <div class="view-ext view-ext-hidden" aria-hidden="true"><i class="fa-solid fa-trash"></i></div>
+            <p class="view-note">This file is marked for deletion and is no longer served.</p>
+        {% elseif kind == 'image' %}
+            <a href="{{ fileUrl }}"><img class="view-media" src="{{ fileUrl }}" alt="{{ file.originalName }}"></a>
+        {% elseif kind == 'video' %}
+            {% set poster = file.isThumbnailable ? path('serve_file_thumbnail', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) : '' %}
+            <div class="view-player" data-media-player="video" data-src="{{ fileUrl }}" data-poster="{{ poster }}">
+                <video class="view-media" controls playsinline preload="metadata" src="{{ fileUrl }}"{% if poster %} poster="{{ poster }}"{% endif %}></video>
+            </div>
+        {% elseif kind == 'audio' %}
+            <div class="view-player" data-media-player="audio" data-src="{{ fileUrl }}">
+                <audio class="view-audio" controls preload="metadata" src="{{ fileUrl }}"></audio>
+            </div>
+        {% else %}
+            <div class="view-ext" aria-hidden="true">{{ extension|slice(0, 4) }}</div>
+        {% endif %}
+    </div>
+    <div class="view-caption">
+        <h1 class="view-title">{{ file.originalName }}</h1>
+        <div class="view-meta">
+            <span class="admin-chip">{{ extension|upper }}</span>
+            <span>{{ size }}</span>
+            <span>{{ file.getDate|date("Y-m-d H:i") }}</span>
+            <span class="admin-chip admin-marked" data-marked-chip {% if not hidden %}hidden{% endif %}><i class="fa-solid fa-trash me-1" aria-hidden="true"></i>Marked for deletion</span>
+        </div>
+    </div>
+    <div class="view-actions">
+        <div class="btn-group" role="group" aria-label="File actions">
+            <a href="{{ fileUrl }}" class="btn btn-primary" download><i class="fa-solid fa-download me-2" aria-hidden="true"></i>Download</a>
+            <button type="button" class="btn btn-secondary clipbutton" data-clipboard-text="{{ fileUrl }}"><i class="fa-solid fa-link me-2" aria-hidden="true"></i>Copy link</button>
+            {% if canManage %}
+                <button type="button" class="btn {{ hidden ? 'btn-warning' : 'btn-danger' }}" data-view-delete="{{ file.id }}" data-action="{{ hidden ? 'undo' : 'del' }}">
+                    <i class="fa-solid {{ hidden ? 'fa-trash-arrow-up' : 'fa-trash' }} me-2" aria-hidden="true"></i><span>{{ hidden ? 'Undelete' : 'Delete' }}</span>
+                </button>
+            {% endif %}
+        </div>
+        <div class="small view-result" data-view-result hidden></div>
+    </div>
+</div>
+{% endblock %}

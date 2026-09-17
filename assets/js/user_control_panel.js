@@ -1,4 +1,5 @@
 import { Modal } from 'bootstrap';
+import { buildPlayer } from './media-player';
 
 $(document).ready(function () {
     var UserGalleryControls = {
@@ -74,6 +75,30 @@ $(document).ready(function () {
                 }
             }.bind(this));
             $(document).on('keydown', this.onPreviewKey.bind(this));
+            // Safari has been seen ignoring Escape via the bubbling handlers; catch it early on the window,
+            // on both key phases, and retry the hide if the modal is still up after the transition.
+            var self = this;
+            var isEscape = function (e) { return e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27; };
+            ['keydown', 'keyup'].forEach(function (type) {
+                window.addEventListener(type, function (e) {
+                    if (!isEscape(e) || !self.isPreviewOpen()) {
+                        return;
+                    }
+                    e.preventDefault();
+                    self.closePreview();
+                }, true);
+            });
+        },
+        closePreview: function () {
+            var self = this;
+            var modalEl = document.getElementById('previewModal');
+            var instance = Modal.getInstance(modalEl) || this.previewModal;
+            instance.hide();
+            setTimeout(function () {
+                if (modalEl.classList.contains('show')) {
+                    instance.hide();
+                }
+            }, 400);
         },
         tiles: function () {
             return $('#file-container .itembox');
@@ -119,8 +144,29 @@ $(document).ready(function () {
             if (index < 0) {
                 index = delta > 0 ? -1 : 0;
             }
-            var next = Math.min(Math.max(index + delta, 0), tiles.length - 1);
+            var last = tiles.length - 1;
+            var target = index + delta;
+            if (delta > 0 && target > last && this.isPreviewOpen()) {
+                // Past the loaded set: fetch the next page and land on the target tile (or the new last one).
+                var self = this;
+                var request = this.loadNextPage();
+                var pending = request || this.pendingLoad;
+                if (pending) {
+                    this.pendingLoad = pending;
+                    pending.done(function () {
+                        var refreshed = self.tiles();
+                        if (refreshed.length > last + 1) {
+                            self.setCursor(refreshed.eq(Math.min(target, refreshed.length - 1)));
+                        }
+                    });
+                    return;
+                }
+            }
+            var next = Math.min(Math.max(index + delta, 0), last);
             this.setCursor(tiles.eq(next));
+            if (next === last && this.isPreviewOpen()) {
+                this.pendingLoad = this.loadNextPage() || this.pendingLoad;
+            }
         },
         isPreviewOpen: function () {
             return $('#previewModal').hasClass('show');
@@ -135,10 +181,13 @@ $(document).ready(function () {
             var open = this.isPreviewOpen();
             var handled = true;
             switch (e.key) {
+                case 'Escape':
+                    if (open) { this.closePreview(); } else { handled = false; }
+                    break;
                 case 'ArrowRight': this.moveCursor(1); break;
                 case 'ArrowLeft': this.moveCursor(-1); break;
-                case 'ArrowDown': this.moveCursor(open ? 1 : this.columnsPerRow()); break;
-                case 'ArrowUp': this.moveCursor(open ? -1 : -this.columnsPerRow()); break;
+                case 'ArrowDown': this.moveCursor(this.columnsPerRow()); break;
+                case 'ArrowUp': this.moveCursor(-this.columnsPerRow()); break;
                 case ' ':
                 case 'Enter':
                     if ($(e.target).is('button, a') && !open) {
@@ -164,52 +213,8 @@ $(document).ready(function () {
             }
         },
         // Custom media controls in the glass style; native controls cannot be themed.
-        buildPlayer: function (kind, url) {
-            var media = $(kind === 'video' ? '<video playsinline preload="metadata">' : '<audio preload="metadata">').attr('src', url);
-            var player = $('<div class="preview-player is-paused">').addClass('is-' + kind);
-            if (kind === 'audio') {
-                player.append('<div class="player-artwork"><i class="fa-solid fa-music" aria-hidden="true"></i></div>');
-            }
-            var controls = $(
-                '<div class="player-controls">' +
-                    '<button type="button" class="player-btn" data-player="toggle" title="Play/pause (Space)"><i class="fa-solid fa-play" aria-hidden="true"></i></button>' +
-                    '<span class="player-time" data-player="current">0:00</span>' +
-                    '<input type="range" class="player-seek" min="0" max="1000" step="1" value="0" aria-label="Seek">' +
-                    '<span class="player-time" data-player="duration">0:00</span>' +
-                    '<button type="button" class="player-btn" data-player="mute" title="Mute"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></button>' +
-                    (kind === 'video' ? '<button type="button" class="player-btn" data-player="fullscreen" title="Fullscreen"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>' : '') +
-                '</div>'
-            );
-            player.append(media, controls);
-            var el = media[0];
-            var seek = controls.find('.player-seek');
-            var fmt = function (t) {
-                if (!isFinite(t)) { return '0:00'; }
-                var m = Math.floor(t / 60), sec = Math.floor(t % 60);
-                return m + ':' + (sec < 10 ? '0' : '') + sec;
-            };
-            var setIcon = function (btn, icon) {
-                var i = controls.find('[data-player="' + btn + '"] > i, [data-player="' + btn + '"] > svg');
-                i.replaceWith($('<i class="fa-solid" aria-hidden="true">').addClass(icon));
-            };
-            media.on('loadedmetadata durationchange', function () { controls.find('[data-player="duration"]').text(fmt(el.duration)); });
-            media.on('timeupdate', function () {
-                controls.find('[data-player="current"]').text(fmt(el.currentTime));
-                if (el.duration && !seek.data('scrubbing')) { seek.val(Math.round(el.currentTime / el.duration * 1000)); }
-            });
-            media.on('play', function () { player.removeClass('is-paused'); setIcon('toggle', 'fa-pause'); });
-            media.on('pause ended', function () { player.addClass('is-paused'); setIcon('toggle', 'fa-play'); });
-            media.on('volumechange', function () { setIcon('mute', el.muted || el.volume === 0 ? 'fa-volume-xmark' : 'fa-volume-high'); });
-            controls.on('click', '[data-player="toggle"]', function () { el.paused ? el.play() : el.pause(); });
-            if (kind === 'video') { media.on('click', function () { el.paused ? el.play() : el.pause(); }); }
-            controls.on('click', '[data-player="mute"]', function () { el.muted = !el.muted; });
-            controls.on('click', '[data-player="fullscreen"]', function () {
-                if (document.fullscreenElement) { document.exitFullscreen(); } else if (player[0].requestFullscreen) { player[0].requestFullscreen(); }
-            });
-            seek.on('pointerdown', function () { seek.data('scrubbing', true); });
-            seek.on('input', function () { if (el.duration) { el.currentTime = seek.val() / 1000 * el.duration; } });
-            seek.on('pointerup change', function () { seek.data('scrubbing', false); });
-            return player;
+        buildPlayer: function (kind, url, options) {
+            return buildPlayer(kind, url, options);
         },
         currentMedia: function () {
             return $('#previewModal .preview-player video, #previewModal .preview-player audio')[0] || null;
@@ -239,16 +244,28 @@ $(document).ready(function () {
             modal.find('.preview-counter').text((tiles.index(tile) + 1) + ' / ' + tiles.length);
             modal.find('.preview-meta').text(tile.data('previewDate'));
             modal.find('[data-preview-download]').attr('href', url);
+            modal.find('[data-preview-open]').attr('href', tile.data('previewView'));
             modal.find('[data-preview-copy]').data('copyText', new URL(url, window.location.href).href);
             modal.find('[data-preview-nav="-1"]').prop('disabled', tiles.index(tile) === 0);
-            modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1);
+            modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1 && !this.hasMorePages());
             var placeholder = function (icon, text) {
                 return $('<div class="preview-placeholder">').append($('<i class="fa-solid" aria-hidden="true">').addClass(icon)).append($('<div>').text(text));
             };
+            var thumb = tile.data('previewThumb');
             if (kind === 'image') {
-                body.append($('<img>').attr({src: url, alt: name}));
+                // Thumbnail first so the modal has its shape at once; the full image swaps in and may resize it.
+                var full = $('<img>').attr({src: url, alt: name});
+                if (thumb) {
+                    var placeholder = $('<img class="preview-thumb">').attr({src: thumb, alt: ''});
+                    body.append(placeholder);
+                    full.on('load', function () { if (placeholder.parent().length) { placeholder.replaceWith(full); } });
+                    full.on('error', function () { placeholder.removeClass('preview-thumb'); });
+                } else {
+                    body.append(full);
+                }
             } else if (kind === 'video' || kind === 'audio') {
-                body.append(this.buildPlayer(kind, url));
+                var player = this.buildPlayer(kind, url, {poster: kind === 'video' ? thumb : null});
+                body.append(player);
             } else if (kind === 'hidden') {
                 body.append(placeholder('fa-trash', 'This file is marked for deletion, so it cannot be previewed.'));
             } else {
@@ -416,20 +433,27 @@ $(document).ready(function () {
                     }
                 });
         },
-        fetchNextPage: function (e) {
+        hasMorePages: function () {
+            var button = $('.gallery-pager button[data-pagination-next]')[0];
+            return !!button && !button.disabled;
+        },
+        fetchNextPage: function () {
+            this.loadNextPage();
+        },
+        // Returns the request, or null when nothing is left to load or a load is already running.
+        loadNextPage: function () {
             if (this.fetchLock) {
-                console.log("Fetch in progress");
-                return;
+                return null;
             }
-            var button = $(e.currentTarget).find('button[data-pagination-next]')[0];
+            var button = $('.gallery-pager button[data-pagination-next]')[0];
             if (!button || button.disabled) {
-                return;
+                return null;
             }
             var action = $(button).data('paginationNext');
             $('#fetch-in-progress').show();
             this.fetchLock = true;
             var self = this;
-            this.getData(action)
+            return this.getData(action)
                 .done(function (data) {
                     var container = $('#file-container');
                     $.each(data.rendered, function (i, o) {

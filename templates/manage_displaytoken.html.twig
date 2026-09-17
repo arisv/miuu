@@ -2,7 +2,7 @@
 
 {% block managecontent %}
     <div class="p-3">
-        <h3 class="mb-3">Security</h3>
+        <h3 class="mb-3">Remote Upload</h3>
         <label for="uploadResult" class="form-label">Your API token for ShareX and other remote uploaders</label>
         <div class="input-group mb-4" style="max-width: 32rem">
             <input class="form-control" id="uploadResult" readonly title="Your token for ShareX" value="{{ app.user.remoteToken }}">
@@ -14,5 +14,127 @@
             </button>
         </div>
         <div data-refresh-token-result class="small mb-4" hidden></div>
+
+        {% set uploadUrl = url('set_file_form') %}
+        {% set base = url('home')|trim('/') %}
+        <section class="api-doc mt-4">
+            <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-3">
+                <h4 class="mb-0">API reference</h4>
+                <span class="api-base">Base URL <code>{{ base }}</code></span>
+            </div>
+
+            <article class="api-endpoint">
+                <header class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/getfile/</code>
+                    <span class="api-summary">Upload a file</span>
+                </header>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Authenticates with your token. The body is <code>multipart/form-data</code>.</p>
+                    <h6 class="api-h">Form fields</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>meowfile_remote</code></td><td>file</td><td><span class="api-req">required</span></td><td>The file to store.</td></tr>
+                            <tr><td><code>private_key</code></td><td>string</td><td><span class="api-req">required</span></td><td>Your API token from this page.</td></tr>
+                            <tr><td><code>plaintext</code></td><td>any</td><td><span class="api-opt">optional</span></td><td>When present, the reply is the direct link as <code>text/plain</code> with status <code>201</code>.</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <h6 class="api-h">Responses</h6>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{
+  "file":   "{{ base }}/a1b2c3d4e5.png",
+  "manage": "{{ base }}/v/a1b2c3d4e5.png",
+  "delete": "{{ base }}/d/a1b2c3d4e5.png?key=…"
+}</code></pre>
+                        <dl class="api-fields">
+                            <dt><code>file</code></dt><dd>Direct link to the stored file.</dd>
+                            <dt><code>manage</code></dt><dd>HTML page with preview, copy link and, when signed in as the owner, delete.</dd>
+                            <dt><code>delete</code></dt><dd>Signed link that marks the file for deletion. It needs no login, so treat it as a secret.</dd>
+                        </dl>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">201</span> <code>text/plain</code> <span class="api-dim">with <code>plaintext</code></span></div>
+<pre class="api-pre"><code>{{ base }}/a1b2c3d4e5.png</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">400</span> <code>application/json</code> <span class="api-dim">invalid token, disabled account or unusable file</span></div>
+<pre class="api-pre"><code>{ "error": "Upload rejected: invalid token or unusable file" }</code></pre>
+                    </div>
+                    <h6 class="api-h">Example</h6>
+<pre class="api-pre"><code>curl -F "meowfile_remote=@screenshot.png" \
+     -F "private_key={{ app.user.remoteToken }}" \
+     {{ uploadUrl }}</code></pre>
+                </div>
+            </article>
+
+            <article class="api-endpoint">
+                <header class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/d/{id}.{ext}</code>
+                    <span class="api-summary">Mark a file for deletion</span>
+                </header>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Use the <code>delete</code> link from the upload response. No token or login is needed; the <code>key</code> proves ownership of the link.</p>
+                    <h6 class="api-h">Parameters</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>key</code></td><td>form or query</td><td><span class="api-req">required</span></td><td>Signature issued with the upload response.</td></tr>
+                            <tr><td><code>Accept: application/json</code></td><td>header</td><td><span class="api-opt">optional</span></td><td>Answer as JSON instead of an HTML page. <code>?format=json</code> works too.</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <h6 class="api-h">Responses</h6>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "status": "ok", "deleted": true }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">403</span> <code>application/json</code> <span class="api-dim">unknown file or invalid key</span></div>
+<pre class="api-pre"><code>{ "status": "error", "message": "Unknown file or invalid key" }</code></pre>
+                    </div>
+                    <p class="api-dim mb-0"><span class="api-method api-method-get">GET</span> on the same link opens a confirmation page, which is what ShareX-style clients do with a deletion URL.</p>
+                </div>
+            </article>
+
+            <article class="api-endpoint">
+                <header class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/v/{id}.{ext}</code>
+                    <span class="api-summary">File page</span>
+                </header>
+                <div class="api-endpoint-body">
+                    <p class="api-lead mb-0">HTML preview of the file with download and copy link. Owners and admins also get delete. Returns <code>404</code> once a file is marked for deletion, except for its owner.</p>
+                </div>
+            </article>
+
+            <article class="api-endpoint">
+                <header class="api-endpoint-head">
+                    <span class="api-method api-method-get">ShareX</span>
+                    <span class="api-summary">Custom uploader settings</span>
+                </header>
+                <div class="api-endpoint-body">
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <tbody>
+                            <tr><th>Destination type</th><td>Image uploader, File uploader</td></tr>
+                            <tr><th>Method</th><td><code>POST</code></td></tr>
+                            <tr><th>Request URL</th><td><code>{{ uploadUrl }}</code></td></tr>
+                            <tr><th>Body</th><td>Form data (multipart/form-data)</td></tr>
+                            <tr><th>File form name</th><td><code>meowfile_remote</code></td></tr>
+                            <tr><th>Arguments</th><td><code>private_key</code> = your token</td></tr>
+                            <tr><th>URL</th><td><code>{json:file}</code></td></tr>
+                            <tr><th>Deletion URL</th><td><code>{json:delete}</code></td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </article>
+        </section>
     </div>
 {% endblock %}

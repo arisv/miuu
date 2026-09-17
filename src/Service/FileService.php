@@ -29,8 +29,39 @@ class FileService
         private RouterInterface $router,
         private ThumbnailService $thumbnailService,
         private string $projectDir,
-        private string $storageDir
+        private string $storageDir,
+        private string $appSecret
     ) {
+    }
+
+    /**
+     * Deletion links are stateless: the key is an HMAC over the file's identity with the app secret,
+     * so an upload client can act on its own files without a session or its token.
+     */
+    public function generateDeletionKey(StoredFile $file): string
+    {
+        return substr(hash_hmac('sha256', $file->getId() . ':' . $file->getInternalName(), $this->appSecret), 0, 32);
+    }
+
+    public function verifyDeletionKey(StoredFile $file, string $key): bool
+    {
+        return $key !== '' && hash_equals($this->generateDeletionKey($file), $key);
+    }
+
+    public function generateDeletionURL(StoredFile $file): string
+    {
+        return $this->router->generate('delete_file', [
+            'customUrl' => $file->getCustomUrl(),
+            'fileExtension' => $file->getOriginalExtension(),
+            'key' => $this->generateDeletionKey($file)
+        ], Router::ABSOLUTE_URL);
+    }
+
+    public function markForDeletion(StoredFile $file): void
+    {
+        $file->setVisibilityStatus(false);
+        $file->setMarkedForDeletionAt(new \DateTime());
+        $this->em->flush();
     }
 
     public function getFileByCustomURL($customUrl)
@@ -86,6 +117,14 @@ class FileService
     public function generateFullURL(StoredFile $file)
     {
         return $this->router->generate('get_file_custom_url', [
+            'customUrl' => $file->getCustomUrl(),
+            'fileExtension' => $file->getOriginalExtension()
+        ], Router::ABSOLUTE_URL);
+    }
+
+    public function generateViewURL(StoredFile $file)
+    {
+        return $this->router->generate('view_file', [
             'customUrl' => $file->getCustomUrl(),
             'fileExtension' => $file->getOriginalExtension()
         ], Router::ABSOLUTE_URL);
@@ -295,6 +334,27 @@ class FileService
             $file->setMarkedForDeletionAt(null);
         }
         $this->em->flush();
+    }
+
+    /** Owner of the upload record, or any admin. Anonymous visitors manage nothing. */
+    public function canManage(?User $user, StoredFile $file): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        if (in_array('ROLE_ADMIN', $user->getRoles())) {
+            return true;
+        }
+        return (bool) $this->em->getRepository(UploadRecord::class)->findOneBy([
+            'user' => $user,
+            'image' => $file
+        ]);
+    }
+
+    /** For the HTML view page: hidden files resolve too, so their managers can still undelete them. */
+    public function getFileForView(string $customUrl): ?StoredFile
+    {
+        return $this->em->getRepository(StoredFile::class)->findFileByCustomURLAnyVisibility($customUrl);
     }
 
     /**

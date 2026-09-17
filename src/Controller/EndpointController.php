@@ -101,9 +101,17 @@ class EndpointController extends AbstractController
                 if ($request->request->get('plaintext')) {
                     return new Response($fullUrl, 201);
                 }
-                return new JsonResponse(['file' => $fullUrl]);
+                return new JsonResponse([
+                    'file' => $fullUrl,
+                    'manage' => $fileService->generateViewURL($storedFile),
+                    'delete' => $fileService->generateDeletionURL($storedFile)
+                ]);
             } catch (\Exception $e) {
                 $logger->error('Error saving file: ' . $e->getMessage() . " with token " . $remoteToken);
+                if ($request->request->get('plaintext')) {
+                    return new Response('Upload rejected: invalid token or unusable file', 400);
+                }
+                return new JsonResponse(['error' => 'Upload rejected: invalid token or unusable file'], 400);
             }
         }
         $this->addFlash('global-danger', 'No input file specified');
@@ -135,6 +143,42 @@ class EndpointController extends AbstractController
     }
 
 
+    /**
+     * Deletion link handed to upload clients. GET shows a confirmation page (clients such as ShareX open
+     * the link in a browser); POST performs the deletion and answers JSON when the client asks for it.
+     */
+    #[Route("/d/{customUrl}.{fileExtension}", name: "delete_file", methods: ['GET', 'POST'])]
+    public function deleteByKeyAction(Request $request, string $customUrl, string $fileExtension, FileService $fileService, LoggerInterface $logger)
+    {
+        $file = $fileService->getFileForView($customUrl);
+        $key = (string) ($request->request->get('key') ?? $request->query->get('key', ''));
+        $wantsJson = $request->request->get('plaintext') || $request->query->get('format') === 'json'
+            || str_contains((string) $request->headers->get('Accept'), 'application/json');
+        if (!$file || !$fileService->verifyDeletionKey($file, $key)) {
+            if ($wantsJson) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Unknown file or invalid key'], 403);
+            }
+            throw $this->createNotFoundException();
+        }
+        $viewData = [
+            'file' => $file,
+            'key' => $key,
+            'extension' => $file->getOriginalExtension() ?: 'bin',
+            'size' => UserService::formatSize($file->getInternalSize()),
+        ];
+        if ($request->isMethod('POST')) {
+            if (!$file->markedForDeletion()) {
+                $fileService->markForDeletion($file);
+                $logger->info("File {$file->getId()} marked for deletion through its deletion link");
+            }
+            if ($wantsJson) {
+                return new JsonResponse(['status' => 'ok', 'deleted' => true]);
+            }
+            return $this->render('delete_file.html.twig', $viewData + ['done' => true]);
+        }
+        return $this->render('delete_file.html.twig', $viewData + ['done' => false]);
+    }
+
     #[Route(path: '/endpoint/dropzone/', name: 'set_file_ajax')]
     public function ajaxUploadAction(Request $request, FileService $fileService, LoggerInterface $logger)
     {
@@ -154,6 +198,7 @@ class EndpointController extends AbstractController
                 $storedFile = $fileService->storeFormUploadFile($file, $user);
                 $result['success'] = true;
                 $result['download'] = $fileService->generateFullURL($storedFile);
+                $result['view'] = $fileService->generateViewURL($storedFile);
                 $code = 200;
             } catch (\Exception $e) {
                 $logger->error('Error saving dropzone file: ' . $e->getMessage());
@@ -216,6 +261,57 @@ class EndpointController extends AbstractController
             $result['message'] = $e->getMessage();
         }
         return new JsonResponse($result);
+    }
+
+    #[Route(path: '/endpoint/setuserrole/', name: 'admin_set_user_role', methods: ['POST'])]
+    public function setUserRole(Request $request, UserService $userService, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $result = ['status' => 'ok'];
+        $userId = (int) $request->request->get('id');
+        $role = (int) $request->request->get('role');
+        /** @var User $actor */
+        $actor = $this->getUser();
+        if ($userId === (int) $actor->getId()) {
+            return new JsonResponse(['status' => 'error', 'message' => 'You cannot change your own role'], 403);
+        }
+        try {
+            $user = $userService->setUserRole($actor, $userId, $role);
+            $result['role'] = (int) $user->getRole();
+            $logger->info("Role of user {$user->getId()} set to {$result['role']} by admin {$actor->getId()}");
+        } catch (\Exception $e) {
+            $logger->warning("Cannot set role={$role} for user {$userId}: " . $e->getMessage());
+            $result['status'] = 'error';
+            $result['message'] = $e->getMessage();
+        }
+        return new JsonResponse($result, $result['status'] === 'ok' ? 200 : 400);
+    }
+
+    #[Route(path: '/endpoint/deleteuser/', name: 'admin_delete_user', methods: ['POST'])]
+    public function deleteUser(Request $request, UserService $userService, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $userId = (int) $request->request->get('id');
+        $confirmation = trim((string) $request->request->get('confirm', ''));
+        $markFiles = filter_var($request->request->get('mark_files'), FILTER_VALIDATE_BOOLEAN);
+        /** @var User $actor */
+        $actor = $this->getUser();
+        if ($userId === (int) $actor->getId()) {
+            return new JsonResponse(['status' => 'error', 'message' => 'You cannot delete your own account'], 403);
+        }
+        // The typed username is checked server-side too, not only in the modal.
+        $target = $userService->findUser($userId);
+        if (!$target || $confirmation !== $target->getLogin()) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Username confirmation does not match'], 400);
+        }
+        try {
+            $report = $userService->deleteUser($actor, $userId, $markFiles);
+            $logger->info("User {$userId} ({$report['login']}) deleted by admin {$actor->getId()}; files={$report['files']} marked={$report['marked']}");
+            return new JsonResponse(['status' => 'ok'] + $report);
+        } catch (\Exception $e) {
+            $logger->warning("Cannot delete user {$userId}: " . $e->getMessage());
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 400);
+        }
     }
 
     #[Route(path: '/endpoint/resetuserpassword/', name: 'admin_reset_user_password', methods: ['POST'])]

@@ -2,7 +2,7 @@
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": "^8.2.0",
+        "php": "^8.4.0",
         "ext-ctype": "*",
         "ext-curl": "*",
         "ext-iconv": "*",
@@ -52,7 +52,7 @@
     },
     "config": {
         "platform": {
-            "php": "8.2.12"
+            "php": "8.4.25"
         },
         "preferred-install": {
             "*": "dist"

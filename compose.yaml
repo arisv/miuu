@@ -81,3 +81,10 @@ services:
 volumes:
   db-data:
   composer-cache:
+
+# Pinned subnet so the dev stack does not collide with other 172.x networks on the host.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.50.0.0/24

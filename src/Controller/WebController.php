@@ -60,7 +60,15 @@ class WebController extends AbstractController
                     'text' => 'text',
                     'url' => 'url',
                     'files' => [
-                        ['name' => 'meowfile', 'accept' => ['image/*', 'video/*', 'audio/*', 'application/*', 'text/*']],
+                        // Extensions as well as MIME types: some Android gallery apps hand Chrome a null or
+                        // generic type for scoped-storage URIs, and Chrome silently drops files that match nothing.
+                        ['name' => 'meowfile', 'accept' => [
+                            'image/*', 'video/*', 'audio/*', 'application/*', 'text/*', 'application/octet-stream',
+                            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif', '.avif', '.bmp', '.svg',
+                            '.mp4', '.mov', '.webm', '.mkv', '.m4v', '.3gp',
+                            '.mp3', '.m4a', '.aac', '.ogg', '.opus', '.wav', '.flac',
+                            '.pdf', '.zip', '.7z', '.rar', '.txt', '.md', '.json', '.csv', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.apk',
+                        ]],
                     ],
                 ],
             ],

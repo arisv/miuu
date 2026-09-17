@@ -21,6 +21,12 @@ $(function () {
     dz.on("success", function (file, reply) {
         console.log(reply);
         if (reply.success) {
+            if (!reply.thumbnailable && reply.icon) {
+                const ext = (file.name.split('.').pop() || '').slice(0, 5);
+                $(file.previewTemplate).find('.dz-image').empty().append(
+                    $('<div class="dz-file-icon" aria-hidden="true">').append($('<i class="fa-solid" aria-hidden="true">').addClass(reply.icon)).append($('<span>').text(ext))
+                );
+            }
             const actions = $('<div class="btn-group btn-group-sm dz-actions" role="group" aria-label="Uploaded file actions">');
             actions.append(
                 $('<button type="button" class="btn clipbutton" title="Copy link"><i class="fa-solid fa-link me-1" aria-hidden="true"></i>Copy</button>').attr('data-clipboard-text', reply.download),

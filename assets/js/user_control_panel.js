@@ -251,6 +251,7 @@ $(document).ready(function () {
             var placeholder = function (icon, text) {
                 return $('<div class="preview-placeholder">').append($('<i class="fa-solid" aria-hidden="true">').addClass(icon)).append($('<div>').text(text));
             };
+            var fileIcon = tile.data('previewIcon') || 'fa-file';
             var thumb = tile.data('previewThumb');
             if (kind === 'image') {
                 // Thumbnail first so the modal has its shape at once; the full image swaps in and may resize it.
@@ -266,10 +267,27 @@ $(document).ready(function () {
             } else if (kind === 'video' || kind === 'audio') {
                 var player = this.buildPlayer(kind, url, {poster: kind === 'video' ? thumb : null});
                 body.append(player);
+            } else if (kind === 'text') {
+                var pre = $('<pre class="preview-text" tabindex="0">').text('Loading…');
+                body.append(pre);
+                var limit = 512 * 1024;
+                fetch(url, {credentials: 'same-origin'}).then(function (response) {
+                    if (!response.ok) { throw new Error(response.status); }
+                    return response.text();
+                }).then(function (text) {
+                    if (pre.parent().length === 0) { return; }
+                    var truncated = text.length > limit;
+                    pre.text(truncated ? text.slice(0, limit) : text);
+                    if (truncated) {
+                        pre.after($('<div class="preview-text-note">').text('Showing the first 512 KB. Download the file for the rest.'));
+                    }
+                }).catch(function () {
+                    pre.replaceWith(placeholder(fileIcon, 'The text could not be loaded. Use Download to open it.'));
+                });
             } else if (kind === 'hidden') {
                 body.append(placeholder('fa-trash', 'This file is marked for deletion, so it cannot be previewed.'));
             } else {
-                body.append(placeholder('fa-file', 'No preview for this file type. Use Download to open it.'));
+                body.append(placeholder(fileIcon, 'No preview for this file type. Use Download to open it.'));
             }
         },
         // Touch layouts: hover controls are unreachable, so tiles are selected and acted on from a fixed bar.

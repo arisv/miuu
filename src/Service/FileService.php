@@ -30,7 +30,8 @@ class FileService
         private ThumbnailService $thumbnailService,
         private string $projectDir,
         private string $storageDir,
-        private string $appSecret
+        private string $appSecret,
+        private FileIconResolver $iconResolver
     ) {
     }
 
@@ -469,6 +470,7 @@ SQL;
             $mime = (string) $fileData['internal_mimetype'];
             $temp['thumbnailable'] = str_starts_with($mime, 'image') || str_starts_with($mime, 'video');
             $temp['marked_for_deletion'] = $fileData['marked_for_deletion_at'] !== null;
+            $temp['icon'] = $this->iconResolver->resolve($mime, $temp['extension'], $fileData['original_name']);
             $result[] = $temp;
         }
         $users = $this->em->getRepository(User::class)->findUsersByList(array_unique($userIdsEncountered));

@@ -1540,6 +1540,18 @@ body.glass-ui .view-actions .btn-group .btn {
     --bs-btn-padding-x: 1.1rem;
 }
 
+body.glass-ui .preview-text,
+body.glass-ui .view-text {
+    color: var(--g-text-strong);
+    background: rgba(0, 0, 0, .45);
+    box-shadow: inset 0 0 0 .6px rgba(255, 255, 255, .06);
+    scrollbar-width: thin;
+}
+
+body.glass-ui .preview-text-note {
+    color: var(--g-text-dim);
+}
+
 /* Admin lists: flat wells in a stack, concentric with the chips and buttons inside. */
 body.glass-ui .admin-row {
     border: 0;
@@ -1568,9 +1580,68 @@ body.glass-ui .admin-avatar.is-anon {
 
 body.glass-ui .admin-ext {
     background: var(--g-flat-hover);
-    color: var(--g-text-strong);
+    color: var(--g-accent);
     box-shadow: var(--g-rim-soft);
     border-radius: 14px;
+    font-size: 1.35rem;
+}
+
+body.glass-ui .admin-ext > i,
+body.glass-ui .admin-ext > svg {
+    width: 1em;
+    height: 1em;
+}
+
+body.glass-ui .itembox-icon {
+    color: var(--g-accent);
+}
+
+body.glass-ui .itembox-ext {
+    background: rgba(14, 17, 16, .72);
+    color: var(--g-text-strong);
+    box-shadow: var(--g-rim-soft);
+}
+
+body.glass-ui .view-ext {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    line-height: 1;
+    overflow: hidden;
+}
+
+body.glass-ui .view-ext > i,
+body.glass-ui .view-ext > svg {
+    flex: 0 0 auto;
+    width: 1em;
+    height: 1em;
+    color: var(--g-accent);
+    font-size: 2.75rem;
+}
+
+body.glass-ui .view-ext-label {
+    margin-top: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.glass-ui .view-ext-hidden > i,
+body.glass-ui .view-ext-hidden > svg {
+    color: #ffb4bc;
+}
+
+body.glass-ui .view-ext-label {
+    color: var(--g-text);
+}
+
+body.glass-ui .preview-placeholder > i,
+body.glass-ui .preview-placeholder > svg {
+    color: var(--g-accent);
 }
 
 @supports (corner-shape: squircle) {

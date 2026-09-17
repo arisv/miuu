@@ -45,10 +45,25 @@ class WebController extends AbstractController
             $kind = 'video';
         } elseif ($file->isMimeType(['audio'])) {
             $kind = 'audio';
+        } elseif ($file->isTextual()) {
+            $kind = 'text';
         } else {
             $kind = 'file';
         }
+        $text = null;
+        $textTruncated = false;
+        if ($kind === 'text' && !$file->markedForDeletion()) {
+            $limit = 512 * 1024;
+            $path = $fileService->buildFullFilePath($file);
+            if (is_readable($path)) {
+                $text = (string) file_get_contents($path, false, null, 0, $limit + 1);
+                $textTruncated = strlen($text) > $limit;
+                $text = mb_convert_encoding(substr($text, 0, $limit), 'UTF-8', 'UTF-8');
+            }
+        }
         return $this->render('view_file.html.twig', [
+            'text' => $text,
+            'textTruncated' => $textTruncated,
             'file' => $file,
             'kind' => $kind,
             'canManage' => $canManage,

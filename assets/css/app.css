@@ -573,6 +573,79 @@ a.btn:disabled {
     border: solid #34e6a1 4px;
 }
 
+/* Non-thumbnailable files: a large type icon with the extension underneath. */
+.itembox-icon {
+    position: absolute;
+    inset: 0 0 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #34e6a1;
+    pointer-events: none;
+}
+
+.itembox-icon > i,
+.itembox-icon > svg {
+    font-size: 4rem;
+    width: 1em;
+    height: 1em;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45));
+}
+
+.itembox-ext {
+    padding: .1em .7em;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .1);
+    color: #e6e6e6;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.itembox-icon.is-hidden-file {
+    color: #8f948f;
+}
+
+.view-ext-label {
+    margin-top: 6px;
+    font-size: .72rem;
+    letter-spacing: .08em;
+}
+
+.view-ext > i,
+.view-ext > svg {
+    color: #34e6a1;
+}
+
+.dz-file-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    color: #34e6a1;
+}
+
+.dz-file-icon > i,
+.dz-file-icon > svg {
+    font-size: 2.6rem;
+    width: 1em;
+    height: 1em;
+}
+
+.dz-file-icon > span {
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #e6e6e6;
+}
+
 .itembox:hover .itembox-hover {
     display: block;
 }
@@ -954,6 +1027,53 @@ a.btn:disabled {
         white-space: nowrap;
         font-size: .9rem;
         --bs-btn-padding-x: .5rem;
+    }
+}
+
+/* Inline text preview: its own scroller, monospace, wrapped long lines. */
+.preview-text,
+.view-text {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px;
+    text-align: left;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: .82rem;
+    line-height: 1.5;
+    color: #e6e6e6;
+    background: rgba(0, 0, 0, .35);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: auto;
+    tab-size: 4;
+}
+
+.preview-text {
+    max-height: 76vh;
+    min-width: min(720px, 90vw);
+}
+
+.view-text {
+    max-height: 72vh;
+    border-radius: 12px;
+}
+
+.preview-text-note {
+    padding: 6px 12px;
+    color: #8f948f;
+    font-size: .8rem;
+}
+
+.view-stage-text {
+    padding: 0;
+    background: transparent;
+}
+
+@media (max-width: 767.98px) {
+    .preview-text {
+        max-height: 60vh;
+        min-width: 0;
     }
 }
 

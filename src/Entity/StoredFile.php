@@ -189,6 +189,20 @@ class StoredFile
         return false;
     }
 
+    /** Plain text, markup and source files that can be shown inline as text. */
+    public function isTextual(): bool
+    {
+        $mime = strtolower((string) $this->internalMimetype);
+        if (str_starts_with($mime, 'text/')) {
+            return true;
+        }
+        return in_array($mime, [
+            'application/json', 'application/ld+json', 'application/xml', 'application/javascript', 'application/x-javascript',
+            'application/x-yaml', 'application/yaml', 'application/x-sh', 'application/x-shellscript', 'application/x-httpd-php',
+            'application/x-php', 'application/toml', 'application/sql', 'application/x-empty',
+        ], true);
+    }
+
     public function isThumbnailable(): bool
     {
         return $this->isMimeType(["image", "video"]);

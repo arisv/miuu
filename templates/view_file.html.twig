@@ -23,14 +23,17 @@
             <div class="view-player" data-media-player="audio" data-src="{{ fileUrl }}">
                 <audio class="view-audio" controls preload="metadata" src="{{ fileUrl }}"></audio>
             </div>
+        {% elseif kind == 'text' and text is not null %}
+            <pre class="view-text" tabindex="0">{{ text }}</pre>
+            {% if textTruncated %}<p class="view-note mb-2">Showing the first 512 KB. Download the file for the rest.</p>{% endif %}
         {% else %}
-            <div class="view-ext" aria-hidden="true">{{ extension|slice(0, 4) }}</div>
+            <div class="view-ext" aria-hidden="true"><i class="fa-solid {{ file_icon(file.internalMimetype, file.originalExtension, file.originalName) }}"></i><span class="view-ext-label">{{ ('.' in file.originalName ? file.originalName|split('.')|last : extension)|slice(0, 7) }}</span></div>
         {% endif %}
     </div>
     <div class="view-caption">
         <h1 class="view-title">{{ file.originalName }}</h1>
         <div class="view-meta">
-            <span class="admin-chip">{{ extension|upper }}</span>
+            <span class="admin-chip">{{ ('.' in file.originalName ? file.originalName|split('.')|last : extension)|upper }}</span>
             <span>{{ size }}</span>
             <span>{{ file.getDate|date("Y-m-d H:i") }}</span>
             <span class="admin-chip admin-marked" data-marked-chip {% if not hidden %}hidden{% endif %}><i class="fa-solid fa-trash me-1" aria-hidden="true"></i>Marked for deletion</span>

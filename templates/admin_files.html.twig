@@ -17,7 +17,7 @@
                 <img src="{{ path('serve_file_thumbnail', {'customUrl': file.url, 'fileExtension': file.extension}) }}" alt="" loading="lazy">
             </a>
         {% else %}
-            <div class="admin-ext" aria-hidden="true">{{ file.extension|slice(0, 4) }}</div>
+            <div class="admin-ext" aria-hidden="true" title="{{ file.extension }}"><i class="fa-solid {{ file.icon }}"></i></div>
         {% endif %}
         <div class="admin-identity">
             <div class="admin-title"><a href="{{ fileUrl }}" class="admin-file-link">{{ file.name }}</a></div>

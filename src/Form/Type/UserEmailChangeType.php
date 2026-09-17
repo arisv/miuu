@@ -19,7 +19,7 @@ class UserEmailChangeType extends AbstractType
     private EntityManagerInterface $em;
     private ?User $currentUser = null;
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $this->em = $options['entity_manager'];
         $this->currentUser = $options['current_user'];
@@ -42,7 +42,7 @@ class UserEmailChangeType extends AbstractType
             ]);
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setRequired(['entity_manager', 'current_user']);
         $resolver->setAllowedTypes('entity_manager', EntityManagerInterface::class);

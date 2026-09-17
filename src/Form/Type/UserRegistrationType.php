@@ -20,7 +20,7 @@ class UserRegistrationType extends AbstractType
     /** @var $em EntityManager */
     private $em;
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $this->em = $options['entity_manager'];
         $builder
@@ -82,7 +82,7 @@ class UserRegistrationType extends AbstractType
         }
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setRequired('entity_manager');
         // Admin-side user creation exposes the role picker; public signup does not.

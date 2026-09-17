@@ -118,7 +118,6 @@ body.glass-ui .app {
 /* Regular glass: header pill, sticky toolbar, admin menu, mobile sidebar, tile control pill. */
 body.glass-ui .glass,
 body.glass-ui #userheader,
-body.glass-ui #loginpanel,
 body.glass-ui #navpanel,
 body.glass-ui .admin-menu,
 body.glass-ui .profile-sidebar .list-group,
@@ -141,7 +140,6 @@ body.glass-ui .itembox-controls {
 /* Illumination from within: a glow that starts under the pointer (position set by liquid-glass.js). */
 body.glass-ui .glass::after,
 body.glass-ui #userheader::after,
-body.glass-ui #loginpanel::after,
 body.glass-ui #navpanel::after,
 body.glass-ui .admin-menu::after,
 body.glass-ui .profile-sidebar .list-group::after,
@@ -159,7 +157,7 @@ body.glass-ui .btn::after {
     transition: opacity 260ms var(--g-ease);
 }
 
-body.glass-ui :is(.glass, #userheader, #loginpanel, #navpanel, .admin-menu, .profile-sidebar .list-group, #sidebar, .itembox-controls, .btn):hover::after {
+body.glass-ui :is(.glass, #userheader, #navpanel, .admin-menu, .profile-sidebar .list-group, #sidebar, .itembox-controls, .btn):hover::after {
     opacity: 1;
 }
 
@@ -170,7 +168,6 @@ body.glass-ui .lg-pressed::after {
 
 /* Capsules: the header nav and the toolbar read as floating pills. */
 body.glass-ui #userheader,
-body.glass-ui #loginpanel,
 body.glass-ui #navpanel,
 body.glass-ui .itembox-controls {
     border-radius: var(--g-r-capsule);
@@ -506,15 +503,6 @@ body.glass-ui .footer {
 
 /* Header pill */
 body.glass-ui #userheader,
-body.glass-ui #loginpanel {
-    display: inline-block;
-    padding: 4px;
-}
-
-body.glass-ui #loginpanel {
-    padding: 8px 18px;
-}
-
 body.glass-ui #profilebox {
     margin-bottom: 0;
 }
@@ -671,8 +659,20 @@ body.glass-ui #hamburger-userheader li {
     border-bottom-color: var(--g-divider);
 }
 
-body.glass-ui #hamburger-userheader li:hover {
+body.glass-ui #hamburger-userheader li:not(.sidebar-brand):hover {
     background: var(--g-flat-hover);
+}
+
+body.glass-ui .brand-link {
+    transition: transform var(--g-dur) var(--g-spring), filter 200ms var(--g-ease);
+}
+
+body.glass-ui .brand-link:active {
+    transition-duration: 80ms;
+}
+
+body.glass-ui #sidebarCloseBtn {
+    box-shadow: var(--g-rim), var(--g-drop);
 }
 
 /* Profile sidebar: flat rows inside the content sheet (no glass on the sheet). */
@@ -686,6 +686,14 @@ body.glass-ui .profile-sidebar .list-group {
     padding: 6px;
     gap: 2px;
     overflow: hidden;
+}
+
+/* Phones: the same list is the bottom tab bar and must scroll sideways (declared after the clip above). */
+@media (max-width: 767.98px) {
+    body.glass-ui .profile-sidebar .list-group {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
 }
 
 body.glass-ui .profile-sidebar .list-group a {
@@ -863,7 +871,7 @@ body.glass-ui .btn.lg-pressed {
     transition-duration: 90ms;
 }
 
-body.glass-ui :is(#userheader, #loginpanel, #navpanel, .admin-menu, #sidebar).lg-pressed {
+body.glass-ui :is(#userheader, #navpanel, .admin-menu, #sidebar).lg-pressed {
     transform: scale(.985);
 }
 
@@ -1164,6 +1172,21 @@ body.glass-ui .glass-modal-content .modal-footer {
 
 body.glass-ui .preview-body {
     background: rgba(0, 0, 0, .45);
+}
+
+body.glass-ui .preview-nav-strip .btn {
+    box-shadow: none;
+    background: var(--g-flat);
+}
+
+@media (max-width: 767.98px) {
+    body.glass-ui .preview-dialog .preview-content {
+        border-radius: 0;
+    }
+
+    body.glass-ui .preview-content .modal-footer .btn {
+        --bs-btn-border-radius: 14px;
+    }
 }
 
 body.glass-ui .preview-meta,

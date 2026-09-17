@@ -381,6 +381,15 @@ a.btn:disabled {
     text-align: center;
 }
 
+/* Disabled-uploads home page: the artwork half stays, the dark half carries the message. */
+.upload-box-empty {
+    min-height: 280px;
+}
+
+.uploads-disabled p {
+    color: #b4b4b4;
+}
+
 #mirror-box span {
     display: inline-block;
     width: 64px;
@@ -441,6 +450,12 @@ a.btn:disabled {
     color: #313131;
 }
 
+/* The drawer toggles sit above Bootstrap's modal layer; hide them while a modal is open. */
+body.modal-open #sidebarShowBtn,
+body.modal-open #calendarShowBtn {
+    visibility: hidden;
+}
+
 #sidebarShowBtn {
     position: absolute;
     top: 0;
@@ -462,8 +477,49 @@ a.btn:disabled {
     color: #b4b4b4;
 }
 
+/* Drawer close: pinned to the bottom-right corner of the sidebar, clear of the menu list. */
 #sidebarCloseBtn {
+    position: absolute;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.25rem;
     cursor: pointer;
+}
+
+#sidebar {
+    padding-bottom: 88px;
+}
+
+/* Logo links push back when pressed. */
+.brand-link {
+    display: inline-block;
+    line-height: 0;
+    border-radius: 12px;
+    transition: transform .35s cubic-bezier(.32, .72, 0, 1), filter .2s ease;
+}
+
+.brand-link:hover {
+    transform: scale(1.04);
+}
+
+.brand-link:active {
+    transform: scale(.9);
+    filter: brightness(1.2);
+    transition-duration: .08s;
+}
+
+.brand-link:focus-visible {
+    outline: 3px solid rgba(52, 230, 161, .55);
+    outline-offset: 4px;
+}
+
+.sidebar-brand {
+    text-align: center;
+    padding: 12px 0 !important;
 }
 
 #hamburger-userheader li {
@@ -482,7 +538,6 @@ a.btn:disabled {
     cursor: pointer;
 }
 
-#loginpanel,
 #userheader {
     display: inline-block;
     border-radius: 10px;
@@ -1098,23 +1153,90 @@ a.btn:disabled {
     font-size: .875rem;
 }
 
+/* Phones: the previewer is full screen; a thin prev/next strip sits above the media and the actions form one toolbar. */
+.preview-nav-strip {
+    display: none;
+}
+
 @media (max-width: 767.98px) {
+    .preview-dialog {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .preview-dialog .preview-content {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .preview-content .modal-header {
+        padding: 10px 14px;
+    }
+
+    .preview-nav-strip {
+        display: flex;
+        gap: 6px;
+        padding: 6px 8px 0;
+    }
+
+    .preview-nav-strip .btn {
+        flex: 1 1 0;
+        padding: 4px 0;
+        line-height: 1;
+        font-size: .9rem;
+        border-radius: 8px;
+    }
+
     .preview-body {
-        min-height: 30vh;
-        max-height: 60vh;
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: 0;
+        max-height: none;
+        margin: 6px 8px;
+        border-radius: 12px;
     }
 
     .preview-body img,
-    .preview-body video {
-        max-height: 60vh;
+    .preview-body video,
+    .preview-player video {
+        max-width: 100%;
+        max-height: calc(100dvh - 200px);
     }
 
-    .modal-footer {
-        justify-content: flex-end;
+    .preview-text {
+        max-height: calc(100dvh - 200px);
     }
 
-    .modal-footer .preview-meta {
-        flex-basis: 100%;
+    .preview-content .modal-footer {
+        flex-wrap: nowrap;
+        justify-content: stretch;
+        gap: 6px;
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .preview-content .modal-footer .preview-meta {
+        display: none;
+    }
+
+    .preview-content .modal-footer > .btn {
+        flex: 1 1 0;
+        margin: 0;
+        padding: .6rem .25rem;
+        min-width: 0;
+    }
+
+    .preview-content .modal-footer .btn-label {
+        display: none;
+    }
+
+    .preview-content .modal-footer .btn > i,
+    .preview-content .modal-footer .btn > svg {
+        margin: 0 !important;
+        font-size: 1.1rem;
     }
 }
 

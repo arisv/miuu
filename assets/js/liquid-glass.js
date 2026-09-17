@@ -6,7 +6,7 @@
  * Inert unless <body class="glass-ui"> is present.
  */
 
-const SURFACES = '#userheader, #loginpanel, #navpanel, .admin-menu, .profile-sidebar .list-group, #sidebar';
+const SURFACES = '#userheader, #navpanel, .admin-menu, .profile-sidebar .list-group, #sidebar';
 
 function setupIllumination() {
     const glassy = `${SURFACES}, .btn, .itembox-controls`;

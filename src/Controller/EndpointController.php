@@ -247,7 +247,7 @@ class EndpointController extends AbstractController
                 'files' => array_map(fn ($f) => is_array($f) ? count($f) : ($f ? $f->getClientOriginalName() . ' ' . $f->getSize() . 'B err=' . $f->getError() : null), $request->files->all()),
                 'user_agent' => $request->headers->get('User-Agent'),
             ]);
-            $this->addFlash('global-danger', 'Nothing to upload was shared.');
+            $this->addFlash('global-danger', 'Nothing arrived with the share. The sharing app may not have passed the file along; try sharing from a file manager or the system gallery.');
         }
         return $this->redirectToRoute('home');
     }

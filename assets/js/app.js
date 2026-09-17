@@ -8,10 +8,19 @@ const $ = require('jquery');
 require('bootstrap');
 import * as Clipboard from './clipboard.min';
 import './liquid-glass';
+import { enhancePlayers } from './media-player';
 
 new Clipboard('.clipbutton');
 
 $(document).ready(() => {
+    enhancePlayers(document);
+
+    // Phone tab bar scrolls sideways: start with the active tab in view.
+    const activeTab = document.querySelector('.profile-sidebar .list-group a.active');
+    if (activeTab && window.matchMedia('(max-width: 767.98px)').matches) {
+        activeTab.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+
     // Slide-in drawers: the site menu (left) and, on the gallery, the calendar (right).
     const drawers = [
         { bodyClass: 'sidebar-open', panel: '#sidebar', show: '#sidebarShowBtn', hide: '#sidebarCloseBtn, #sidebarBackdrop' },
@@ -28,7 +37,7 @@ $(document).ready(() => {
     });
     $(document).on('keydown', (e) => { if (e.key === 'Escape') drawers.forEach((d) => setOpen(d, false)); });
 
-    // Security page: replace the remote upload token in place.
+    // Remote Upload page: replace the remote upload token in place.
     $('body').on('click', 'button[data-refresh-token]', (e) => {
         const button = $(e.currentTarget);
         if (!window.confirm('Generate a new API token? Remote uploaders using the current token stop working immediately.')) {
@@ -45,6 +54,26 @@ $(document).ready(() => {
                 const message = xhr.responseJSON && xhr.responseJSON.message;
                 result.text(message || 'Unable to generate a new token').addClass('text-danger').prop('hidden', false);
             })
+            .always(() => button.prop('disabled', false));
+    });
+
+    // File view page: owner/admin delete toggle; the page reloads so the stage reflects the new state.
+    $('body').on('click', 'button[data-view-delete]', (e) => {
+        const button = $(e.currentTarget);
+        const action = button.data('action');
+        if (action === 'del' && !window.confirm('Mark this file for deletion? It stops being served immediately.')) {
+            return;
+        }
+        button.prop('disabled', true);
+        $.ajax({ type: 'POST', url: '/endpoint/setdeletestatus/', data: { id: button.data('viewDelete'), action } })
+            .done((data) => {
+                if (data.status !== 'ok') {
+                    $('[data-view-result]').text('Unable to change file status').addClass('text-danger').prop('hidden', false);
+                    return;
+                }
+                window.location.reload();
+            })
+            .fail(() => $('[data-view-result]').text('Unable to change file status').addClass('text-danger').prop('hidden', false))
             .always(() => button.prop('disabled', false));
     });
 

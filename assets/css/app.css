@@ -188,14 +188,25 @@ body.calendar-open #calendarShowBtn {
         word-break: break-all;
     }
 
+    /* More tabs than fit scroll sideways; each tab keeps a tappable minimum width. */
     .profile-sidebar .list-group {
         flex-direction: row;
-        justify-content: space-around;
+        justify-content: flex-start;
         background-color: #1f1f1f;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .profile-sidebar .list-group::-webkit-scrollbar {
+        display: none;
     }
 
     .profile-sidebar .list-group a {
-        flex: 1 1 0;
+        flex: 1 0 4.4rem;
+        scroll-snap-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -668,12 +679,30 @@ a.btn:disabled {
     overflow: hidden;
 }
 
+/* The dialog fits its content: never smaller than a thumbnail, grows when the full image arrives. */
+.preview-dialog {
+    width: fit-content;
+    min-width: min(22rem, 95vw);
+    max-width: min(1140px, 95vw);
+}
+
+.preview-body {
+    min-width: min(350px, 88vw);
+    min-height: 240px;
+}
+
 .preview-body img,
 .preview-body video {
     display: block;
-    max-width: 100%;
+    width: auto;
+    height: auto;
+    max-width: min(1140px, 95vw);
     max-height: 76vh;
-    object-fit: contain;
+}
+
+.preview-body img.preview-thumb {
+    min-width: min(350px, 88vw);
+    filter: blur(1px) brightness(.85);
 }
 
 .preview-body audio {
@@ -691,7 +720,9 @@ a.btn:disabled {
 
 .preview-player video {
     width: 100%;
+    aspect-ratio: 16 / 9;
     max-height: 76vh;
+    object-fit: contain;
     background: #000;
     cursor: pointer;
 }
@@ -780,6 +811,150 @@ a.btn:disabled {
     accent-color: #34e6a1;
     height: 4px;
     cursor: pointer;
+}
+
+@media (max-width: 575.98px) {
+    .player-controls {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        gap: 4px;
+        padding: 4px 8px;
+    }
+
+    .player-time[data-player="duration"] {
+        display: none;
+    }
+
+    .player-time {
+        min-width: 2.2rem;
+        font-size: .75rem;
+    }
+
+    .player-btn {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* /v/ page: the asset, its caption and a group of three actions, on the home page sheet. */
+.view-sheet {
+    padding: 24px 16px 20px;
+    text-align: center;
+}
+
+.view-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 240px;
+    padding: 8px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, .35);
+}
+
+.view-media {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 72vh;
+    border-radius: 12px;
+}
+
+.view-stage-video .view-media {
+    width: 100%;
+    background: #000;
+}
+
+.view-player {
+    width: 100%;
+}
+
+.view-player .preview-player video {
+    max-height: 72vh;
+    border-radius: 12px;
+}
+
+.view-audio {
+    width: min(100%, 32rem);
+}
+
+.view-ext {
+    display: grid;
+    place-items: center;
+    width: 120px;
+    height: 120px;
+    margin: 24px 0;
+    border-radius: 28px;
+    background: #3d3d3d;
+    color: #e6e6e6;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.view-ext svg,
+.view-ext i {
+    width: 1em;
+    height: 1em;
+    font-size: 2.6rem;
+}
+
+.view-ext-hidden {
+    color: #ffb4bc;
+}
+
+.view-note {
+    color: #8f948f;
+    margin: 0 0 16px;
+}
+
+.view-caption {
+    padding: 20px 8px 8px;
+}
+
+.view-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #fff;
+    overflow-wrap: anywhere;
+    margin: 0 0 8px;
+}
+
+.view-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px 14px;
+    color: #8f948f;
+    font-size: .9rem;
+}
+
+.view-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 4px;
+}
+
+@media (max-width: 575.98px) {
+    .view-actions .btn-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .view-actions .btn-group .btn {
+        flex: 1 1 0;
+        white-space: nowrap;
+        font-size: .9rem;
+        --bs-btn-padding-x: .5rem;
+    }
 }
 
 .preview-placeholder {
@@ -1143,13 +1318,13 @@ button[data-toggle-user] {
 .admin-list-users {
     --admin-meta-cols: 10.5rem 4.5rem 5.5rem;
     --admin-meta-w: calc(20.5rem + 44px);
-    --admin-actions-w: 16rem;
+    --admin-actions-w: 24rem;
 }
 
 .admin-list-files {
     --admin-meta-cols: 6.5rem 17rem;
     --admin-meta-w: calc(23.5rem + 22px);
-    --admin-actions-w: 6rem;
+    --admin-actions-w: 8.5rem;
 }
 
 @media (min-width: 768px) {
@@ -1231,6 +1406,13 @@ button[data-toggle-user] {
 
     .admin-actions .btn-group .btn {
         flex: 1 1 0;
+        white-space: nowrap;
+    }
+
+    /* Four labelled user actions do not fit one row on a phone: two by two. */
+    .admin-list-users .admin-actions .btn-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .admin-password-result {

@@ -462,12 +462,20 @@ body.glass-ui .dropzone .dz-preview .dz-error-message::after {
     border-bottom-color: rgba(220, 53, 69, .92);
 }
 
-body.glass-ui .dropzone .dz-preview .clipbutton {
+body.glass-ui .dropzone .dz-preview .dz-actions {
+    display: flex;
     width: 100%;
     margin-top: 6px;
+}
+
+body.glass-ui .dropzone .dz-preview .dz-actions .btn {
     --bs-btn-padding-y: .3rem;
-    --bs-btn-padding-x: .6rem;
+    --bs-btn-padding-x: .5rem;
     --bs-btn-font-size: .8rem;
+}
+
+body.glass-ui .dropzone .dz-preview .dz-actions .clipbutton {
+    flex: 1 1 auto;
 }
 
 body.glass-ui .dropzone-border {
@@ -597,6 +605,8 @@ body.glass-ui #sidebar {
         background: var(--g-noise), var(--g-sheen), var(--g-fill-strong);
         border-radius: var(--g-r-panel);
         padding: 6px;
+        /* Fade hints that the bar continues past its edges. */
+        mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent);
     }
 
     body.glass-ui .profile-sidebar .list-group a {
@@ -1134,7 +1144,8 @@ body.glass-ui .modal-backdrop {
     background: rgba(5, 7, 6, .78);
 }
 
-body.glass-ui .preview-content {
+body.glass-ui .preview-content,
+body.glass-ui .glass-modal-content {
     border: 0;
     border-radius: var(--g-r-sheet);
     background: var(--g-noise), var(--g-sheen), rgba(14, 17, 16, .96);
@@ -1145,7 +1156,9 @@ body.glass-ui .preview-content {
 }
 
 body.glass-ui .preview-content .modal-header,
-body.glass-ui .preview-content .modal-footer {
+body.glass-ui .preview-content .modal-footer,
+body.glass-ui .glass-modal-content .modal-header,
+body.glass-ui .glass-modal-content .modal-footer {
     border-color: var(--g-divider);
 }
 
@@ -1198,6 +1211,333 @@ body.glass-ui .player-artwork {
 
 body.glass-ui .player-time {
     color: var(--g-text);
+}
+
+/* Remote Upload page: API reference */
+body.glass-ui .api-doc {
+    max-width: 52rem;
+    color: var(--g-text);
+}
+
+body.glass-ui .api-base {
+    font-size: .875rem;
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .api-doc code {
+    padding: .1em .45em;
+    border-radius: 6px;
+    background: var(--g-flat-hover);
+    color: var(--g-accent);
+    font-size: .875em;
+    overflow-wrap: anywhere;
+}
+
+body.glass-ui .api-endpoint {
+    margin-bottom: 14px;
+    border-radius: var(--g-r-item);
+    background: var(--g-flat);
+    box-shadow: var(--g-rim-soft);
+    overflow: hidden;
+}
+
+body.glass-ui .api-endpoint-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, .03);
+    border-bottom: 1px solid var(--g-divider);
+}
+
+body.glass-ui .api-method {
+    display: inline-block;
+    min-width: 3.6rem;
+    padding: .2em .6em;
+    border-radius: var(--g-r-capsule);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+body.glass-ui .api-method-post {
+    background: var(--g-accent-tint-strong);
+    color: var(--g-accent);
+}
+
+body.glass-ui .api-method-get {
+    background: rgba(120, 170, 255, .2);
+    color: #9dc1ff;
+}
+
+body.glass-ui .api-path {
+    font-size: 1rem;
+    background: transparent;
+    padding: 0;
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .api-summary {
+    margin-left: auto;
+    color: var(--g-text-dim);
+    font-size: .9rem;
+}
+
+body.glass-ui .api-endpoint-body {
+    padding: 14px 16px 16px;
+}
+
+body.glass-ui .api-lead {
+    margin-bottom: 12px;
+}
+
+body.glass-ui .api-h {
+    margin: 14px 0 8px;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .api-table {
+    width: 100%;
+    margin: 0;
+    font-size: .9rem;
+    border-collapse: collapse;
+}
+
+body.glass-ui .api-table th,
+body.glass-ui .api-table td {
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--g-divider);
+}
+
+body.glass-ui .api-table thead th {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .api-table tbody th {
+    font-weight: 500;
+    color: var(--g-text-strong);
+    white-space: nowrap;
+    width: 11rem;
+}
+
+/* Names never break mid-word; the wrapper scrolls sideways on narrow screens instead. */
+body.glass-ui .api-table td:first-child code {
+    white-space: nowrap;
+}
+
+body.glass-ui .api-table td:last-child {
+    min-width: 16rem;
+}
+
+body.glass-ui .api-table tr:last-child td,
+body.glass-ui .api-table tr:last-child th {
+    border-bottom: 0;
+}
+
+body.glass-ui .api-req,
+body.glass-ui .api-opt {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+body.glass-ui .api-req {
+    color: var(--g-warm);
+}
+
+body.glass-ui .api-opt {
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .api-response {
+    margin-bottom: 12px;
+}
+
+body.glass-ui .api-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: .875rem;
+}
+
+body.glass-ui .api-code-ok,
+body.glass-ui .api-code-err {
+    padding: .1em .55em;
+    border-radius: var(--g-r-capsule);
+    font-weight: 700;
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+body.glass-ui .api-code-ok {
+    background: var(--g-accent-tint);
+    color: var(--g-accent);
+}
+
+body.glass-ui .api-code-err {
+    background: rgba(220, 53, 69, .2);
+    color: #ffb4bc;
+}
+
+body.glass-ui .api-dim {
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .api-pre {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, .45);
+    box-shadow: inset 0 0 0 .6px rgba(255, 255, 255, .06);
+    font-size: .82rem;
+    line-height: 1.5;
+    color: var(--g-text-strong);
+    overflow-x: auto;
+}
+
+body.glass-ui .api-pre code {
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    overflow-wrap: normal;
+}
+
+body.glass-ui .api-fields {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 14px;
+    margin: 10px 0 0;
+    font-size: .9rem;
+}
+
+body.glass-ui .api-fields dd {
+    margin: 0;
+}
+
+@media (max-width: 575.98px) {
+    body.glass-ui .api-fields {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    body.glass-ui .api-fields dd {
+        margin-bottom: 8px;
+        color: var(--g-text-dim);
+    }
+
+    body.glass-ui .api-summary {
+        flex-basis: 100%;
+        margin-left: 0;
+    }
+
+    body.glass-ui .api-table tbody th {
+        width: auto;
+        white-space: normal;
+    }
+}
+
+/* Settings page */
+body.glass-ui .settings-row {
+    align-items: center;
+}
+
+body.glass-ui .settings-key {
+    padding: .1em .45em;
+    border-radius: 6px;
+    background: var(--g-flat-hover);
+    color: var(--g-accent);
+    font-size: .8rem;
+}
+
+body.glass-ui .settings-switch .form-check {
+    margin: 0;
+    padding: 0;
+}
+
+body.glass-ui .settings-switch .form-check-input {
+    width: 3.2em;
+    height: 1.7em;
+    margin: 0;
+    cursor: pointer;
+    background-color: var(--g-flat-active);
+    border: 0;
+    box-shadow: var(--g-rim-soft);
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23e6e6e6'/%3e%3c/svg%3e");
+}
+
+body.glass-ui .settings-switch .form-check-input:checked {
+    background-color: var(--g-accent-solid);
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230f1d17'/%3e%3c/svg%3e");
+}
+
+body.glass-ui .settings-switch .form-check-input:focus-visible {
+    box-shadow: 0 0 0 3px var(--g-focus);
+}
+
+@media (min-width: 768px) {
+    body.glass-ui .settings-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "identity actions";
+    }
+}
+
+/* /v/ page */
+body.glass-ui .view-sheet {
+    max-width: 1100px;
+    margin-top: 8px;
+}
+
+body.glass-ui .view-stage {
+    border-radius: var(--g-r-panel);
+    background: rgba(0, 0, 0, .4);
+    box-shadow: inset 0 0 0 .6px rgba(255, 255, 255, .06);
+}
+
+body.glass-ui .view-media {
+    border-radius: var(--g-r-item);
+}
+
+body.glass-ui .view-ext {
+    background: var(--g-flat-hover);
+    color: var(--g-text-strong);
+    box-shadow: var(--g-rim-soft);
+}
+
+@supports (corner-shape: squircle) {
+    body.glass-ui .view-ext {
+        corner-shape: squircle;
+        border-radius: 40px;
+    }
+}
+
+body.glass-ui .view-title {
+    color: var(--g-text-strong);
+}
+
+body.glass-ui .view-meta,
+body.glass-ui .view-note {
+    color: var(--g-text-dim);
+}
+
+body.glass-ui .view-actions .btn-group .btn {
+    --bs-btn-padding-x: 1.1rem;
 }
 
 /* Admin lists: flat wells in a stack, concentric with the chips and buttons inside. */

@@ -1,0 +1,44 @@
+{% extends 'admin_layout.html.twig' %}
+
+{% block title %}
+    Settings - MIU
+{% endblock %}
+
+{% block managecontent %}
+<div class="admin-list-head d-flex align-items-center justify-content-between mb-3">
+    <h4 class="mb-0"><i class="fa-solid fa-sliders me-2" aria-hidden="true"></i>Settings</h4>
+</div>
+
+{% if dumpedEnv %}
+    <div class="alert alert-warning">A compiled <code>.env.local.php</code> is in use, so changes saved here stay dormant until <code>composer dump-env</code> is run again on the server.</div>
+{% endif %}
+{% if not writable %}
+    <div class="alert alert-danger">The web server cannot write <code>{{ envPath }}</code>. Grant write access to that file (or the project directory) to change settings from here.</div>
+{% endif %}
+
+<form method="post" class="settings-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('admin_settings') }}">
+    <ul class="admin-list">
+        {% for key, meta in settings %}
+        <li class="admin-row settings-row">
+            <div class="admin-identity">
+                <div class="admin-title"><label for="setting-{{ key }}">{{ meta.label }}</label></div>
+                <div class="admin-sub">{{ meta.help }}</div>
+                <div class="admin-sub mt-1"><code class="settings-key">{{ key }}</code></div>
+            </div>
+            <div class="admin-actions settings-switch">
+                <div class="form-check form-switch">
+                    <input type="hidden" name="{{ key }}" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="setting-{{ key }}" name="{{ key }}" value="1" {% if values[key] %}checked{% endif %} {% if not writable %}disabled{% endif %}>
+                    <label class="form-check-label visually-hidden" for="setting-{{ key }}">{{ meta.label }}</label>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="d-flex align-items-center gap-3 mt-3">
+        <button type="submit" class="btn btn-primary" {% if not writable %}disabled{% endif %}><i class="fa-solid fa-floppy-disk me-2" aria-hidden="true"></i>Save settings</button>
+        <span class="admin-sub">Written to <code class="settings-key">.env.local</code>; takes effect on the next request.</span>
+    </div>
+</form>
+{% endblock %}

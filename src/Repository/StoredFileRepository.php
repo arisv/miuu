@@ -20,6 +20,15 @@ class StoredFileRepository extends EntityRepository
         return $qb->getQuery()->getOneOrNullResult();
     }
 
+    public function findFileByCustomURLAnyVisibility($customUrl)
+    {
+        return $this->createQueryBuilder('f')
+            ->where('f.customUrl = :url')
+            ->setParameter('url', $customUrl)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function getUserUploadHistoryPage(User $user, $cursor, $limit, $orderBy, $filter)
     {
         $qb = $this->getEntityManager()->createQueryBuilder()

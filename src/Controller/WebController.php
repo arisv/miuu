@@ -9,6 +9,7 @@ use App\Form\Type\UserPasswordChangeType;
 use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
 use App\Service\FileService;
+use App\Service\SettingsService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -26,6 +27,34 @@ class WebController extends AbstractController
     public function homeAction(Request $request)
     {
         return $this->render('homepage.html.twig');
+    }
+
+    #[Route("/v/{customUrl}.{fileExtension}", name: "view_file")]
+    public function viewFileAction(string $customUrl, string $fileExtension, FileService $fileService)
+    {
+        $file = $fileService->getFileForView($customUrl);
+        /** @var User|null $user */
+        $user = $this->getUser();
+        $canManage = $file ? $fileService->canManage($user, $file) : false;
+        if (!$file || ($file->markedForDeletion() && !$canManage)) {
+            throw $this->createNotFoundException();
+        }
+        if ($file->isMimeType(['image'])) {
+            $kind = 'image';
+        } elseif ($file->isMimeType(['video'])) {
+            $kind = 'video';
+        } elseif ($file->isMimeType(['audio'])) {
+            $kind = 'audio';
+        } else {
+            $kind = 'file';
+        }
+        return $this->render('view_file.html.twig', [
+            'file' => $file,
+            'kind' => $kind,
+            'canManage' => $canManage,
+            'size' => UserService::formatSize($file->getInternalSize()),
+            'extension' => $file->getOriginalExtension() ?: 'bin'
+        ]);
     }
 
     #[Route("/login", name: "auth_login")]
@@ -216,6 +245,38 @@ class WebController extends AbstractController
 
         return $this->render('admin_create_user.html.twig', [
             'form' => $form->createView()
+        ]);
+    }
+
+    #[Route("/manage/admin/settings/", name: "admin_settings", methods: ['GET', 'POST'])]
+    public function adminSettings(Request $request, SettingsService $settings, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('admin_settings', (string) $request->request->get('_token'))) {
+                $this->addFlash('global-danger', 'The form has expired, please try again.');
+                return $this->redirectToRoute('admin_settings');
+            }
+            $values = [];
+            foreach (array_keys(SettingsService::SETTINGS) as $key) {
+                $values[$key] = $request->request->getBoolean($key);
+            }
+            try {
+                $settings->save($values);
+                $logger->info('Settings saved by admin ' . $this->getUser()->getId() . ': ' . json_encode($values));
+                $this->addFlash('global-success', 'Settings saved.');
+            } catch (\Exception $e) {
+                $logger->error('Cannot save settings: ' . $e->getMessage());
+                $this->addFlash('global-danger', 'Settings could not be written: ' . $e->getMessage());
+            }
+            return $this->redirectToRoute('admin_settings');
+        }
+        return $this->render('admin_settings.html.twig', [
+            'settings' => SettingsService::SETTINGS,
+            'values' => $settings->getEffectiveValues(),
+            'writable' => $settings->isWritable(),
+            'dumpedEnv' => $settings->hasDumpedEnv(),
+            'envPath' => $settings->getLocalEnvPath(),
         ]);
     }
 

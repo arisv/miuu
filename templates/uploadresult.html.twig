@@ -11,7 +11,7 @@
                 <div class="d-flex align-items-center gap-2 my-4">
                     <input class="form-control" id="uploadResult" readonly title="Here's your file!" value="{{ url('get_file_custom_url', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) }}">
                     <button id="clipboardbtn" type="button" class="btn btn-success clipbutton" data-clipboard-target="#uploadResult" title="Copy to clipboard">
-                        <img src="{{ asset('static/clippy.svg') }}" alt="Copy to clipboard" width="15">
+                        <i class="fa-regular fa-copy" aria-hidden="true"></i><span class="visually-hidden">Copy to clipboard</span>
                     </button>
                 </div>
             </div>

@@ -4,6 +4,7 @@ namespace App\Service;
 
 
 use App\Entity\StoredFile;
+use App\Entity\UploadRecord;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -49,6 +50,62 @@ class UserService
         $user->setActive($active);
         $this->em->flush();
         return $user;
+    }
+
+    public function findUser(int $userId): ?User
+    {
+        return $this->em->getRepository(User::class)->find($userId);
+    }
+
+    public function setUserRole(User $actor, int $userId, int $role): User
+    {
+        if (!in_array($role, [User::ROLE_USER, User::ROLE_ADMIN], true)) {
+            throw new \Exception("Unknown role {$role}");
+        }
+        /** @var User|null $user */
+        $user = $this->em->getRepository(User::class)->find($userId);
+        if (!$user) {
+            throw new \Exception("User {$userId} not found");
+        }
+        if ($user->getId() === $actor->getId()) {
+            throw new \Exception("You cannot change your own role");
+        }
+        $user->setRole($role);
+        $this->em->flush();
+        return $user;
+    }
+
+    /**
+     * Removes the account. Its upload records go with it, so the files become anonymous uploads
+     * (still visible to admins); with $markFiles they are additionally marked for deletion.
+     */
+    public function deleteUser(User $actor, int $userId, bool $markFiles): array
+    {
+        /** @var User|null $user */
+        $user = $this->em->getRepository(User::class)->find($userId);
+        if (!$user) {
+            throw new \Exception("User {$userId} not found");
+        }
+        if ($user->getId() === $actor->getId()) {
+            throw new \Exception("You cannot delete your own account");
+        }
+        $records = $this->em->getRepository(UploadRecord::class)->findBy(['user' => $user]);
+        $marked = 0;
+        foreach ($records as $record) {
+            if ($markFiles) {
+                $file = $record->getImage();
+                if (!$file->markedForDeletion()) {
+                    $file->setVisibilityStatus(false);
+                    $file->setMarkedForDeletionAt(new \DateTime());
+                    $marked++;
+                }
+            }
+            $this->em->remove($record);
+        }
+        $login = $user->getLogin();
+        $this->em->remove($user);
+        $this->em->flush();
+        return ['login' => $login, 'files' => count($records), 'marked' => $marked];
     }
 
     public function changePassword(User $user, string $plainPassword): void

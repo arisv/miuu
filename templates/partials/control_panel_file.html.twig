@@ -5,6 +5,8 @@
         data-preview-url="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"
         data-preview-name="{{ item.originalName }}"
         data-preview-date="{{ item.getDate|date("Y-m-d H:i:s") }}"
+        data-preview-view="{{ path('view_file', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"
+        {% if not item.markedForDeletion and item.isThumbnailable %}data-preview-thumb="{{ path('serve_file_thumbnail', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"{% endif %}
         {% if item.markedForDeletion == true %}
         style="background-image: url({{ asset("/static/hidden_image.png") }})"
         {% elseif item.isThumbnailable %}

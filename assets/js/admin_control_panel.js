@@ -1,3 +1,5 @@
+import { Modal } from 'bootstrap';
+
 $(document).ready(function () {
     var AdminControlPanel = {
         initialize: function () {
@@ -5,6 +7,96 @@ $(document).ready(function () {
             $('body').on('click', 'button[data-toggle-user]', this.toggleUserActive.bind(this));
             $('body').on('click', 'button[data-reset-password]', this.resetUserPassword.bind(this));
             $('body').on('click', 'button[data-deleteaction]', this.toggleFileDeletion.bind(this));
+            $('body').on('click', 'button[data-toggle-role]', this.toggleUserRole.bind(this));
+            this.initializeDeleteUser();
+        },
+        toggleUserRole: function (e) {
+            var button = $(e.currentTarget);
+            var row = button.closest('[data-userid]');
+            var userId = button.data('toggle-role');
+            var isAdmin = parseInt(button.attr('data-role'), 10) === 2;
+            var login = row.find('[data-user-login]').text();
+            var verb = isAdmin ? 'Demote "' + login + '" to a regular user?' : 'Promote "' + login + '" to admin? Admins can manage every user and file.';
+            if (!window.confirm(verb)) {
+                return;
+            }
+            button.prop('disabled', true);
+            this.postData('/endpoint/setuserrole/', {'id': userId, 'role': isAdmin ? 1 : 2}).done(function (data) {
+                if (data.status !== 'ok') {
+                    alert(data.message || 'Unable to change role');
+                    return;
+                }
+                var admin = data.role === 2;
+                button.attr('data-role', data.role)
+                    .attr('title', admin ? 'Demote to user' : 'Promote to admin')
+                    .html('<i class="fa-solid ' + (admin ? 'fa-user' : 'fa-user-shield') + ' me-1" aria-hidden="true"></i>' + (admin ? 'Demote' : 'Promote'));
+                row.find('.admin-chip.role-admin, .admin-chip.role-user')
+                    .removeClass('role-admin role-user')
+                    .addClass(admin ? 'role-admin' : 'role-user')
+                    .text(admin ? 'Admin' : 'User');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON && xhr.responseJSON.message;
+                alert(message || 'Unable to change role');
+            }).always(function () {
+                button.prop('disabled', false);
+            });
+        },
+        // Delete needs the username typed back; the server checks it again.
+        initializeDeleteUser: function () {
+            var modalEl = document.getElementById('deleteUserModal');
+            if (!modalEl) {
+                return;
+            }
+            var self = this;
+            var modal = new Modal(modalEl);
+            var $modal = $(modalEl);
+            var input = $modal.find('#deleteUserConfirm');
+            var submit = $modal.find('[data-delete-submit]');
+            var error = $modal.find('[data-delete-error]');
+            var target = null;
+            $('body').on('click', 'button[data-delete-user]', function (e) {
+                var button = $(e.currentTarget);
+                var row = button.closest('[data-userid]');
+                var sizeText = row.find('[data-usersize]').text();
+                var filesMatch = /(\d+) files?/.exec(sizeText);
+                target = {id: button.data('delete-user'), login: String(button.data('login')), row: row};
+                $modal.find('[data-delete-login], [data-delete-login-title]').text(target.login);
+                $modal.find('[data-delete-file-count]').text(filesMatch ? filesMatch[1] : '');
+                input.val('');
+                $modal.find('#deleteUserFiles').prop('checked', false);
+                error.prop('hidden', true).text('');
+                submit.prop('disabled', true);
+                modal.show();
+            });
+            $modal.on('shown.bs.modal', function () { input.trigger('focus'); });
+            input.on('input', function () {
+                submit.prop('disabled', !target || input.val().trim() !== target.login);
+            });
+            $modal.find('#deleteUserForm').on('submit', function (e) {
+                e.preventDefault();
+                if (!target || input.val().trim() !== target.login) {
+                    return;
+                }
+                submit.prop('disabled', true);
+                self.postData('/endpoint/deleteuser/', {
+                    'id': target.id,
+                    'confirm': input.val().trim(),
+                    'mark_files': $modal.find('#deleteUserFiles').is(':checked') ? 1 : 0
+                }).done(function (data) {
+                    if (data.status !== 'ok') {
+                        error.text(data.message || 'Unable to delete user').prop('hidden', false);
+                        return;
+                    }
+                    target.row.slideUp(200, function () { $(this).remove(); });
+                    var counter = $('.admin-list-head .admin-chip');
+                    counter.text(Math.max(parseInt(counter.text(), 10) - 1, 0));
+                    modal.hide();
+                }).fail(function (xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message;
+                    error.text(message || 'Unable to delete user').prop('hidden', false);
+                    submit.prop('disabled', false);
+                });
+            });
         },
         toggleFileDeletion: function (e) {
             var button = $(e.currentTarget);

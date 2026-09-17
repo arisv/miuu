@@ -4,13 +4,13 @@ require('../css/basic.css');
 require('../css/app.css');
 require('../css/glass.css');
 require('@fortawesome/fontawesome-free/js/all.js');
-const $ = require('jquery');
+import $ from 'jquery';
 require('bootstrap');
-import * as Clipboard from './clipboard.min';
+import { setupClipboard } from './clipboard';
 import './liquid-glass';
 import { enhancePlayers } from './media-player';
 
-new Clipboard('.clipbutton');
+setupClipboard();
 
 $(document).ready(() => {
     enhancePlayers(document);

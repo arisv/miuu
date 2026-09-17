@@ -54,8 +54,12 @@ Encore
     // requires WebpackEncoreBundle 1.4 or higher
     //.enableIntegrityHashes(Encore.isProduction())
 
-    // uncomment if you're having problems with a jQuery plugin
-    .autoProvidejQuery()
+    // jQuery 4 ships as an ES module, so the provided globals must point at its default export.
+    .autoProvideVariables({
+        $: ['jquery', 'default'],
+        jQuery: ['jquery', 'default'],
+        'window.jQuery': ['jquery', 'default'],
+    })
 ;
 
 export default await Encore.getWebpackConfig();

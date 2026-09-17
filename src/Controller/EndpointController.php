@@ -98,14 +98,20 @@ class EndpointController extends AbstractController
             $remoteToken = trim((string) $request->request->get('private_key', ''));
             try {
                 $storedFile = $fileService->storeRemoteUploadFile($file, $remoteToken);
-                $fullUrl = $fileService->generateFullURL($storedFile);
+                $directUrl = $fileService->generateFullURL($storedFile);
+                $viewUrl = $fileService->generateViewURL($storedFile);
+                // api_ver=v2: media keeps the direct link, everything else gets the file page.
+                $apiVersion = strtolower(trim((string) $request->request->get('api_ver', 'v1')));
+                $fileUrl = $apiVersion === 'v2' && !$storedFile->shouldEmbed() ? $viewUrl : $directUrl;
                 if ($request->request->get('plaintext')) {
-                    return new Response($fullUrl, 201);
+                    return new Response($fileUrl, 201);
                 }
                 return new JsonResponse([
-                    'file' => $fullUrl,
-                    'manage' => $fileService->generateViewURL($storedFile),
-                    'delete' => $fileService->generateDeletionURL($storedFile)
+                    'file' => $fileUrl,
+                    'direct' => $directUrl,
+                    'manage' => $viewUrl,
+                    'delete' => $fileService->generateDeletionURL($storedFile),
+                    'api_ver' => $apiVersion === 'v2' ? 'v2' : 'v1'
                 ]);
             } catch (\Exception $e) {
                 $logger->error('Error saving file: ' . $e->getMessage() . " with token " . $remoteToken);

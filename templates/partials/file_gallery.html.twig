@@ -103,24 +103,28 @@
 					</div>
 				</div>
 				<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewTitle" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered preview-dialog">
+					<div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-md-down preview-dialog">
 						<div class="modal-content preview-content">
 							<div class="modal-header">
 								<h5 class="modal-title text-truncate" id="previewTitle"></h5>
 								<span class="preview-counter ms-3 text-nowrap"></span>
 								<button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
 							</div>
+							<div class="preview-nav-strip d-md-none" role="group" aria-label="Previous and next file">
+								<button type="button" class="btn btn-secondary" data-preview-nav="-1" aria-label="Previous file"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+								<button type="button" class="btn btn-secondary" data-preview-nav="1" aria-label="Next file"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+							</div>
 							<div class="modal-body preview-body"></div>
 							<div class="modal-footer">
 								<span class="preview-meta me-auto"></span>
-								<div class="btn-group" role="group" aria-label="Previous and next file">
+								<div class="btn-group d-none d-md-inline-flex" role="group" aria-label="Previous and next file">
 									<button type="button" class="btn btn-secondary" data-preview-nav="-1" title="Previous (←)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
 									<button type="button" class="btn btn-secondary" data-preview-nav="1" title="Next (→)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
 								</div>
-								<a href="#" class="btn btn-secondary" data-preview-open title="Open the file page"><i class="fa-solid fa-arrow-up-right-from-square me-2" aria-hidden="true"></i>Open</a>
-								<button type="button" class="btn btn-primary clipbutton" data-preview-copy><i class="fa-solid fa-link me-2" aria-hidden="true"></i><span class="clip-label">Copy link</span></button>
-								<a href="#" class="btn btn-primary" data-preview-download><i class="fa-solid fa-download me-2" aria-hidden="true"></i>Download</a>
-								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-xmark me-2" aria-hidden="true"></i>Close</button>
+								<a href="#" class="btn btn-secondary" data-preview-open title="Open the file page"><i class="fa-solid fa-arrow-up-right-from-square me-2" aria-hidden="true"></i><span class="btn-label">Open</span></a>
+								<button type="button" class="btn btn-primary clipbutton" data-preview-copy title="Copy link"><i class="fa-solid fa-link me-2" aria-hidden="true"></i><span class="clip-label btn-label">Copy link</span></button>
+								<a href="#" class="btn btn-primary" data-preview-download title="Download"><i class="fa-solid fa-download me-2" aria-hidden="true"></i><span class="btn-label">Download</span></a>
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" title="Close"><i class="fa-solid fa-xmark me-2" aria-hidden="true"></i><span class="btn-label">Close</span></button>
 							</div>
 						</div>
 					</div>

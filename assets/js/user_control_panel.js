@@ -48,6 +48,30 @@ $(document).ready(function () {
                 }
             }.bind(this));
             $(document).on('keydown', this.onPreviewKey.bind(this));
+            // Touch: a horizontal swipe over the preview steps to the previous/next file.
+            var swipe = null;
+            modalEl.addEventListener('touchstart', function (e) {
+                if (e.touches.length !== 1 || e.target.closest('.player-controls, .modal-footer, .modal-header')) {
+                    swipe = null;
+                    return;
+                }
+                var t = e.touches[0];
+                swipe = {x: t.clientX, y: t.clientY, at: Date.now()};
+            }, {passive: true});
+            modalEl.addEventListener('touchend', function (e) {
+                if (!swipe) {
+                    return;
+                }
+                var t = e.changedTouches[0];
+                var dx = t.clientX - swipe.x;
+                var dy = t.clientY - swipe.y;
+                var quick = Date.now() - swipe.at < 800;
+                swipe = null;
+                if (quick && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                    this.moveCursor(dx < 0 ? 1 : -1);
+                }
+            }.bind(this), {passive: true});
+            modalEl.addEventListener('touchcancel', function () { swipe = null; }, {passive: true});
             // Safari has been seen ignoring Escape via the bubbling handlers; catch it early on the window,
             // on both key phases, and retry the hide if the modal is still up after the transition.
             var self = this;

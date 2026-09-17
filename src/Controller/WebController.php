@@ -61,9 +61,17 @@ class WebController extends AbstractController
                 $text = mb_convert_encoding(substr($text, 0, $limit), 'UTF-8', 'UTF-8');
             }
         }
+        $imageSize = null;
+        if ($kind === 'image' && !$file->markedForDeletion()) {
+            $dims = @getimagesize($fileService->buildFullFilePath($file));
+            if ($dims) {
+                $imageSize = ['width' => $dims[0], 'height' => $dims[1]];
+            }
+        }
         return $this->render('view_file.html.twig', [
             'text' => $text,
             'textTruncated' => $textTruncated,
+            'imageSize' => $imageSize,
             'file' => $file,
             'kind' => $kind,
             'canManage' => $canManage,

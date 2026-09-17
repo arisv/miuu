@@ -401,7 +401,7 @@ class FileService
             ->where('file.markedForDeletionAt IS NOT NULL AND file.markedForDeletionAt < :pivot')
             ->setParameter('pivot', $pivot)
             ->getQuery()
-            ->execute();
+            ->getResult();
 
         foreach ($filesToDelete as $file) {
             $report = $this->deleteFileFromStorage($file);

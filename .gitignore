@@ -37,3 +37,6 @@ yarn-error.log
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
+###> symfony/framework-bundle ###
+/config/reference.php
+###< symfony/framework-bundle ###

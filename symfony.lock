@@ -1,12 +1,6 @@
 {
-    "doctrine/cache": {
-        "version": "v1.8.0"
-    },
     "doctrine/collections": {
         "version": "v1.6.2"
-    },
-    "doctrine/common": {
-        "version": "v2.10.0"
     },
     "doctrine/dbal": {
         "version": "v2.9.2"
@@ -410,14 +404,8 @@
     "symfony/polyfill-mbstring": {
         "version": "v1.12.0"
     },
-    "symfony/polyfill-php72": {
-        "version": "v1.12.0"
-    },
     "symfony/polyfill-php73": {
         "version": "v1.12.0"
-    },
-    "symfony/polyfill-php80": {
-        "version": "v1.23.1"
     },
     "symfony/polyfill-php81": {
         "version": "v1.23.0"
@@ -430,9 +418,6 @@
     },
     "symfony/property-info": {
         "version": "v4.3.3"
-    },
-    "symfony/proxy-manager-bridge": {
-        "version": "v4.4.27"
     },
     "symfony/routing": {
         "version": "6.3",

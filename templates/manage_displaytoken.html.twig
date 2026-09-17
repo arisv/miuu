@@ -38,7 +38,8 @@
                         <tbody>
                             <tr><td><code>meowfile_remote</code></td><td>file</td><td><span class="api-req">required</span></td><td>The file to store.</td></tr>
                             <tr><td><code>private_key</code></td><td>string</td><td><span class="api-req">required</span></td><td>Your API token from this page.</td></tr>
-                            <tr><td><code>plaintext</code></td><td>any</td><td><span class="api-opt">optional</span></td><td>When present, the reply is the direct link as <code>text/plain</code> with status <code>201</code>.</td></tr>
+                            <tr><td><code>api_ver</code></td><td>string</td><td><span class="api-opt">optional</span></td><td><code>v1</code> (default): <code>file</code> is always the direct link. <code>v2</code>: images, video and audio keep the direct link, while text, archives, binaries and other files get the <code>/v/</code> file page instead.</td></tr>
+                            <tr><td><code>plaintext</code></td><td>any</td><td><span class="api-opt">optional</span></td><td>When present, the reply is the <code>file</code> URL as <code>text/plain</code> with status <code>201</code>.</td></tr>
                         </tbody>
                     </table>
                     </div>
@@ -46,12 +47,15 @@
                     <div class="api-response">
                         <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
 <pre class="api-pre"><code>{
-  "file":   "{{ base }}/a1b2c3d4e5.png",
-  "manage": "{{ base }}/v/a1b2c3d4e5.png",
-  "delete": "{{ base }}/d/a1b2c3d4e5.png?key=…"
+  "file":    "{{ base }}/a1b2c3d4e5.png",
+  "direct":  "{{ base }}/a1b2c3d4e5.png",
+  "manage":  "{{ base }}/v/a1b2c3d4e5.png",
+  "delete":  "{{ base }}/d/a1b2c3d4e5.png?key=…",
+  "api_ver": "v1"
 }</code></pre>
                         <dl class="api-fields">
-                            <dt><code>file</code></dt><dd>Direct link to the stored file.</dd>
+                            <dt><code>file</code></dt><dd>The link to hand out: the direct link, or with <code>api_ver=v2</code> the file page for non-media files.</dd>
+                            <dt><code>direct</code></dt><dd>Always the direct link to the stored file.</dd>
                             <dt><code>manage</code></dt><dd>HTML page with preview, copy link and, when signed in as the owner, delete.</dd>
                             <dt><code>delete</code></dt><dd>Signed link that marks the file for deletion. It needs no login, so treat it as a secret.</dd>
                         </dl>
@@ -67,6 +71,7 @@
                     <h6 class="api-h">Example</h6>
 <pre class="api-pre"><code>curl -F "meowfile_remote=@screenshot.png" \
      -F "private_key={{ app.user.remoteToken }}" \
+     -F "api_ver=v2" \
      {{ uploadUrl }}</code></pre>
                 </div>
             </article>
@@ -127,7 +132,7 @@
                             <tr><th>Request URL</th><td><code>{{ uploadUrl }}</code></td></tr>
                             <tr><th>Body</th><td>Form data (multipart/form-data)</td></tr>
                             <tr><th>File form name</th><td><code>meowfile_remote</code></td></tr>
-                            <tr><th>Arguments</th><td><code>private_key</code> = your token</td></tr>
+                            <tr><th>Arguments</th><td><code>private_key</code> = your token, <code>api_ver</code> = <code>v2</code></td></tr>
                             <tr><th>URL</th><td><code>{json:file}</code></td></tr>
                             <tr><th>Deletion URL</th><td><code>{json:delete}</code></td></tr>
                         </tbody>

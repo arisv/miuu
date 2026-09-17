@@ -4,6 +4,64 @@
     {{ file.originalName }} - MIU
 {% endblock %}
 
+{% block meta %}
+{% if not file.markedForDeletion %}
+{% set fileUrl = url('get_file_custom_url', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) %}
+{% set viewUrl = url('view_file', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) %}
+{% set thumbUrl = file.isThumbnailable ? url('serve_file_thumbnail', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) : null %}
+{% set shownExt = '.' in file.originalName ? file.originalName|split('.')|last : extension %}
+{% set description = (shownExt|upper) ~ ' · ' ~ size ~ ' · ' ~ file.getDate|date("Y-m-d H:i") ~ ' UTC' %}
+    <meta name="description" content="{{ description }}">
+    <meta name="theme-color" content="#34e6a1">
+    <meta property="og:site_name" content="MIU">
+    <meta property="og:title" content="{{ file.originalName }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:url" content="{{ viewUrl }}">
+    {% if kind == 'image' %}
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ fileUrl }}">
+    <meta property="og:image:type" content="{{ file.internalMimetype }}">
+    {% if imageSize %}
+    <meta property="og:image:width" content="{{ imageSize.width }}">
+    <meta property="og:image:height" content="{{ imageSize.height }}">
+    {% endif %}
+    <meta property="og:image:alt" content="{{ file.originalName }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ fileUrl }}">
+    {% elseif kind == 'video' %}
+    <meta property="og:type" content="video.other">
+    <meta property="og:video" content="{{ fileUrl }}">
+    <meta property="og:video:url" content="{{ fileUrl }}">
+    <meta property="og:video:secure_url" content="{{ fileUrl }}">
+    <meta property="og:video:type" content="{{ file.internalMimetype }}">
+    {% if thumbUrl %}
+    <meta property="og:image" content="{{ thumbUrl }}">
+    <meta name="twitter:image" content="{{ thumbUrl }}">
+    {% endif %}
+    <meta name="twitter:card" content="player">
+    <meta name="twitter:player" content="{{ viewUrl }}">
+    <meta name="twitter:player:stream" content="{{ fileUrl }}">
+    <meta name="twitter:player:stream:content_type" content="{{ file.internalMimetype }}">
+    {% elseif kind == 'audio' %}
+    <meta property="og:type" content="music.song">
+    <meta property="og:audio" content="{{ fileUrl }}">
+    <meta property="og:audio:secure_url" content="{{ fileUrl }}">
+    <meta property="og:audio:type" content="{{ file.internalMimetype }}">
+    <meta property="og:image" content="{{ absolute_url(asset('static/logo.png')) }}">
+    <meta name="twitter:card" content="summary">
+    {% else %}
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ absolute_url(asset('static/logo.png')) }}">
+    <meta name="twitter:card" content="summary">
+    {% endif %}
+    <meta name="twitter:title" content="{{ file.originalName }}">
+    <meta name="twitter:description" content="{{ description }}">
+    <link rel="canonical" href="{{ viewUrl }}">
+{% else %}
+    <meta name="robots" content="noindex">
+{% endif %}
+{% endblock %}
+
 {% block maincontent %}
 {% set fileUrl = url('get_file_custom_url', {'customUrl': file.customUrl, 'fileExtension': file.originalExtension}) %}
 {% set hidden = file.markedForDeletion %}

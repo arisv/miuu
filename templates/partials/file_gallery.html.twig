@@ -140,7 +140,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="p-3 gallery-pager">
+				<div class="p-3 gallery-pager" data-lg-proxy=".btn">
 					{% set defaultParams = app.request.attributes.get('_route_params') | merge(app.request.query.all) %}
 					{% if pageData.hasNextPage %}
 						<button data-pagination-next="{{ path(nextPageRoute, defaultParams | merge({'cursor': pageData.cursor})) }}" type="button" class="btn btn-info btn-lg w-100">Get more!</button>

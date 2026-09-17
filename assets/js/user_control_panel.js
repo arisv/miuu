@@ -8,7 +8,9 @@ $(document).ready(function () {
         calendarPointer: 'start',
         initialize: function () {
             $('body').on('click', 'button[data-deleteid]', this.manageDeletion.bind(this));
-            $('button[data-pagination-next]').on('click', this.fetchNextPage.bind(this));
+            // Bound on the wrapper, which is exactly the button's footprint plus padding, so a click
+            // still lands if the button shifts under the pointer while the page re-flows.
+            $('.gallery-pager').on('click', this.fetchNextPage.bind(this));
             $('[data-date]').on('click', this.calendarHighlight.bind(this));
             $('#order-form').on('submit', function (e) {
                 var el = e.currentTarget;
@@ -398,7 +400,10 @@ $(document).ready(function () {
                 console.log("Fetch in progress");
                 return;
             }
-            var button = e.currentTarget;
+            var button = $(e.currentTarget).find('button[data-pagination-next]')[0];
+            if (!button || button.disabled) {
+                return;
+            }
             var action = $(button).data('paginationNext');
             $('#fetch-in-progress').show();
             this.fetchLock = true;

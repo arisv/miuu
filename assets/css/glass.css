@@ -878,6 +878,17 @@ body.glass-ui .btn.w-100 {
     --bs-btn-border-radius: var(--g-r-panel);
 }
 
+/* The pager wrapper is the click target, so its hover state paints the button. */
+body.glass-ui .gallery-pager:hover .btn:not(:disabled) {
+    color: var(--bs-btn-hover-color);
+    background-color: var(--bs-btn-hover-bg);
+    border-color: var(--bs-btn-hover-border-color);
+}
+
+body.glass-ui .gallery-pager:hover .btn:not(:disabled)::after {
+    opacity: 1;
+}
+
 /* Inputs: quiet flat wells, capsule for single-line fields, accent ring on focus. */
 body.glass-ui .form-control,
 body.glass-ui .form-select,

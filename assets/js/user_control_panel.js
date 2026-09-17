@@ -362,6 +362,9 @@ $(document).ready(function () {
                 this.calendarRangeEnd = date;
                 this.calendarPointer = 'start';
                 this.clearRangeStart();
+                this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
+                $('#order-form').trigger('submit');
+                return;
             }
             this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
         },

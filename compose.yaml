@@ -20,7 +20,7 @@ x-app: &app
     APP_DEBUG: "1"
     SF_VAGRANT_MODE: "0"
     STORAGE_DIR: storage
-    DATABASE_URL: "mysql://root:root@db:3306/miubase?serverVersion=mariadb-10.5.29&charset=utf8mb4"
+    DATABASE_URL: "mysql://root:root@db:3306/miubase?serverVersion=mariadb-11.8.8&charset=utf8mb4"
     MESSENGER_TRANSPORT_DSN: "doctrine://default?auto_setup=0"
     COMPOSER_HOME: /tmp/composer
     XDEBUG_MODE: "${XDEBUG_MODE:-debug}"
@@ -30,13 +30,15 @@ x-app: &app
 
 services:
   db:
-    image: mariadb:10.5
+    image: mariadb:11.8
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_DATABASE: miubase
+      # Upgrades an existing data directory in place (e.g. the 10.5 volume) on first start.
+      MARIADB_AUTO_UPGRADE: "1"
       TZ: UTC
     ports:
       - "127.0.0.1:${DB_PORT:-3306}:3306"

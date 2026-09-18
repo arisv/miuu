@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Security\UploadTokenResolver;
 
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
@@ -31,7 +32,8 @@ class FileService
         private string $projectDir,
         private string $storageDir,
         private string $appSecret,
-        private FileIconResolver $iconResolver
+        private FileIconResolver $iconResolver,
+        private UploadTokenResolver $tokenResolver
     ) {
     }
 
@@ -108,7 +110,8 @@ class FileService
         if (!$file || !$file->isValid()) {
             throw new \Exception("File failed validation");
         }
-        $user = $this->em->getRepository(User::class)->findActiveUserByToken($remoteToken);
+        // Accepts a per-device token from the app as well as the legacy account-wide remote token.
+        $user = $this->tokenResolver->resolveUser((string) $remoteToken);
         if (!$user) {
             throw new \Exception("Unable to find user by token " . $remoteToken);
         }

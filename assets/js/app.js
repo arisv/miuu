@@ -83,6 +83,30 @@ $(document).ready(() => {
             .always(() => button.prop('disabled', false));
     });
 
+    // Remote Upload page: revoke a signed-in device.
+    $('body').on('click', 'button[data-revoke-device]', (e) => {
+        const button = $(e.currentTarget);
+        const row = button.closest('[data-deviceid]');
+        const name = row.find('.admin-title').text().trim();
+        if (!window.confirm(`Revoke "${name}"? The app on that device is signed out immediately.`)) {
+            return;
+        }
+        button.prop('disabled', true);
+        $.ajax({ type: 'POST', url: button.data('revokeUrl'), data: { id: button.data('revokeDevice') } })
+            .done(() => {
+                const list = row.closest('[data-devices-list]');
+                row.slideUp(200, () => {
+                    row.remove();
+                    const counter = $('.admin-list-head .admin-chip').first();
+                    counter.text(Math.max(parseInt(counter.text(), 10) - 1, 0));
+                    if (list.children().length === 0) {
+                        list.replaceWith('<p class="admin-sub small mb-4" data-devices-empty>No devices signed in.</p>');
+                    }
+                });
+            })
+            .fail(() => { button.prop('disabled', false); window.alert('Unable to revoke this device'); });
+    });
+
     // Gallery: on phones the order toolbar lives inside the calendar drawer, on wider screens above the tiles.
     const navpanel = document.getElementById('navpanel');
     const slot = document.getElementById('calendarToolbarSlot');

@@ -1,0 +1,6 @@
+# Copy to compose.override.yaml to expose the dev stack on the LAN (phones/tablets testing the app).
+# Android emulator reaches the host at http://10.0.2.2:8080 without this.
+services:
+  nginx:
+    ports: !override
+      - "0.0.0.0:8080:80"

@@ -40,3 +40,6 @@ phpstan.neon
 ###> symfony/framework-bundle ###
 /config/reference.php
 ###< symfony/framework-bundle ###
+
+# local compose overrides
+/compose.override.yaml

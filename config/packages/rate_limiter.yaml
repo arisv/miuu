@@ -1,0 +1,8 @@
+framework:
+    rate_limiter:
+        # Login attempts per client IP + login; symfony/lock is not installed, so no cross-process lock.
+        api_login:
+            policy: sliding_window
+            limit: 10
+            interval: '15 minutes'
+            lock_factory: null

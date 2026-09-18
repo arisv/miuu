@@ -203,6 +203,21 @@ class StoredFile
         ], true);
     }
 
+    /** How clients should present the file: image | video | audio | text | file. */
+    public function previewKind(): string
+    {
+        if ($this->isMimeType(['image'])) {
+            return 'image';
+        }
+        if ($this->isMimeType(['video'])) {
+            return 'video';
+        }
+        if ($this->isMimeType(['audio'])) {
+            return 'audio';
+        }
+        return $this->isTextual() ? 'text' : 'file';
+    }
+
     public function isThumbnailable(): bool
     {
         return $this->isMimeType(["image", "video"]);

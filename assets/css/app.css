@@ -1563,6 +1563,12 @@ button[data-toggle-user] {
     --admin-actions-w: 24rem;
 }
 
+.admin-list-devices {
+    --admin-meta-cols: 8.5rem 8.5rem;
+    --admin-meta-w: calc(17rem + 22px);
+    --admin-actions-w: 7rem;
+}
+
 .admin-list-files {
     --admin-meta-cols: 6.5rem 17rem;
     --admin-meta-w: calc(23.5rem + 22px);

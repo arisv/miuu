@@ -63,14 +63,9 @@ class UserEmailChangeType extends AbstractType
         if ($data === null || $data === '') {
             return;
         }
-        $qb = $this->em->getRepository(User::class)->createQueryBuilder('u')
-            ->select('COUNT(u.id)')
-            ->where('u.login = :value OR u.email = :value')
-            ->setParameter('value', $data);
-        if ($this->currentUser && $this->currentUser->getId()) {
-            $qb->andWhere('u.id != :self')->setParameter('self', $this->currentUser->getId());
-        }
-        if ((int) $qb->getQuery()->getSingleScalarResult() > 0) {
+        /** @var \App\Repository\UserRepository $users */
+        $users = $this->em->getRepository(User::class);
+        if ($users->isIdentifierTaken($data, $this->currentUser?->getId())) {
             $context->buildViolation('Email already in use')
                 ->atPath('email')
                 ->addViolation();

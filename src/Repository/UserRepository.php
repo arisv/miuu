@@ -41,6 +41,19 @@ class UserRepository extends EntityRepository implements UserLoaderInterface
             ->getOneOrNullResult();
     }
 
+    /** Both identifiers are accepted at login, so a value must be free across login and email. */
+    public function isIdentifierTaken(string $value, ?int $exceptUserId = null): bool
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.login = :value OR u.email = :value')
+            ->setParameter('value', $value);
+        if ($exceptUserId !== null) {
+            $qb->andWhere('u.id != :self')->setParameter('self', $exceptUserId);
+        }
+        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
+    }
+
     public function findUsersByList($idList)
     {
         $users = $this->createQueryBuilder('u')

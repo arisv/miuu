@@ -11,6 +11,17 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        # Native clients: stateless Bearer device tokens. Must precede "images" (security: false, ^/.+).
+        api:
+            pattern: ^/api/
+            stateless: true
+            provider: users
+            user_checker: App\Security\UserChecker
+            entry_point: App\Security\ApiAuthenticationHandler
+            access_token:
+                token_handler: App\Security\DeviceTokenHandler
+                realm: MIU
+                failure_handler: App\Security\ApiAuthenticationHandler
         main:
             # The trailing (/|$) keeps raw file URLs such as /vxyz.png in the stateless images firewall.
             pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile|share|v)(/|$))
@@ -44,6 +55,8 @@ security:
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/manage/admin, roles: ROLE_ADMIN }
         - { path: ^/manage, roles: ROLE_USER }
+        - { path: ^/api/v1/(auth/login|server)$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/, roles: ROLE_USER }
         - { path: ^/*, roles: PUBLIC_ACCESS }
 
 when@test:

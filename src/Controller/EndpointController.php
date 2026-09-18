@@ -7,6 +7,7 @@ use App\Entity\UploadRecord;
 use App\Entity\User;
 use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
+use App\Service\DeviceTokenService;
 use App\Service\FileIconResolver;
 use App\Service\FileService;
 use App\Service\ThumbnailService;
@@ -45,10 +46,10 @@ class EndpointController extends AbstractController
             [$file, $path] = $fileService->getFileByCustomURL($customUrl);
 
             $thumbnailPath = $thumbnailService->tryGettingThumbnail($file);
-            if ($thumbnailPath) {
-                $path = $thumbnailPath;
+            if (!$thumbnailPath) {
+                throw $this->createNotFoundException('Thumbnail not ready');
             }
-            return $this->generateThumbnailServeResponse($file, $path);
+            return $this->generateThumbnailServeResponse($file, $thumbnailPath);
         } catch (\Exception $e) {
             $logger->error('Error serving file: ' . $e->getMessage());
             throw $this->createNotFoundException();
@@ -413,6 +414,22 @@ class EndpointController extends AbstractController
             $result['message'] = $e->getMessage();
         }
         return new JsonResponse($result);
+    }
+
+    #[Route(path: '/endpoint/revokedevice/', name: 'user_revoke_device', methods: ['POST'])]
+    public function revokeDevice(Request $request, DeviceTokenService $deviceTokens, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        /** @var User $user */
+        $user = $this->getUser();
+        $id = (int) $request->request->get('id');
+        try {
+            $deviceTokens->revoke($user, $id);
+            $logger->info("Device token {$id} revoked by user {$user->getId()} from the web");
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Device not found'], 404);
+        }
+        return new JsonResponse(['status' => 'ok']);
     }
 
     #[Route(path: '/endpoint/regeneratetoken/', name: 'user_regenerate_token', methods: ['POST'])]

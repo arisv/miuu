@@ -15,6 +15,42 @@
         </div>
         <div data-refresh-token-result class="small mb-4" hidden></div>
 
+        <div class="admin-list-head d-flex align-items-center justify-content-between mb-2 mt-4">
+            <h4 class="mb-0"><i class="fa-solid fa-mobile-screen me-2" aria-hidden="true"></i>Signed-in devices <span class="admin-chip ms-2">{{ devices|length }}</span></h4>
+        </div>
+        <p class="api-help small mb-3">Devices are added by logging in from the MIU app. Revoking a device signs it out immediately.</p>
+        {% if devices is empty %}
+            <p class="admin-sub small mb-4" data-devices-empty>No devices signed in.</p>
+        {% else %}
+        <ul class="admin-list admin-list-devices mb-4" data-devices-list>
+        {% for device in devices %}
+            {% set icon = device.platform == 'ios' or device.platform == 'macos' ? 'fa-brands fa-apple' : (device.platform == 'android' ? 'fa-brands fa-android' : 'fa-solid fa-mobile-screen') %}
+            <li class="admin-row" data-deviceid="{{ device.id }}">
+                <div class="admin-avatar is-anon" aria-hidden="true"><i class="{{ icon }}"></i></div>
+                <div class="admin-identity">
+                    <div class="admin-title">{{ device.name }} <span class="admin-chip admin-id">{{ device.tokenPrefix }}&hellip;</span></div>
+                    <div class="admin-sub">{{ device.platform|capitalize }}</div>
+                </div>
+                <div class="admin-meta">
+                    <div class="admin-stat" data-stat="created">
+                        <span class="admin-stat-label">Signed in</span>
+                        <span class="admin-stat-value">{{ device.createdAt|date('Y-m-d H:i') }}</span>
+                    </div>
+                    <div class="admin-stat" data-stat="used">
+                        <span class="admin-stat-label">Last used</span>
+                        <span class="admin-stat-value">{{ device.lastUsedAt ? device.lastUsedAt|date('Y-m-d H:i') : 'never' }}</span>
+                    </div>
+                </div>
+                <div class="admin-actions">
+                    <button type="button" class="btn btn-danger btn-sm" data-revoke-device="{{ device.id }}" data-revoke-url="{{ path('user_revoke_device') }}">
+                        <i class="fa-solid fa-right-from-bracket me-1" aria-hidden="true"></i>Revoke
+                    </button>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+
         {% set uploadUrl = url('set_file_form') %}
         {% set base = url('home')|trim('/') %}
         <section class="api-doc mt-4">
@@ -23,12 +59,12 @@
                 <span class="api-base">Base URL <code>{{ base }}</code></span>
             </div>
 
-            <article class="api-endpoint">
-                <header class="api-endpoint-head">
+            <details class="api-endpoint">
+                <summary class="api-endpoint-head">
                     <span class="api-method api-method-post">POST</span>
                     <code class="api-path">/getfile/</code>
                     <span class="api-summary">Upload a file</span>
-                </header>
+                </summary>
                 <div class="api-endpoint-body">
                     <p class="api-lead">Authenticates with your token. The body is <code>multipart/form-data</code>.</p>
                     <h6 class="api-h">Form fields</h6>
@@ -74,14 +110,14 @@
      -F "api_ver=v2" \
      {{ uploadUrl }}</code></pre>
                 </div>
-            </article>
+            </details>
 
-            <article class="api-endpoint">
-                <header class="api-endpoint-head">
+            <details class="api-endpoint">
+                <summary class="api-endpoint-head">
                     <span class="api-method api-method-post">POST</span>
                     <code class="api-path">/d/{id}.{ext}</code>
                     <span class="api-summary">Mark a file for deletion</span>
-                </header>
+                </summary>
                 <div class="api-endpoint-body">
                     <p class="api-lead">Use the <code>delete</code> link from the upload response. No token or login is needed; the <code>key</code> proves ownership of the link.</p>
                     <h6 class="api-h">Parameters</h6>
@@ -105,24 +141,24 @@
                     </div>
                     <p class="api-dim mb-0"><span class="api-method api-method-get">GET</span> on the same link opens a confirmation page, which is what ShareX-style clients do with a deletion URL.</p>
                 </div>
-            </article>
+            </details>
 
-            <article class="api-endpoint">
-                <header class="api-endpoint-head">
+            <details class="api-endpoint">
+                <summary class="api-endpoint-head">
                     <span class="api-method api-method-get">GET</span>
                     <code class="api-path">/v/{id}.{ext}</code>
                     <span class="api-summary">File page</span>
-                </header>
+                </summary>
                 <div class="api-endpoint-body">
                     <p class="api-lead mb-0">HTML preview of the file with download and copy link. Owners and admins also get delete. Returns <code>404</code> once a file is marked for deletion, except for its owner.</p>
                 </div>
-            </article>
+            </details>
 
-            <article class="api-endpoint">
-                <header class="api-endpoint-head">
+            <details class="api-endpoint">
+                <summary class="api-endpoint-head">
                     <span class="api-method api-method-get">App</span>
                     <span class="api-summary">Install MIU and share to it</span>
-                </header>
+                </summary>
                 <div class="api-endpoint-body">
                     <div class="table-responsive">
                     <table class="api-table">
@@ -133,13 +169,13 @@
                     </table>
                     </div>
                 </div>
-            </article>
+            </details>
 
-            <article class="api-endpoint">
-                <header class="api-endpoint-head">
+            <details class="api-endpoint">
+                <summary class="api-endpoint-head">
                     <span class="api-method api-method-get">ShareX</span>
                     <span class="api-summary">Custom uploader settings</span>
-                </header>
+                </summary>
                 <div class="api-endpoint-body">
                     <div class="table-responsive">
                     <table class="api-table">
@@ -156,7 +192,388 @@
                     </table>
                     </div>
                 </div>
-            </article>
+            </details>
+            <h5 class="api-group mt-4 mb-2">App API</h5>
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/auth/login</code>
+                    <span class="api-summary">App API: sign in a device</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Public. Issues a per-device Bearer token; the device appears in the list above and can be revoked there. JSON or form body.</p>
+                    <h6 class="api-h">Body</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>login</code></td><td>body</td><td><span class="api-req">required</span></td><td>Username or email.</td></tr>
+                            <tr><td><code>password</code></td><td>body</td><td><span class="api-req">required</span></td><td></td></tr>
+                            <tr><td><code>device_name</code></td><td>body</td><td><span class="api-req">required</span></td><td>Shown in the device list, up to 100 characters.</td></tr>
+                            <tr><td><code>platform</code></td><td>body</td><td><span class="api-opt">optional</span></td><td><code>ios</code>, <code>android</code>, <code>macos</code> or <code>other</code> (default).</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <h6 class="api-h">Responses</h6>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">201</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{
+  "token": "…", "token_type": "Bearer",
+  "device": { "id": 1, "name": "My phone", "platform": "ios", "token_prefix": "b81a480b", "created_at": "…", "last_used_at": null, "current": true },
+  "user": { "id": 3, "login": "alice", "email": "…", "role": "user", "active": true }
+}</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">401</span> <code>application/json</code> <span class="api-dim">wrong login or password</span></div>
+<pre class="api-pre"><code>{ "error": { "code": "invalid_credentials", "message": "Invalid login or password." } }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">403</span> <code>application/json</code> <span class="api-dim">disabled account &middot; <code>account_disabled</code></span></div>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">422</span> <code>application/json</code> <span class="api-dim">missing fields &middot; <code>validation_failed</code> with <code>details</code></span></div>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">429</span> <code>application/json</code> <span class="api-dim">more than 10 attempts in 15 minutes &middot; <code>too_many_requests</code></span></div>
+                    </div>
+                    <h6 class="api-h">Example</h6>
+<pre class="api-pre"><code>curl -X POST {{ base }}/api/v1/auth/login -H "Content-Type: application/json" \
+     -d '{"login":"you","password":"…","device_name":"My phone","platform":"ios"}'</code></pre>
+                    <p class="api-dim mb-0">Every other <code>/api/v1/</code> call answers errors as <code>{"error": {"code", "message", "details"?}}</code>; a revoked token gets <code>401 unauthenticated</code>.</p>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/auth/logout</code>
+                    <span class="api-summary">Revoke the calling device</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">204</span> <code></code> <span class="api-dim">the device token stops working immediately</span></div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/api/v1/server</code>
+                    <span class="api-summary">Server capabilities</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Public. Lets a client validate a server URL before signing in.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{
+  "name": "MIU",
+  "api_version": 1,
+  "allow_registration": true,
+  "allow_anonymous_uploads": true,
+  "max_upload_bytes": 104857600,
+  "max_remote_file_bytes": 104857600,
+  "page_sizes": [24, 48, 72, 96],
+  "thumbnail_width": 350,
+  "delete_grace_minutes": 1
+}</code></pre>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/api/v1/files</code>
+                    <span class="api-summary">List your uploads (paged)</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <h6 class="api-h">Query parameters</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>page-size</code></td><td>query</td><td><span class="api-opt">optional</span></td><td>24 (default), 48, 72 or 96.</td></tr>
+                            <tr><td><code>order-date</code></td><td>query</td><td><span class="api-opt">optional</span></td><td><code>new</code> or <code>old</code>.</td></tr>
+                            <tr><td><code>order-size</code></td><td>query</td><td><span class="api-opt">optional</span></td><td><code>big</code> or <code>small</code>.</td></tr>
+                            <tr><td><code>calendar-start</code>, <code>calendar-end</code></td><td>query</td><td><span class="api-opt">optional</span></td><td>Month range as <code>Y-m-d</code>, same as the calendar on the pictures page.</td></tr>
+                            <tr><td><code>cursor</code></td><td>query</td><td><span class="api-opt">optional</span></td><td>Opaque value from <code>next_cursor</code>; resend the same order and filter parameters with it.</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{
+  "files": [ { …file object… } ],
+  "has_next_page": true,
+  "next_cursor": "…",
+  "page_size": 24
+}</code></pre>
+                    </div>
+                    <h6 class="api-h">File object</h6>
+<pre class="api-pre"><code>{
+  "id": 4711, "slug": "a1b2c3d4e5", "name": "IMG_0001.jpg", "extension": "jpeg", "mime": "image/jpeg",
+  "size": 1048576, "size_formatted": "1 MB", "uploaded_at": "2026-09-19T10:11:12+00:00",
+  "kind": "image",                 // image | video | audio | text | file
+  "thumbnailable": true, "embeddable": true, "deleted": false, "deleted_at": null, "icon": "fa-file-image",
+  "urls": {
+    "direct":    "{{ base }}/a1b2c3d4e5.jpeg",
+    "view":      "{{ base }}/v/a1b2c3d4e5.jpeg",
+    "share":     "{{ base }}/a1b2c3d4e5.jpeg",      // direct for media, view page otherwise (api_ver=v2 rule)
+    "thumbnail": "{{ base }}/thumb/a1b2c3d4e5.jpeg", // null when not thumbnailable or deleted; 404 until generated
+    "delete":    "{{ base }}/d/a1b2c3d4e5.jpeg?key=…" // only on single-file responses
+  }
+}</code></pre>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/api/v1/files/dates</code>
+                    <span class="api-summary">Month buckets of your uploads</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code> <span class="api-dim">newest first</span></div>
+<pre class="api-pre"><code>{
+  "months": [
+    { "year": 2026, "month": 9, "count": 12 },
+    { "year": 2026, "month": 8, "count": 4 }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/api/v1/files/{id}</code>
+                    <span class="api-summary">File details</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "file": { …file object with urls.delete… } }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">404</span> <code>application/json</code> <span class="api-dim">unknown id or not your file &middot; <code>not_found</code></span></div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/files</code>
+                    <span class="api-summary">Upload a file</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <h6 class="api-h">Form fields</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>file</code></td><td>file</td><td><span class="api-req">required</span></td><td>The file to store (<code>multipart/form-data</code>).</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">201</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "file": { …file object… } }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">400</span> <code>application/json</code> <span class="api-dim">no file part &middot; <code>no_file</code></span></div>
+                    </div>
+                    <h6 class="api-h">Example</h6>
+<pre class="api-pre"><code>curl -X POST {{ base }}/api/v1/files -H "Authorization: Bearer &lt;token&gt;" -F file=@shot.png</code></pre>
+                    <p class="api-dim mb-0">A device token is also accepted as <code>private_key</code> on <code>/getfile/</code>, which share extensions use.</p>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/files/mirror</code>
+                    <span class="api-summary">Mirror a remote URL</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <h6 class="api-h">Body</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>url</code></td><td>body</td><td><span class="api-req">required</span></td><td>Direct <code>http(s)</code> link to fetch.</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">201</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "file": { …file object… } }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">422</span> <code>application/json</code> <span class="api-dim">unreachable, too large or not a file &middot; <code>mirror_failed</code></span></div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-delete">DELETE</span>
+                    <code class="api-path">/api/v1/files/{id}</code>
+                    <span class="api-summary">Mark a file for deletion</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <p class="api-lead">The file stops being served at once and is purged after the grace period; until then it can be restored.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "file": { …, "deleted": true, "deleted_at": "…", "urls": { …, "thumbnail": null } } }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">404</span> <code>application/json</code> <span class="api-dim">unknown id or not your file</span></div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/files/{id}/restore</code>
+                    <span class="api-summary">Undo a deletion</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "file": { …, "deleted": false } }</code></pre>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/api/v1/me</code>
+                    <span class="api-summary">Your account</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{
+  "user": { "id": 3, "login": "alice", "email": "alice@example.org", "role": "user", "active": true }
+}</code></pre>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/me/email</code>
+                    <span class="api-summary">Change email</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <h6 class="api-h">Body</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>email</code></td><td>body</td><td><span class="api-req">required</span></td><td>Must be free as both an email and a username.</td></tr>
+                            <tr><td><code>current_password</code></td><td>body</td><td><span class="api-req">required</span></td><td></td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "user": { … } }</code></pre>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">422</span> <code>application/json</code> <span class="api-dim"><code>validation_failed</code> with <code>details.email</code> or <code>details.current_password</code></span></div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-post">POST</span>
+                    <code class="api-path">/api/v1/me/password</code>
+                    <span class="api-summary">Change password</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <h6 class="api-h">Body</h6>
+                    <div class="table-responsive">
+                    <table class="api-table">
+                        <thead><tr><th>Name</th><th>In</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>current_password</code></td><td>body</td><td><span class="api-req">required</span></td><td></td></tr>
+                            <tr><td><code>new_password</code></td><td>body</td><td><span class="api-req">required</span></td><td>At least 6 characters.</td></tr>
+                            <tr><td><code>revoke_other_devices</code></td><td>body</td><td><span class="api-opt">optional</span></td><td><code>true</code> signs out every other device.</td></tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{ "user": { … }, "revoked_devices": 0 }</code></pre>
+                    </div>
+                    <p class="api-dim mb-0">Web sessions remembered with a cookie are signed out by a password change as well.</p>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-get">GET</span>
+                    <code class="api-path">/api/v1/devices</code>
+                    <span class="api-summary">Signed-in devices</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">200</span> <code>application/json</code></div>
+<pre class="api-pre"><code>{
+  "devices": [
+    {
+      "id": 1,
+      "name": "My phone",
+      "platform": "ios",
+      "token_prefix": "b81a480b",
+      "created_at": "2026-09-19T10:11:12+00:00",
+      "last_used_at": "2026-09-19T10:15:00+00:00",
+      "current": true
+    }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+            </details>
+
+            <details class="api-endpoint api-endpoint-app">
+                <summary class="api-endpoint-head">
+                    <span class="api-method api-method-delete">DELETE</span>
+                    <code class="api-path">/api/v1/devices/{id}</code>
+                    <span class="api-summary">Revoke a device</span>
+                </summary>
+                <div class="api-endpoint-body">
+                    <p class="api-lead">Requires <code>Authorization: Bearer &lt;device token&gt;</code>.</p>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-ok">204</span> <code></code></div>
+                    </div>
+                    <div class="api-response">
+                        <div class="api-status"><span class="api-code-err">404</span> <code>application/json</code> <span class="api-dim">unknown id or not your device</span></div>
+                    </div>
+                </div>
+            </details>
+
         </section>
     </div>
 {% endblock %}

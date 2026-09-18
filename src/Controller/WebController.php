@@ -8,6 +8,7 @@ use App\Form\Type\UserEmailChangeType;
 use App\Form\Type\UserPasswordChangeType;
 use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
+use App\Service\DeviceTokenService;
 use App\Service\FileService;
 use App\Service\SettingsService;
 use App\Service\UserService;
@@ -90,17 +91,7 @@ class WebController extends AbstractController
         if (!$file || ($file->markedForDeletion() && !$canManage)) {
             throw $this->createNotFoundException();
         }
-        if ($file->isMimeType(['image'])) {
-            $kind = 'image';
-        } elseif ($file->isMimeType(['video'])) {
-            $kind = 'video';
-        } elseif ($file->isMimeType(['audio'])) {
-            $kind = 'audio';
-        } elseif ($file->isTextual()) {
-            $kind = 'text';
-        } else {
-            $kind = 'file';
-        }
+        $kind = $file->previewKind();
         $text = null;
         $textTruncated = false;
         if ($kind === 'text' && !$file->markedForDeletion()) {
@@ -236,11 +227,14 @@ class WebController extends AbstractController
     }
 
     #[Route("/manage/mytoken/", name: "cabinet_token")]
-    public function userCabinetViewTokenAction(Request $request)
+    public function userCabinetViewTokenAction(Request $request, DeviceTokenService $deviceTokens)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
+        /** @var User $user */
+        $user = $this->getUser();
         return $this->render('manage_displaytoken.html.twig', [
-            'page' => 'token'
+            'page' => 'token',
+            'devices' => $deviceTokens->listActive($user),
         ]);
     }
 

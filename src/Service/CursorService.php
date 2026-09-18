@@ -73,8 +73,9 @@ class CursorService
 
     public function decodeCursor($cursor)
     {
-        $data = json_decode(base64_decode($cursor), true);
-        if (!$data) {
+        $data = json_decode(base64_decode((string) $cursor, true) ?: '', true);
+        // A malformed or foreign cursor degrades to the first page instead of warning.
+        if (!is_array($data) || !isset($data['s'], $data['i'], $data['d'])) {
             return [];
         }
         return [

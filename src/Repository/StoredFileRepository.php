@@ -13,12 +13,20 @@ use Doctrine\ORM\QueryBuilder;
 
 class StoredFileRepository extends EntityRepository
 {
+    /**
+     * Files of a user with a pending purge do not exist for anyone: every lookup by URL applies
+     * this, so direct links, thumbnails, the view page and the delete page all answer 404.
+     */
+    private const NOT_PURGING = 'NOT EXISTS (SELECT 1 FROM App\Entity\UploadRecord pl JOIN pl.user pu'
+        . ' WHERE pl.image = f AND pu.purgeTs IS NOT NULL)';
+
     public function findFileByCustomURL($customUrl)
     {
         $qb = $this->createQueryBuilder('f')
             ->where('f.customUrl = :url')
             ->setParameter('url', $customUrl)
-            ->andWhere('f.visibilityStatus = true');
+            ->andWhere('f.visibilityStatus = true')
+            ->andWhere(self::NOT_PURGING);
         return $qb->getQuery()->getOneOrNullResult();
     }
 
@@ -27,6 +35,7 @@ class StoredFileRepository extends EntityRepository
         return $this->createQueryBuilder('f')
             ->where('f.customUrl = :url')
             ->setParameter('url', $customUrl)
+            ->andWhere(self::NOT_PURGING)
             ->getQuery()
             ->getOneOrNullResult();
     }
@@ -81,27 +90,26 @@ class StoredFileRepository extends EntityRepository
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
-    // ---- Purge (queue all of a user's files for deletion) -------------------------------------
+    // ---- Purge ---------------------------------------------------------------------------------
 
-    /** @return array{total: int, marked: int} */
-    public function purgeStats(User $user): array
+    /** Files owned by the user (through upload records), regardless of trash state. */
+    public function countUserFiles(User $user): int
     {
-        $row = $this->getEntityManager()->createQueryBuilder()
-            ->select('COUNT(file.id) AS total, SUM(CASE WHEN file.markedForDeletionAt IS NULL THEN 0 ELSE 1 END) AS marked')
+        return (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(file.id)')
             ->from('App\Entity\UploadRecord', 'log')
             ->join('log.image', 'file')
             ->where('log.user = :user')
             ->setParameter('user', $user)
             ->getQuery()
-            ->getSingleResult();
-        return ['total' => (int) $row['total'], 'marked' => (int) $row['marked']];
+            ->getSingleScalarResult();
     }
 
-    /** @return array<int, array{total: int, marked: int}> keyed by user id */
-    public function purgeStatsForAll(): array
+    /** @return array<int, int> file count keyed by user id, for the admin list */
+    public function countFilesByUser(): array
     {
         $rows = $this->getEntityManager()->createQueryBuilder()
-            ->select('IDENTITY(log.user) AS userId, COUNT(file.id) AS total, SUM(CASE WHEN file.markedForDeletionAt IS NULL THEN 0 ELSE 1 END) AS marked')
+            ->select('IDENTITY(log.user) AS userId, COUNT(file.id) AS total')
             ->from('App\Entity\UploadRecord', 'log')
             ->join('log.image', 'file')
             ->where('log.user IS NOT NULL')
@@ -110,29 +118,32 @@ class StoredFileRepository extends EntityRepository
             ->getArrayResult();
         $out = [];
         foreach ($rows as $row) {
-            $out[(int) $row['userId']] = ['total' => (int) $row['total'], 'marked' => (int) $row['marked']];
+            $out[(int) $row['userId']] = (int) $row['total'];
         }
         return $out;
     }
 
-    /** Marks every not-yet-marked file of the user; returns the number of rows changed. */
-    public function markUserFiles(User $user, \DateTimeInterface $at): int
+    /** One batch of the user's files for the purge command, oldest first. @return StoredFile[] */
+    public function userFilesBatch(User $user, int $limit): array
     {
-        return (int) $this->getEntityManager()->createQuery(
-            'UPDATE App\Entity\StoredFile f SET f.markedForDeletionAt = :at, f.visibilityStatus = false'
-            . ' WHERE f.markedForDeletionAt IS NULL'
-            . ' AND f.id IN (SELECT IDENTITY(l.image) FROM App\Entity\UploadRecord l WHERE l.user = :user)'
-        )->setParameter('at', $at)->setParameter('user', $user)->execute();
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('file')
+            ->from('App\Entity\StoredFile', 'file')
+            ->where('file.id IN (SELECT IDENTITY(l.image) FROM App\Entity\UploadRecord l WHERE l.user = :user)')
+            ->setParameter('user', $user)
+            ->orderBy('file.id', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 
-    /** Clears the deletion mark on every file of the user; returns the number of rows changed. */
-    public function unmarkUserFiles(User $user): int
+    /** Whether the file belongs to a user with a pending purge. */
+    public function ownerIsPurging(StoredFile $file): bool
     {
-        return (int) $this->getEntityManager()->createQuery(
-            'UPDATE App\Entity\StoredFile f SET f.markedForDeletionAt = NULL, f.visibilityStatus = true'
-            . ' WHERE f.markedForDeletionAt IS NOT NULL'
-            . ' AND f.id IN (SELECT IDENTITY(l.image) FROM App\Entity\UploadRecord l WHERE l.user = :user)'
-        )->setParameter('user', $user)->execute();
+        $ts = $this->getEntityManager()->createQuery(
+            'SELECT u.purgeTs FROM App\Entity\UploadRecord l JOIN l.user u WHERE l.image = :file'
+        )->setParameter('file', $file)->setMaxResults(1)->getOneOrNullResult();
+        return $ts !== null && $ts['purgeTs'] !== null;
     }
 
     private function applyFilter(QueryBuilder $qb, $filter): void

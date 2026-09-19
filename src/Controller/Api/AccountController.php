@@ -88,25 +88,25 @@ class AccountController extends AbstractController
         return $this->json(['purge' => $purge->status($user)]);
     }
 
-    /** Queues every file of the user for deletion. Requires the current password. */
+    /** Schedules the deletion of every file of the user (after the grace period). Requires the current password. */
     #[Route('/me/purge', name: 'api_me_purge', methods: ['POST'])]
     public function requestPurge(Request $request, #[CurrentUser] User $user, PurgeService $purge): JsonResponse
     {
         $this->requireCurrentPassword($user, (string) $request->getPayload()->get('current_password', ''));
-        $marked = $purge->purge($user, 'the user (app)');
-        return $this->json(['marked' => $marked, 'purge' => $purge->status($user)]);
+        $status = $purge->purge($user, 'the user (app)');
+        return $this->json(['marked' => $status['total'], 'purge' => $status]);
     }
 
-    /** Restores every file while the purge is still pending (all files marked). */
+    /** Cancels the pending purge; the files reappear. */
     #[Route('/me/purge', name: 'api_me_purge_cancel', methods: ['DELETE'])]
     public function cancelPurge(#[CurrentUser] User $user, PurgeService $purge): JsonResponse
     {
         try {
-            $restored = $purge->cancel($user, 'the user (app)');
+            $status = $purge->cancel($user, 'the user (app)');
         } catch (PurgeNotCancellable $e) {
             throw ApiException::badRequest('purge_not_cancellable', $e->getMessage());
         }
-        return $this->json(['restored' => $restored, 'purge' => $purge->status($user)]);
+        return $this->json(['restored' => $status['total'], 'purge' => $status]);
     }
 
     #[Route('/devices', name: 'api_devices_list', methods: ['GET'])]

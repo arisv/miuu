@@ -161,6 +161,9 @@ class UserService
 
     public function getUploadDateTree(User $user)
     {
+        if ($user->isPurging()) {
+            return [];
+        }
         $sql = 'SELECT YEAR(FROM_UNIXTIME(filestorage.date)) as dyear, MONTH(FROM_UNIXTIME(filestorage.date)) as dmonth, COUNT(filestorage.id) as dcount FROM uploadlog
 JOIN filestorage ON uploadlog.image_id = filestorage.id AND uploadlog.user_id = :user
 GROUP BY YEAR(FROM_UNIXTIME(filestorage.date)), MONTH(FROM_UNIXTIME(filestorage.date))
@@ -199,6 +202,10 @@ ORDER BY dyear DESC, dmonth DESC';
 
     public function getUserUploadHistoryPage(User $user, $cursor, $orderBy, $filter, int $limit = CursorService::DEFAULT_PAGE_SIZE)
     {
+        if ($user->isPurging()) {
+            // Frozen while a purge is pending: the library shows nothing.
+            return ['files' => [], 'hasNextPage' => false];
+        }
         $fileRepo = $this->em->getRepository(StoredFile::class);
         $pageFiles = $fileRepo->getUserUploadHistoryPage($user, $cursor, $limit, $orderBy, $filter);
 
@@ -207,6 +214,9 @@ ORDER BY dyear DESC, dmonth DESC';
 
     public function countUserUploadHistory(User $user, $filter): int
     {
+        if ($user->isPurging()) {
+            return 0;
+        }
         return $this->em->getRepository(StoredFile::class)->countUserUploadHistory($user, $filter);
     }
 

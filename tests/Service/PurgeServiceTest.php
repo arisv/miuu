@@ -4,17 +4,20 @@ namespace App\Tests\Service;
 
 use App\Entity\StoredFile;
 use App\Entity\User;
+use App\Exception\UploadBlockedException;
+use App\Repository\StoredFileRepository;
+use App\Service\FileService;
 use App\Service\PurgeNotCancellable;
 use App\Service\PurgeService;
 use App\Tests\Support\PurgeFixtures;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * The purge queues every file a user owns for deletion and can be undone only while it is still
- * a purge (all files marked). These tests pin that contract, including that other users' files
- * are never touched.
+ * A purge is `users.purge_ts`: scheduling sets it, cancelling clears it, and while it is set the
+ * user is frozen (files 404 by URL, library empty, uploads refused). Other users are never touched.
  */
 final class PurgeServiceTest extends KernelTestCase
 {
@@ -23,6 +26,8 @@ final class PurgeServiceTest extends KernelTestCase
     private PurgeService $purge;
     private User $bob;
     private User $alice;
+    private StoredFile $bobFile;
+    private StoredFile $aliceFile;
 
     protected function setUp(): void
     {
@@ -35,96 +40,115 @@ final class PurgeServiceTest extends KernelTestCase
 
         $this->bob = $this->fixtures->user('bob', 'bob12345');
         $this->alice = $this->fixtures->user('alice', 'alice123');
+        $this->bobFile = $this->fixtures->file($this->bob);
         $this->fixtures->file($this->bob);
-        $this->fixtures->file($this->bob);
-        $this->fixtures->file($this->bob, marked: true); // bob already trashed one file himself
-        $this->fixtures->file($this->alice);
-        $this->fixtures->file($this->alice, marked: true);
+        $this->fixtures->file($this->bob, marked: true); // bob trashed one file himself
+        $this->aliceFile = $this->fixtures->file($this->alice);
     }
 
-    public function testStatusCountsFilesAndOnlyOffersCancelWhenEverythingIsMarked(): void
+    private function repo(): StoredFileRepository
     {
-        $status = $this->purge->status($this->bob);
-        self::assertSame(['total' => 3, 'marked' => 1, 'active' => 2, 'pending' => false, 'can_cancel' => false], $status);
+        return $this->em->getRepository(StoredFile::class);
     }
 
-    public function testPurgeMarksEveryFileOfTheUserAndNothingElse(): void
+    public function testStatusOfAQuietAccount(): void
     {
-        $marked = $this->purge->purge($this->bob, 'test');
-
-        self::assertSame(2, $marked, 'only the files that were not already marked count');
-        foreach ($this->fixtures->filesOf($this->bob) as $file) {
-            self::assertTrue($file->markedForDeletion(), $file->getOriginalName() . ' should be queued');
-            self::assertFalse($file->getVisibilityStatus());
-        }
-        $aliceStates = array_map(fn (StoredFile $f) => $f->markedForDeletion(), $this->fixtures->filesOf($this->alice));
-        sort($aliceStates);
-        self::assertSame([false, true], $aliceStates, "alice's files are untouched");
-
         $status = $this->purge->status($this->bob);
-        self::assertSame(3, $status['marked']);
+        self::assertSame(
+            ['pending' => false, 'purge_at' => null, 'total' => 3, 'marked' => 0, 'active' => 3, 'can_cancel' => false],
+            $status
+        );
+    }
+
+    public function testPurgeSchedulesTheGracePeriodAndFreezesTheAccount(): void
+    {
+        $before = time();
+        $status = $this->purge->purge($this->bob, 'test');
+
+        $grace = (int) static::getContainer()->getParameter('app.purge_grace_minutes');
         self::assertTrue($status['pending']);
         self::assertTrue($status['can_cancel']);
-    }
+        self::assertSame(3, $status['marked'], 'while pending every file counts as marked for older app builds');
+        self::assertSame(0, $status['active']);
+        $ts = $this->fixtures->reload($this->bob)->getPurgeTs();
+        self::assertGreaterThanOrEqual($before + $grace * 60, $ts);
+        self::assertLessThanOrEqual(time() + $grace * 60, $ts);
+        self::assertSame($ts, (new \DateTimeImmutable($status['purge_at']))->getTimestamp());
 
-    public function testPurgeIsIdempotent(): void
-    {
-        $this->purge->purge($this->bob, 'test');
-        self::assertSame(0, $this->purge->purge($this->bob, 'test'));
-        self::assertSame(3, $this->purge->status($this->bob)['marked']);
-    }
-
-    public function testCancelRestoresEveryFileWhilePending(): void
-    {
-        $this->purge->purge($this->bob, 'test');
-        $restored = $this->purge->cancel($this->bob, 'test');
-
-        self::assertSame(3, $restored, 'the file bob trashed before the purge comes back too');
+        // Nothing about the files themselves changed.
         foreach ($this->fixtures->filesOf($this->bob) as $file) {
-            self::assertFalse($file->markedForDeletion());
-            self::assertTrue($file->getVisibilityStatus());
+            self::assertSame($file->getId() === $this->bobFile->getId() ? true : $file->getVisibilityStatus(), $file->getVisibilityStatus());
         }
-        self::assertSame(0, $this->purge->status($this->bob)['marked']);
-        self::assertFalse($this->purge->status($this->bob)['can_cancel']);
+        self::assertFalse($this->fixtures->reload($this->alice)->isPurging(), 'alice is untouched');
     }
 
-    public function testCancelIsRefusedWhenNotEveryFileIsMarked(): void
+    public function testASecondPurgeRequestKeepsTheOriginalDeadline(): void
+    {
+        $this->purge->purge($this->bob, 'test');
+        $first = $this->fixtures->reload($this->bob)->getPurgeTs();
+        $bob = $this->fixtures->reload($this->bob);
+        $bob->setPurgeTs($first - 300); // pretend time passed
+        $this->em->flush();
+
+        $this->purge->purge($bob, 'test');
+        self::assertSame($first - 300, $this->fixtures->reload($bob)->getPurgeTs());
+    }
+
+    public function testFrozenUserFilesVanishByUrlWhilePending(): void
+    {
+        self::assertNotNull($this->repo()->findFileByCustomURL($this->bobFile->getCustomUrl()));
+        self::assertNotNull($this->repo()->findFileByCustomURLAnyVisibility($this->bobFile->getCustomUrl()));
+
+        $this->purge->purge($this->bob, 'test');
+
+        self::assertNull($this->repo()->findFileByCustomURL($this->bobFile->getCustomUrl()), 'direct link: 404');
+        self::assertNull($this->repo()->findFileByCustomURLAnyVisibility($this->bobFile->getCustomUrl()), 'view page: 404');
+        self::assertNotNull($this->repo()->findFileByCustomURL($this->aliceFile->getCustomUrl()), "alice's files still serve");
+        self::assertTrue($this->repo()->ownerIsPurging($this->bobFile));
+        self::assertFalse($this->repo()->ownerIsPurging($this->aliceFile));
+
+        $this->purge->cancel($this->fixtures->reload($this->bob), 'test');
+        self::assertNotNull($this->repo()->findFileByCustomURL($this->bobFile->getCustomUrl()), 'back after cancel');
+    }
+
+    public function testUploadsAreRefusedWhilePending(): void
+    {
+        $this->purge->purge($this->bob, 'test');
+        $tmp = tempnam(sys_get_temp_dir(), 'purge');
+        file_put_contents($tmp, 'hello');
+        $upload = new UploadedFile($tmp, 'hello.txt', 'text/plain', null, true);
+
+        $this->expectException(UploadBlockedException::class);
+        static::getContainer()->get(FileService::class)->storeFormUploadFile($upload, $this->fixtures->reload($this->bob));
+    }
+
+    public function testCancelClearsTheDeadline(): void
+    {
+        $this->purge->purge($this->bob, 'test');
+        $status = $this->purge->cancel($this->fixtures->reload($this->bob), 'test');
+
+        self::assertFalse($status['pending']);
+        self::assertNull($status['purge_at']);
+        self::assertSame(3, $status['active']);
+        self::assertNull($this->fixtures->reload($this->bob)->getPurgeTs());
+    }
+
+    public function testCancelIsRefusedWithoutAPendingPurge(): void
     {
         $this->expectException(PurgeNotCancellable::class);
-        $this->expectExceptionMessage('2 of 3 still active');
         $this->purge->cancel($this->bob, 'test');
     }
 
-    public function testCancelIsRefusedAfterAnUploadEndsThePurge(): void
-    {
-        $this->purge->purge($this->bob, 'test');
-        $this->fixtures->file($this->bob); // a new upload: no longer "everything is marked"
-
-        try {
-            $this->purge->cancel($this->bob, 'test');
-            self::fail('cancel should be refused');
-        } catch (PurgeNotCancellable $e) {
-            self::assertSame(1, $e->status['active']);
-            self::assertFalse($e->status['can_cancel']);
-        }
-        // Nothing changed: the three purged files are still queued.
-        self::assertSame(3, $this->purge->status($this->bob)['marked']);
-    }
-
-    public function testCancelIsRefusedForAUserWithoutFiles(): void
+    public function testStatusForAllListsUsersWithFilesOrAPendingPurge(): void
     {
         $nobody = $this->fixtures->user('nobody', 'nobody123');
-        $this->expectException(PurgeNotCancellable::class);
-        $this->expectExceptionMessage('no files to restore');
-        $this->purge->cancel($nobody, 'test');
-    }
-
-    public function testStatusForAllListsOnlyUsersWithFiles(): void
-    {
-        $this->fixtures->user('nobody', 'nobody123');
         $all = $this->purge->statusForAll();
         self::assertSame([$this->bob->getId(), $this->alice->getId()], array_keys($all));
         self::assertSame(3, $all[$this->bob->getId()]['total']);
-        self::assertSame(1, $all[$this->alice->getId()]['marked']);
+
+        $this->purge->purge($nobody, 'test');
+        $all = $this->purge->statusForAll();
+        self::assertArrayHasKey($nobody->getId(), $all, 'a pending purge shows even with zero files');
+        self::assertTrue($all[$nobody->getId()]['pending']);
     }
 }

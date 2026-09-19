@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Exception\UploadBlockedException;
 use App\Security\UploadTokenResolver;
 
 use App\Entity\StoredFile;
@@ -136,6 +137,9 @@ class FileService
 
     private function addFileToStorage(UploadedFile $file, ?User $user)
     {
+        if ($user?->isPurging()) {
+            throw new UploadBlockedException();
+        }
         $storedFile = new StoredFile();
         $storedFile->setOriginalName($file->getClientOriginalName());
         $sha = sha1_file($file->getPathname());
@@ -184,6 +188,10 @@ class FileService
 
     public function mirrorRemoteFile($url, ?User $user)
     {
+        if ($user?->isPurging()) {
+            // Refuse before touching the network; addFileToStorage() would refuse anyway.
+            throw new UploadBlockedException();
+        }
         $this->validateUrl($url);
         $remoteSize = $this->queryRemoteFileSize($url);
         if ($remoteSize < 1) {
@@ -338,6 +346,14 @@ class FileService
             $file->setMarkedForDeletionAt(null);
         }
         $this->em->flush();
+    }
+
+    /** True while the file's owner has a purge pending: the file must answer 404 everywhere. */
+    public function ownerIsPurging(StoredFile $file): bool
+    {
+        /** @var StoredFileRepository $repo */
+        $repo = $this->em->getRepository(StoredFile::class);
+        return $repo->ownerIsPurging($file);
     }
 
     /** Owner of the upload record, or any admin. Anonymous visitors manage nothing. */

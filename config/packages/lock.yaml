@@ -1,0 +1,4 @@
+framework:
+    # DoctrineDbalStore on the app database (the DSN is the DBAL URL); the schema tooling knows
+    # its lock_keys table, so migrations create it.
+    lock: '%env(resolve:LOCK_DSN)%'

@@ -267,22 +267,22 @@ $(document).ready(function () {
         // Redraws the Files stat and swaps the Purge / Cancel purge button for the new state.
         renderPurgeState: function (row, purge, login) {
             var state = row.find('[data-purge-state]');
-            if (!purge || purge.total === 0) {
+            if (purge && purge.pending) {
+                var at = purge.purge_at ? new Date(purge.purge_at) : null;
+                var hm = at ? String(at.getHours()).padStart(2, '0') + ':' + String(at.getMinutes()).padStart(2, '0') : '';
+                state.html('<span class="badge bg-danger">Purge at ' + hm + '</span>');
+            } else if (!purge || purge.total === 0) {
                 state.html('<span class="text-secondary">none</span>');
-            } else if (purge.pending) {
-                state.html('<span class="badge bg-danger">Purge pending</span>');
-            } else if (purge.marked) {
-                state.text(purge.active + ' active, ' + purge.marked + ' in trash');
             } else {
-                state.text(purge.total + ' active');
+                state.text(purge.total + (purge.total === 1 ? ' file' : ' files'));
             }
             var userId = row.data('userid');
             var button = purge && purge.can_cancel
                 ? $('<button type="button" class="btn btn-warning" title="Restore every file of this user"><i class="fa-solid fa-trash-arrow-up me-1" aria-hidden="true"></i>Cancel purge</button>')
                     .attr('data-cancel-purge', userId).attr('data-login', login)
-                : $('<button type="button" class="btn btn-danger" title="Queue every file of this user for deletion"><i class="fa-solid fa-broom me-1" aria-hidden="true"></i>Purge</button>')
-                    .attr('data-purge-user', userId).attr('data-login', login).attr('data-active', purge ? purge.active : 0)
-                    .prop('disabled', !purge || purge.active === 0);
+                : $('<button type="button" class="btn btn-danger" title="Schedule the deletion of every file of this user"><i class="fa-solid fa-broom me-1" aria-hidden="true"></i>Purge</button>')
+                    .attr('data-purge-user', userId).attr('data-login', login).attr('data-active', purge ? purge.total : 0)
+                    .prop('disabled', !purge || purge.total === 0);
             row.find('button[data-purge-user], button[data-cancel-purge]').replaceWith(button);
         },
         postData: function (url, data) {

@@ -230,7 +230,7 @@ class WebController extends AbstractController
         ]);
     }
 
-    /** "Delete all my files": marks everything for deletion after the password is confirmed. */
+    /** "Delete all my files": schedules the purge after the password is confirmed. */
     #[Route("/manage/purge/", name: "cabinet_purge", methods: ['POST'])]
     public function userPurgeAction(Request $request, PurgeService $purge, UserPasswordHasherInterface $hasher)
     {
@@ -246,8 +246,11 @@ class WebController extends AbstractController
             $this->addFlash('global-danger', 'Password is incorrect; nothing was deleted.');
             return $this->redirectToRoute('cabinet_home');
         }
-        $marked = $purge->purge($user, 'the user (web)');
-        $this->addFlash('global-success', $marked === 1 ? '1 file queued for deletion.' : "{$marked} files queued for deletion.");
+        $status = $purge->purge($user, 'the user (web)');
+        $this->addFlash('global-success', sprintf(
+            '%d %s will be deleted at %s. You can cancel until then.',
+            $status['total'], $status['total'] === 1 ? 'file' : 'files', $user->purgeDueAt()->format('H:i')
+        ));
         return $this->redirectToRoute('cabinet_home');
     }
 
@@ -262,8 +265,8 @@ class WebController extends AbstractController
             return $this->redirectToRoute('cabinet_home');
         }
         try {
-            $restored = $purge->cancel($user, 'the user (web)');
-            $this->addFlash('global-success', $restored === 1 ? '1 file restored.' : "{$restored} files restored.");
+            $purge->cancel($user, 'the user (web)');
+            $this->addFlash('global-success', 'Deletion cancelled; your files are back.');
         } catch (PurgeNotCancellable $e) {
             $this->addFlash('global-danger', $e->getMessage());
         }
@@ -283,7 +286,7 @@ class WebController extends AbstractController
     }
 
     #[Route("/manage/mypics/", name: "cabinet_mypics")]
-    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService)
+    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService, PurgeService $purge)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
@@ -301,6 +304,7 @@ class WebController extends AbstractController
             'pivot' => $removalPivot,
             'ordering' => $orderBy->toArray(),
             'totalCount' => $userService->countUserUploadHistory($user, $filter),
+            'purge' => $purge->status($user),
             'filter' => json_encode($request->query->all() + $orderBy->toArray())
         ]);
     }

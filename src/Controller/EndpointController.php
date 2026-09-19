@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Exception\UploadBlockedException;
 use App\Service\PurgeNotCancellable;
 use App\Service\PurgeService;
 use App\Entity\StoredFile;
@@ -90,6 +91,9 @@ class EndpointController extends AbstractController
                 return $this->render('uploadresult.html.twig', [
                     'file' => $storedFile
                 ]);
+            } catch (UploadBlockedException $e) {
+                $this->addFlash('global-danger', $e->getMessage());
+                return $this->redirectToRoute('home');
             } catch (\Exception $e) {
                 $logger->error('Error saving file: ' . $e->getMessage());
                 $this->addFlash('global-danger', 'Internal error while saving file');
@@ -115,6 +119,11 @@ class EndpointController extends AbstractController
                     'delete' => $fileService->generateDeletionURL($storedFile),
                     'api_ver' => $apiVersion === 'v2' ? 'v2' : 'v1'
                 ]);
+            } catch (UploadBlockedException $e) {
+                if ($request->request->get('plaintext')) {
+                    return new Response($e->getMessage(), 423);
+                }
+                return new JsonResponse(['error' => $e->getMessage()], 423);
             } catch (\Exception $e) {
                 $logger->error('Error saving file: ' . $e->getMessage() . " with token " . $remoteToken);
                 if ($request->request->get('plaintext')) {
@@ -141,6 +150,9 @@ class EndpointController extends AbstractController
                 return $this->render('uploadresult.html.twig', [
                     'file' => $storedFile
                 ]);
+            } catch (UploadBlockedException $e) {
+                $this->addFlash('global-danger', $e->getMessage());
+                return $this->redirectToRoute('home');
             } catch (\Exception $e) {
                 $logger->error('Error mirroring file: ' . $e->getMessage());
                 $this->addFlash('global-danger', sprintf("Unable to mirror remote file: %s", $e->getMessage()));
@@ -204,6 +216,10 @@ class EndpointController extends AbstractController
         }
         /** @var User $user */
         $user = $this->getUser();
+        if ($user->isPurging()) {
+            $this->addFlash('global-danger', UploadBlockedException::MESSAGE);
+            return $this->redirectToRoute('cabinet_home');
+        }
         $stored = [];
         $failed = 0;
         $files = $request->files->get('meowfile');
@@ -279,6 +295,9 @@ class EndpointController extends AbstractController
                 $result['thumbnailable'] = $storedFile->isThumbnailable();
                 $result['copy'] = $storedFile->shouldEmbed() ? $result['download'] : $result['view'];
                 $code = 200;
+            } catch (UploadBlockedException $e) {
+                $result['message'] = $e->getMessage();
+                $code = 423;
             } catch (\Exception $e) {
                 $logger->error('Error saving dropzone file: ' . $e->getMessage());
             }
@@ -393,7 +412,7 @@ class EndpointController extends AbstractController
         }
     }
 
-    /** Admin purge: queue every file of a user for deletion; the typed username is the confirmation. */
+    /** Admin purge: schedule the deletion of every file of a user; the typed username is the confirmation. */
     #[Route(path: '/endpoint/purgeuserfiles/', name: 'admin_purge_user_files', methods: ['POST'])]
     public function purgeUserFiles(Request $request, UserService $userService, PurgeService $purge, LoggerInterface $logger)
     {
@@ -406,8 +425,8 @@ class EndpointController extends AbstractController
         if (!$target || $confirmation !== $target->getLogin()) {
             return new JsonResponse(['status' => 'error', 'message' => 'Username confirmation does not match'], 400);
         }
-        $marked = $purge->purge($target, "admin {$actor->getId()}");
-        return new JsonResponse(['status' => 'ok', 'marked' => $marked, 'purge' => $purge->status($target)]);
+        $status = $purge->purge($target, "admin {$actor->getId()}");
+        return new JsonResponse(['status' => 'ok', 'purge' => $status]);
     }
 
     #[Route(path: '/endpoint/cancelpurge/', name: 'admin_cancel_purge', methods: ['POST'])]
@@ -422,11 +441,11 @@ class EndpointController extends AbstractController
             return new JsonResponse(['status' => 'error', 'message' => 'User not found'], 404);
         }
         try {
-            $restored = $purge->cancel($target, "admin {$actor->getId()}");
+            $status = $purge->cancel($target, "admin {$actor->getId()}");
         } catch (PurgeNotCancellable $e) {
-            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage(), 'purge' => $e->status], 409);
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 409);
         }
-        return new JsonResponse(['status' => 'ok', 'restored' => $restored, 'purge' => $purge->status($target)]);
+        return new JsonResponse(['status' => 'ok', 'purge' => $status]);
     }
 
     #[Route(path: '/endpoint/resetuserpassword/', name: 'admin_reset_user_password', methods: ['POST'])]

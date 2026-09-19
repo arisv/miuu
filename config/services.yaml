@@ -6,6 +6,7 @@
 parameters:
     app.allow_registration: '%env(bool:ALLOW_REGISTRATION)%'
     app.allow_anonymous_uploads: '%env(bool:ALLOW_ANONYMOUS_UPLOADS)%'
+    app.purge_grace_minutes: '%env(int:PURGE_GRACE_TIME)%'
 
 services:
     # default configuration for services in *this* file
@@ -16,6 +17,7 @@ services:
             $projectDir: '%kernel.project_dir%'
             $storageDir: '%env(string:STORAGE_DIR)%'
             $appSecret: '%kernel.secret%'
+            $purgeGraceMinutes: '%app.purge_grace_minutes%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

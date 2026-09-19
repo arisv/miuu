@@ -1,0 +1,11 @@
+[Unit]
+Description=MIU: delete the files of users whose purge grace period has passed
+After=network.target mariadb.service
+
+[Service]
+Type=oneshot
+User=nginx
+Group=nginx
+WorkingDirectory=/var/www/miuu
+Environment=APP_ENV=prod
+ExecStart=/usr/bin/php bin/console app:purge --no-interaction

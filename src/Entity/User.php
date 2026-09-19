@@ -32,6 +32,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $active;
 
     /**
+     * Unix timestamp from which the purge command may destroy every file of this user, or NULL
+     * when no purge is pending. While set, the user's files answer 404, the library is empty and
+     * uploads are refused (see App\Service\PurgeService).
+     */
+    #[ORM\Column(type: 'integer', name: 'purge_ts', nullable: true)]
+    private ?int $purgeTs = null;
+
+    public function getPurgeTs(): ?int
+    {
+        return $this->purgeTs;
+    }
+
+    public function setPurgeTs(?int $purgeTs): void
+    {
+        $this->purgeTs = $purgeTs;
+    }
+
+    public function isPurging(): bool
+    {
+        return $this->purgeTs !== null;
+    }
+
+    public function purgeDueAt(): ?\DateTimeImmutable
+    {
+        return $this->purgeTs === null ? null : (new \DateTimeImmutable())->setTimestamp($this->purgeTs);
+    }
+
+    /**
      * @return mixed
      */
     public function getId()

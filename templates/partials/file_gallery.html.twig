@@ -136,7 +136,13 @@
 					</div>
 				</div>
 			</div>
-			{% if pageData.files is not empty %}
+			{% if purge is defined and purge.pending %}
+				<div class="alert alert-danger m-3 purge-notice">
+					<i class="fa-solid fa-triangle-exclamation me-2" aria-hidden="true"></i>
+					All your files are queued for deletion at <strong>{{ purge.purge_at|date('H:i, j F') }}</strong>. Until then they are hidden and uploads are paused.
+					<a href="{{ path('cabinet_home') }}" class="alert-link">Cancel the deletion on your profile page.</a>
+				</div>
+			{% elseif pageData.files is not empty %}
 				<div class="row g-0" id="file-container">
 					{% set previousGroup = null %}
 					{% for item in pageData.files %}

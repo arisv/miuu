@@ -23,6 +23,7 @@
         "symfony/framework-bundle": "7.4.*",
         "symfony/http-client": "7.4.*",
         "symfony/intl": "7.4.*",
+        "symfony/lock": "7.4.*",
         "symfony/messenger": "7.4.*",
         "symfony/mime": "7.4.*",
         "symfony/monolog-bundle": "^4.1",

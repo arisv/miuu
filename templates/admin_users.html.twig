@@ -38,11 +38,9 @@
                     {% if purge is null %}
                         <span class="text-secondary">none</span>
                     {% elseif purge.pending %}
-                        <span class="badge bg-danger">Purge pending</span>
-                    {% elseif purge.marked %}
-                        {{ purge.active }} active, {{ purge.marked }} in trash
+                        <span class="badge bg-danger">Purge at {{ purge.purge_at|date('H:i') }}</span>
                     {% else %}
-                        {{ purge.total }} active
+                        {{ purge.total }} {{ purge.total == 1 ? 'file' : 'files' }}
                     {% endif %}
                 </span>
             </div>
@@ -78,7 +76,7 @@
                         <i class="fa-solid fa-trash-arrow-up me-1" aria-hidden="true"></i>Cancel purge
                     </button>
                 {% else %}
-                    <button type="button" class="btn btn-danger" data-purge-user="{{ user.id }}" data-login="{{ user.login }}" data-active="{{ purge ? purge.active : 0 }}" title="Queue every file of this user for deletion"{% if not purge or purge.active == 0 %} disabled{% endif %}>
+                    <button type="button" class="btn btn-danger" data-purge-user="{{ user.id }}" data-login="{{ user.login }}" data-active="{{ purge ? purge.total : 0 }}" title="Schedule the deletion of every file of this user"{% if not purge or purge.total == 0 %} disabled{% endif %}>
                         <i class="fa-solid fa-broom me-1" aria-hidden="true"></i>Purge
                     </button>
                 {% endif %}
@@ -128,7 +126,7 @@
             </div>
             <form id="purgeUserForm" autocomplete="off">
                 <div class="modal-body">
-                    <p>Queues all <strong data-purge-file-count></strong> active files of this user for deletion. Their links stop working immediately; the worker removes the files for good after the grace period. Until then the purge can be cancelled from this list.</p>
+                    <p>Schedules the deletion of all <strong data-purge-file-count></strong> files of this user. Their links stop working immediately and they cannot upload; the purge command removes the files for good after the grace period. Until then the purge can be cancelled from this list.</p>
                     <label class="form-label" for="purgeUserConfirm">Type <strong data-purge-login></strong> to continue</label>
                     <input class="form-control" id="purgeUserConfirm" name="confirm" type="text" autocomplete="off" spellcheck="false">
                     <div class="small text-danger mt-2" data-purge-error hidden></div>

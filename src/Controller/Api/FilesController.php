@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Exception\UploadBlockedException;
 use App\Api\FileNormalizer;
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
@@ -40,6 +41,7 @@ class FilesController extends AbstractController
         $limit = $cursors->getPageSizeFromRequest($request);
         $order = $cursors->getOrderFromRequest($request);
         $filter = $cursors->getFilterFromRequest($request);
+        // A pending purge freezes the account: UserService answers with an empty page and a zero count.
         $page = $users->getUserUploadHistoryPage(
             $user,
             $cursors->decodeCursor($request->query->get('cursor')),
@@ -90,6 +92,8 @@ class FilesController extends AbstractController
         }
         try {
             $stored = $this->files->storeFormUploadFile($file, $user);
+        } catch (UploadBlockedException $e) {
+            throw new ApiException(423, 'purge_pending', $e->getMessage());
         } catch (\Exception $e) {
             $this->logger->error('API upload failed for user ' . $user->getId() . ': ' . $e->getMessage());
             throw new ApiException(500, 'upload_failed', 'The file could not be stored.');
@@ -106,6 +110,8 @@ class FilesController extends AbstractController
         }
         try {
             $stored = $this->files->mirrorRemoteFile($url, $user);
+        } catch (UploadBlockedException $e) {
+            throw new ApiException(423, 'purge_pending', $e->getMessage());
         } catch (\Exception $e) {
             throw new ApiException(422, 'mirror_failed', $e->getMessage());
         }
@@ -132,6 +138,7 @@ class FilesController extends AbstractController
 
     private function toggle(int $id, User $user, string $action): JsonResponse
     {
+        $this->ownedFile($id, $user); // 404 for missing, foreign and frozen files
         try {
             $this->files->setDeleteStatus($user, $id, $action);
         } catch (\Exception $e) {
@@ -140,11 +147,14 @@ class FilesController extends AbstractController
         return $this->json(['file' => $this->normalizer->normalize($this->ownedFile($id, $user), true)]);
     }
 
-    /** Missing and not-owned files both answer 404, so ids cannot be probed. */
+    /**
+     * Missing and not-owned files both answer 404, so ids cannot be probed. Files of a user with
+     * a pending purge (the caller included) do not exist for anyone either.
+     */
     private function ownedFile(int $id, User $user): StoredFile
     {
         $file = $this->em->getRepository(StoredFile::class)->find($id);
-        if (!$file || !$this->files->canManage($user, $file)) {
+        if (!$file || !$this->files->canManage($user, $file) || $user->isPurging() || $this->files->ownerIsPurging($file)) {
             throw ApiException::notFound('File not found');
         }
         return $file;

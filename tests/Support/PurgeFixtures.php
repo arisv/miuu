@@ -40,7 +40,7 @@ final class PurgeFixtures
         return $user;
     }
 
-    /** A stored file owned by the user (via an upload record); $marked pre-queues it for deletion. */
+    /** A stored file owned by the user (via an upload record); $marked puts it in the trash. */
     public function file(User $owner, bool $marked = false): StoredFile
     {
         $n = ++$this->serial;
@@ -71,5 +71,12 @@ final class PurgeFixtures
         $this->em->clear();
         $records = $this->em->getRepository(UploadRecord::class)->findBy(['user' => $owner->getId()]);
         return array_map(fn (UploadRecord $r) => $r->getImage(), $records);
+    }
+
+    /** The user as the database has it now (the identity map is cleared first). */
+    public function reload(User $user): User
+    {
+        $this->em->clear();
+        return $this->em->getRepository(User::class)->find($user->getId());
     }
 }

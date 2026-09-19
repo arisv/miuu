@@ -54,42 +54,99 @@
 			<button type="button" class="btn btn-primary d-md-none" id="calendarShowBtn" aria-label="Open calendar" aria-controls="calendarPanel" aria-expanded="false"><i class="fa-regular fa-calendar" aria-hidden="true"></i></button>
 		{% endif %}
 		<div class="col-md-10 gallery-files">
-			{% if pageData.files is not empty %}
-				<div id="navpanel" class="d-flex justify-content-end">
-					<form id="order-form" class="d-flex align-items-center gap-2 m-2" action="">
-						<div class="order-field">
-							<label class="mb-0 text-nowrap" for="order-size">File size:</label>
-							<select name="order-size" class="form-select w-auto" id="order-size">
-								<option hidden value="">Default</option>
-								<option value="big">Big</option>
-								<option value="small">Small</option>
-							</select>
-						</div>
-						<div class="order-field">
-							<label class="mb-0 text-nowrap" for="order-date">Upload date:</label>
-							<select name="order-date" class="form-select w-auto" id="order-date">
-								<option hidden value="">Default</option>
-								<option value="new">Newest</option>
-								<option value="old">Oldest</option>
-							</select>
-						</div>
-						<div class="order-field">
-							<label class="mb-0 text-nowrap" for="page-size">Per page:</label>
-							<select name="page-size" class="form-select w-auto" id="page-size">
-								{% set currentPageSize = app.request.query.get('page-size', 24) %}
-								{% for size in [24, 48, 72, 96] %}
-									<option value="{{ size }}"{% if currentPageSize == size %} selected{% endif %}>{{ size }}</option>
-								{% endfor %}
-							</select>
-						</div>
-						<input type="hidden" name="calendar-start">
-						<input type="hidden" name="calendar-end">
-						<button type="submit" class="btn btn-primary text-nowrap order-submit"><i class="fa-solid fa-arrow-down-wide-short me-2" aria-hidden="true"></i>Order</button>
-					</form>
+			{% set ordering = ordering|default({'sort': 'date', 'order': 'desc', 'group': 'none'}) %}
+			{% set sortLabels = {'date': 'Date', 'size': 'Size', 'type': 'Type', 'name': 'Name'} %}
+			{% set groupLabels = {'none': 'None', 'date': 'Date', 'az': 'A – Z', 'type': 'Type', 'size': 'Sizes'} %}
+			{% set orderLabels = {'desc': 'Descending', 'asc': 'Ascending'} %}
+			{% set hasRange = app.request.query.get('calendar-start') is not empty %}
+			{# One list of choices, rendered twice: as dropdowns in the desktop button group and inside the phone menu. #}
+			{% macro choices(field, options, current) %}
+				{% for value, label in options %}
+					<li><button type="button" class="dropdown-item{% if value == current %} active{% endif %}" data-order-field="{{ field }}" data-order-value="{{ value }}"><i class="fa-solid fa-check me-2" aria-hidden="true"></i>{{ label }}</button></li>
+				{% endfor %}
+			{% endmacro %}
+			{% import _self as toolbar %}
+			<div id="navpanel" class="gallery-toolbar d-flex align-items-center gap-2">
+				<div class="gallery-title me-auto">
+					<div class="gallery-title-main">Library</div>
+					<div class="gallery-title-sub">{{ totalCount|default(pageData.files|length) }} {{ totalCount|default(pageData.files|length) == 1 ? 'item' : 'items' }}</div>
 				</div>
+				{# Desktop: the controls as a button group. Narrow windows collapse them into the menu button. #}
+				<div class="btn-group gallery-controls d-none d-xl-inline-flex" role="group" aria-label="Sorting and filters">
+					<div class="btn-group" role="group">
+						<button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-arrow-down-wide-short me-2" aria-hidden="true"></i>Sort: {{ sortLabels[ordering.sort] }}<i class="fa-solid fa-chevron-down toggle-chevron" aria-hidden="true"></i></button>
+						<ul class="dropdown-menu">{{ toolbar.choices('sort', sortLabels, ordering.sort) }}</ul>
+					</div>
+					<div class="btn-group" role="group">
+						<button type="button" class="btn btn-secondary dropdown-toggle{% if ordering.group != 'none' %} is-active{% endif %}" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-layer-group me-2" aria-hidden="true"></i>Group: {{ groupLabels[ordering.group] }}<i class="fa-solid fa-chevron-down toggle-chevron" aria-hidden="true"></i></button>
+						<ul class="dropdown-menu">{{ toolbar.choices('group', groupLabels, ordering.group) }}</ul>
+					</div>
+					<div class="btn-group" role="group">
+						<button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid {{ ordering.order == 'desc' ? 'fa-arrow-down-short-wide' : 'fa-arrow-up-short-wide' }} me-2" aria-hidden="true"></i>{{ orderLabels[ordering.order] }}<i class="fa-solid fa-chevron-down toggle-chevron" aria-hidden="true"></i></button>
+						<ul class="dropdown-menu">{{ toolbar.choices('order', orderLabels, ordering.order) }}</ul>
+					</div>
+					{% if dateTree is not empty %}
+						<button type="button" class="btn btn-secondary" data-toggle-months title="Show or hide the months panel"><i class="fa-solid fa-chart-simple me-2" aria-hidden="true"></i>Months</button>
+					{% endif %}
+					<button type="button" class="btn btn-secondary{% if hasRange %} is-active{% endif %}" data-bs-toggle="modal" data-bs-target="#calendarRangeModal"><i class="fa-regular fa-calendar me-2" aria-hidden="true"></i>Calendar</button>
+				</div>
+				<button type="button" class="btn btn-secondary" id="galleryRefreshBtn" title="Refresh" aria-label="Refresh"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+				{# Phones and narrow windows: everything in one menu behind the "three shrinking lines" button. #}
+				<div class="dropdown d-xl-none">
+					<button type="button" class="btn btn-secondary{% if ordering.group != 'none' or hasRange %} is-active{% endif %}" id="galleryMenuBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Sort, group and filter">
+						<svg class="icon-lines-decrease" width="18" height="16" viewBox="0 0 18 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1 3h16M4 8h10M7 13h4"/></svg>
+					</button>
+					<ul class="dropdown-menu dropdown-menu-end gallery-menu">
+						<li><h6 class="dropdown-header">Sort by</h6></li>
+						{{ toolbar.choices('sort', sortLabels, ordering.sort) }}
+						<li><hr class="dropdown-divider"></li>
+						<li><h6 class="dropdown-header">Group by</h6></li>
+						{{ toolbar.choices('group', groupLabels, ordering.group) }}
+						<li><hr class="dropdown-divider"></li>
+						<li><h6 class="dropdown-header">Order</h6></li>
+						{{ toolbar.choices('order', orderLabels, ordering.order) }}
+						<li><hr class="dropdown-divider"></li>
+						{% if dateTree is not empty %}
+							<li><button type="button" class="dropdown-item" data-open-months><i class="fa-solid fa-chart-simple me-2" aria-hidden="true"></i>Months</button></li>
+						{% endif %}
+						<li><button type="button" class="dropdown-item{% if hasRange %} active{% endif %}" data-bs-toggle="modal" data-bs-target="#calendarRangeModal"><i class="fa-regular fa-calendar me-2" aria-hidden="true"></i>Calendar…</button></li>
+						{% if hasRange %}
+							<li><button type="button" class="dropdown-item" data-clear-range><i class="fa-solid fa-xmark me-2" aria-hidden="true"></i>Clear date filter</button></li>
+						{% endif %}
+					</ul>
+				</div>
+				<button type="button" class="btn btn-secondary" id="gallerySelectBtn" aria-pressed="false">Select</button>
+			</div>
+			{# Date range picker shared by the desktop Calendar button and the phone menu. #}
+			<div class="modal fade" id="calendarRangeModal" tabindex="-1" aria-labelledby="calendarRangeTitle" aria-hidden="true">
+				<div class="modal-dialog modal-dialog-centered modal-sm">
+					<div class="modal-content glass-modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title" id="calendarRangeTitle">Date range</h5>
+							<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body d-grid gap-3">
+							<label class="d-grid gap-1">From<input type="date" class="form-control" id="calendarRangeStart" value="{{ app.request.query.get('calendar-start') }}"></label>
+							<label class="d-grid gap-1">To<input type="date" class="form-control" id="calendarRangeEnd" value="{{ app.request.query.get('calendar-end') }}"></label>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary me-auto" data-clear-range{% if not hasRange %} disabled{% endif %}>Clear</button>
+							<button type="button" class="btn btn-primary" id="calendarRangeApply">Apply</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% if pageData.files is not empty %}
 				<div class="row g-0" id="file-container">
+					{% set previousGroup = null %}
 					{% for item in pageData.files %}
-						{% include 'partials/control_panel_file.html.twig' with {'item': item.image is defined ? item.image : item} %}
+						{% set file = item.image is defined ? item.image : item %}
+						{% set label = file_group_label(file, ordering.group) %}
+						{% if label is not null and label != previousGroup %}
+							<div class="gallery-group-header" data-group="{{ label }}">{{ label }}</div>
+							{% set previousGroup = label %}
+						{% endif %}
+						{% include 'partials/control_panel_file.html.twig' with {'item': file, 'group': ordering.group} %}
 					{% endfor %}
 				</div>
 				<div id="selectionBar" role="toolbar" aria-label="Selected files">
@@ -100,6 +157,7 @@
 						<button type="button" class="btn btn-danger" data-selection-action="del" title="Delete"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-warning" data-selection-action="undo" title="Undelete"><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-secondary" data-selection-action="clear" title="Clear selection"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+						<button type="button" class="btn btn-secondary" data-selection-action="done" title="Done selecting">Done</button>
 					</div>
 				</div>
 				<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewTitle" aria-hidden="true">
@@ -154,7 +212,7 @@
 					{% endif %}
 				</div>
 			{% else %}
-				{{ emptyMessage }}
+				<p class="p-3 text-secondary">{{ emptyMessage }}</p>
 			{% endif %}
 		</div>
 	</div>

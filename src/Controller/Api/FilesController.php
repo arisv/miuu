@@ -30,16 +30,21 @@ class FilesController extends AbstractController
     ) {
     }
 
-    /** Same query parameters as the web gallery; the client must resend order/filter along with the cursor. */
+    /**
+     * Same query parameters as the web gallery (sort, order, group, calendar-start/end, page-size);
+     * the client must resend them along with the cursor.
+     */
     #[Route('', name: 'api_files_list', methods: ['GET'])]
     public function list(Request $request, #[CurrentUser] User $user, UserService $users, CursorService $cursors): JsonResponse
     {
         $limit = $cursors->getPageSizeFromRequest($request);
+        $order = $cursors->getOrderFromRequest($request);
+        $filter = $cursors->getFilterFromRequest($request);
         $page = $users->getUserUploadHistoryPage(
             $user,
             $cursors->decodeCursor($request->query->get('cursor')),
-            $cursors->getOrderFromRequest($request),
-            $cursors->getFilterFromRequest($request),
+            $order,
+            $filter,
             $limit
         );
         $files = array_map(fn ($item) => $item instanceof UploadRecord ? $item->getImage() : $item, $page['files']);
@@ -48,6 +53,12 @@ class FilesController extends AbstractController
             'has_next_page' => $page['hasNextPage'],
             'next_cursor' => $page['hasNextPage'] ? ($page['cursor'] ?? null) : null,
             'page_size' => $limit,
+            // Files matching the filter (not just this page), for the "N items" subtitle.
+            'total_count' => $users->countUserUploadHistory($user, $filter),
+            // Effective ordering, after defaults and legacy parameter mapping.
+            'sort' => $order->sort,
+            'order' => $order->order,
+            'group' => $order->group,
         ]);
     }
 

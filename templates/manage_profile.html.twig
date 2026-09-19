@@ -74,6 +74,32 @@
 
             {{ form_end(form) }}
             </div>
+            <div class="col-md-5 col-lg-4">
+                <h4 class="mb-3">Delete all files</h4>
+                {% if purge.total == 0 %}
+                    <p class="text-secondary">You have no files.</p>
+                {% elseif purge.pending %}
+                    <p>All <strong>{{ purge.total }}</strong> of your files are queued for deletion and will be removed for good shortly. Until then you can bring them all back.</p>
+                    <form method="post" action="{{ path('cabinet_purge_cancel') }}" class="purge-form">
+                        <input type="hidden" name="_token" value="{{ csrf_token('purge_files') }}">
+                        <div class="l-sign-btn">
+                            <button type="submit" class="btn btn-warning btn-wmid"><i class="fa-solid fa-trash-arrow-up fa-fw me-2" aria-hidden="true"></i>Cancel deletion</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p>Queues every one of your <strong>{{ purge.active }}</strong> files for deletion{% if purge.marked %} ({{ purge.marked }} already in the trash){% endif %}. Links stop working immediately; the files are removed for good after a short grace period, during which you can cancel here.</p>
+                    <form method="post" action="{{ path('cabinet_purge') }}" class="purge-form" autocomplete="off">
+                        <input type="hidden" name="_token" value="{{ csrf_token('purge_files') }}">
+                        <div class="mb-3 l-sign-mb-3">
+                            <label class="visually-hidden" for="purgePassword">Current password</label>
+                            <input class="form-control" type="password" id="purgePassword" name="password" placeholder="Current password to confirm" autocomplete="current-password" required>
+                        </div>
+                        <div class="l-sign-btn">
+                            <button type="submit" class="btn btn-danger btn-wmid" data-purge-submit><i class="fa-solid fa-trash fa-fw me-2" aria-hidden="true"></i>Delete all my files</button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}

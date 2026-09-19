@@ -2,7 +2,7 @@
 {% set currentRoute = app.request.get('_route') %}
 <div class="list-group">
 	<a href="{{path("cabinet_home")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_home" ? 'active' : '' }}"><i class="fa-solid fa-user fa-fw me-2" aria-hidden="true"></i><span class="nav-label-full">Profile</span><span class="nav-label-short">Profile</span></a>
-	<a href="{{path("cabinet_mypics")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_mypics" ? 'active' : '' }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i><span class="nav-label-full">My Pictures</span><span class="nav-label-short">Pictures</span></a>
+	<a href="{{path("cabinet_mypics")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_mypics" ? 'active' : '' }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i><span class="nav-label-full">Library</span><span class="nav-label-short">Library</span></a>
 	<a href="{{path("cabinet_token")}}" class="list-group-item list-group-item-action {{ currentRoute == "cabinet_token" ? 'active' : '' }}"><i class="fa-solid fa-cloud-arrow-up fa-fw me-2" aria-hidden="true"></i><span class="nav-label-full">Remote Upload</span><span class="nav-label-short">Upload</span></a>
 	{% if is_granted('ROLE_ADMIN') %}
 	<a href="{{path("admin_manage_users")}}" class="list-group-item list-group-item-action {{ currentRoute == "admin_manage_users" ? 'active' : '' }}"><i class="fa-solid fa-users fa-fw me-2" aria-hidden="true"></i><span class="nav-label-full">Manage Users</span><span class="nav-label-short">Users</span></a>

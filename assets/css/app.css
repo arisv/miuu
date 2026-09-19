@@ -66,10 +66,166 @@ body.sidebar-open #sidebarBackdrop {
     }
 }
 
-.order-field {
+/* Gallery toolbar: "Library / N items", then refresh, the sort menu (or the desktop button group) and Select. */
+.gallery-title-main {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.gallery-title-sub {
+    font-size: .8rem;
+    color: #9a9a9a;
+}
+
+.gallery-toolbar .btn.is-active,
+.gallery-toolbar .dropdown-item.active {
+    color: #34e6a1;
+}
+
+.gallery-toolbar .dropdown-menu {
+    background: #1f1f1f;
+    border: 1px solid #3d3d3d;
+    --bs-dropdown-link-color: #e6e6e6;
+    --bs-dropdown-link-hover-color: #fff;
+    --bs-dropdown-link-hover-bg: #2a2a2a;
+    --bs-dropdown-link-active-color: #34e6a1;
+    --bs-dropdown-link-active-bg: transparent;
+    --bs-dropdown-header-color: #9a9a9a;
+    --bs-dropdown-divider-bg: #3d3d3d;
+}
+
+/* The toggles draw their own chevron: Bootstrap's caret lives on ::after, which the glass theme
+   uses as a full-size sheen layer, so its border would read as an embossed top edge. */
+.gallery-toolbar .dropdown-toggle::after {
+    border: 0;
+    margin: 0;
+}
+
+.toggle-chevron {
+    margin-left: .5rem;
+    font-size: .7em;
+    opacity: .75;
+}
+
+/* Choice rows keep a check glyph slot; only the active one shows it. */
+.gallery-toolbar .dropdown-item .fa-check {
+    visibility: hidden;
+}
+
+.gallery-toolbar .dropdown-item.active .fa-check {
+    visibility: visible;
+}
+
+.gallery-menu {
+    min-width: 220px;
+}
+
+.icon-lines-decrease {
+    display: block;
+}
+
+/* Group headers span the whole tile grid. */
+.gallery-group-header {
+    grid-column: 1 / -1;
+    padding: 18px 12px 6px;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #9a9a9a;
+}
+
+/* Desktop: the months column folds away behind the Months button. */
+@media (min-width: 768px) {
+    body.months-collapsed #calendarPanel {
+        display: none;
+    }
+
+    body.months-collapsed .gallery-files {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Phones: the gallery page runs flush, tiles edge to edge; only the toolbar keeps a small inset. */
+@media (max-width: 767.98px) {
+    body:has(.gallery-toolbar) .app.p-4 {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    body:has(.gallery-toolbar) #mainblock,
+    body:has(.gallery-toolbar) .block-app,
+    body:has(.gallery-toolbar) .manage-content,
+    body:has(.gallery-toolbar) .gallery-files {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    body:has(.gallery-toolbar) .block-app {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+    }
+
+    body:has(.gallery-toolbar) .gallery-row,
+    body:has(.gallery-toolbar) .block-app > .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .gallery-toolbar {
+        margin-left: 8px;
+        margin-right: 8px;
+    }
+}
+
+/* Phones: tighter toolbar so Library, refresh, menu and Select fit on one line. */
+@media (max-width: 575.98px) {
+    .gallery-toolbar {
+        gap: 6px;
+    }
+
+    .gallery-toolbar .btn {
+        padding-left: .6rem;
+        padding-right: .6rem;
+    }
+
+    .gallery-title-main {
+        font-size: 1.05rem;
+    }
+
+    #selectionBar {
+        padding-left: 12px;
+    }
+
+    #selectionBar .btn-group .btn {
+        padding-left: .45rem;
+        padding-right: .45rem;
+    }
+}
+
+/* "Done" only matters once Select was pressed; touch layouts select implicitly and just clear. */
+#selectionBar [data-selection-action="done"] {
+    display: none;
+}
+
+body.selection-mode #selectionBar [data-selection-action="done"] {
+    display: inline-block;
+}
+
+/* Select button: checkboxes and the action bar on every layout, not only touch. */
+body.selection-mode .itembox-select {
+    display: block;
+}
+
+body.selection-mode .itembox:hover .itembox-hover {
+    display: none;
+}
+
+body.selection-mode #selectionBar {
     display: flex;
-    align-items: center;
-    gap: .5rem;
 }
 
 /* Phones: the calendar column becomes a drawer sliding in from the right, opened by a floating button. */
@@ -136,38 +292,6 @@ body.calendar-open #calendarShowBtn {
         transition-delay: 0s;
     }
 
-    /* The order toolbar docks into the drawer (moved there by app.js) and stacks its fields. */
-    #calendarPanel #navpanel {
-        position: static;
-        padding: 12px;
-        border-bottom: 1px solid #3d3d3d;
-    }
-
-    #calendarPanel #order-form {
-        flex-wrap: wrap;
-        width: 100%;
-        margin: 0 !important;
-    }
-
-    #calendarPanel .order-field {
-        flex: 1 1 100%;
-        flex-direction: column;
-        align-items: stretch;
-        gap: .25rem;
-    }
-
-    #calendarPanel .order-field label {
-        font-size: .8rem;
-    }
-
-    #calendarPanel .order-field .form-select {
-        width: 100% !important;
-    }
-
-    #calendarPanel .order-submit {
-        flex: 1 1 100%;
-        margin-top: .25rem;
-    }
 }
 
 /* Phones: the manage sidebar becomes a fixed bottom tab bar, icon above label. */
@@ -735,6 +859,83 @@ body.modal-open #calendarShowBtn {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     margin: 0;
+    transform-origin: 50% var(--pinch-origin-y, 50%);
+}
+
+/* Pinch to zoom (touch) / ctrl+wheel (trackpad): the grid relays out to whole columns and a
+   transform carries the fractional remainder, which eases away on release. */
+#file-container.is-pinching {
+    will-change: transform;
+}
+
+#file-container.is-snapping {
+    transition: transform 180ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.gallery-files {
+    touch-action: pan-y;
+}
+
+/* Zoomed-out tiles: square first, then label-less, then icon only. */
+body.tiles-zoomed .itembox {
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1;
+}
+
+body.tiles-zoomed .itembox-icon > i,
+body.tiles-zoomed .itembox-icon > svg {
+    font-size: 2.6rem;
+}
+
+body.tiles-compact .itembox-text,
+body.tiles-tiny .itembox-ext,
+body.tiles-tiny .itembox-hover {
+    display: none !important;
+}
+
+body.tiles-compact .itembox-icon {
+    inset: 0;
+    gap: 6px;
+}
+
+body.tiles-compact .itembox-icon > i,
+body.tiles-compact .itembox-icon > svg {
+    font-size: 2rem;
+}
+
+body.tiles-tiny .itembox-icon > i,
+body.tiles-tiny .itembox-icon > svg {
+    font-size: 1.1rem;
+    filter: none;
+}
+
+body.tiles-tiny .itembox-select {
+    width: 26px;
+    height: 26px;
+}
+
+body.tiles-tiny .itembox-check-mark {
+    top: 4px;
+    left: 4px;
+    width: 16px;
+    height: 16px;
+    border-width: 1.5px;
+    font-size: 8px;
+}
+
+body.tiles-compact .gallery-group-header {
+    padding: 10px 8px 4px;
+}
+
+/* New cards (next page, zoom-out fill) fade in instead of popping. */
+#file-container > .col.is-new .itembox {
+    animation: tile-in 220ms ease-out both;
+}
+
+@keyframes tile-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 #file-container > .col {
@@ -784,10 +985,24 @@ body.modal-open #calendarShowBtn {
     box-shadow: 0 0 0 3px rgba(0, 0, 0, .5) inset;
 }
 
-.preview-content {
+.preview-content,
+.glass-modal-content {
     background: #1f1f1f;
     color: #e6e6e6;
     border: 1px solid #3d3d3d;
+}
+
+/* Small dark dialogs (date range): native date inputs follow the dark scheme too. */
+.glass-modal-content .modal-header,
+.glass-modal-content .modal-footer {
+    border-color: #3d3d3d;
+}
+
+.glass-modal-content .form-control {
+    background: #131715;
+    color: #e6e6e6;
+    border-color: #3d3d3d;
+    color-scheme: dark;
 }
 
 /* Title grows so the counter and close button sit at the top right. */
@@ -941,6 +1156,30 @@ body.modal-open #calendarShowBtn {
     cursor: pointer;
 }
 
+/* Mute button + slider; the slider unfolds on hover/focus so the bar stays compact. */
+.player-volume {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.player-volume-slider {
+    width: 0;
+    opacity: 0;
+    margin: 0;
+    accent-color: #34e6a1;
+    height: 4px;
+    cursor: pointer;
+    transition: width .2s ease, opacity .2s ease, margin .2s ease;
+}
+
+.player-volume:hover .player-volume-slider,
+.player-volume:focus-within .player-volume-slider {
+    width: 80px;
+    opacity: 1;
+    margin: 0 6px 0 2px;
+}
+
 @media (max-width: 575.98px) {
     .player-controls {
         left: 8px;
@@ -962,6 +1201,11 @@ body.modal-open #calendarShowBtn {
     .player-btn {
         width: 32px;
         height: 32px;
+    }
+
+    /* No hover on touch: keep the slider hidden and let the mute button toggle instead. */
+    .player-volume-slider {
+        display: none;
     }
 }
 
@@ -1311,10 +1555,6 @@ body.modal-open #calendarShowBtn {
 }
 
 @media (max-width: 767.98px), (hover: none) {
-    .itembox-select {
-        display: block;
-    }
-
     .itembox:hover .itembox-hover {
         display: none;
     }

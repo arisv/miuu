@@ -6,3 +6,10 @@ framework:
             limit: 10
             interval: '15 minutes'
             lock_factory: null
+
+# Tests log in on every case and the limiter's counters persist in the test cache pool between runs.
+when@test:
+    framework:
+        rate_limiter:
+            api_login:
+                policy: 'no_limit'

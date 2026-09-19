@@ -13,18 +13,213 @@ $(document).ready(function () {
             // still lands if the button shifts under the pointer while the page re-flows.
             $('.gallery-pager').on('click', this.fetchNextPage.bind(this));
             $('[data-date]').on('click', this.calendarHighlight.bind(this));
-            $('#order-form').on('submit', function (e) {
-                var el = e.currentTarget;
-                $(el).find("input[name='calendar-start']").val(this.calendarRangeStart);
-                $(el).find("input[name='calendar-end']").val(this.calendarRangeEnd);
-                $(el).find(":input").filter(function () {
-                    return !this.value;
-                }).attr("disabled", "disabled");
-                return true;
+            // Toolbar: every sort/group/order choice, the calendar range and "clear" reload the
+            // page with the new query string (the cursor never survives a change of ordering).
+            $('body').on('click', '[data-order-field]', this.onOrderChoice.bind(this));
+            $('body').on('click', '[data-clear-range]', function () {
+                this.navigate({'calendar-start': null, 'calendar-end': null});
             }.bind(this));
+            $('#calendarRangeApply').on('click', this.applyCalendarRange.bind(this));
+            $('#galleryRefreshBtn').on('click', function () { window.location.reload(); });
+            $('#gallerySelectBtn').on('click', this.toggleSelectionMode.bind(this));
+            $('[data-toggle-months]').on('click', this.toggleMonths.bind(this));
+            this.restoreMonths();
             this.applyExistingFilter(__filter);
             this.initializeSelection();
             this.initializePreview();
+            this.initializeZoom();
+            this.initializeInfiniteScroll();
+        },
+        // ---- Zoom: pinch (touch) or ctrl+wheel (trackpad) scales the tile size. Same rules as the
+        // app: min 36 px, at most 10 columns on phones / 20 on desktop, live relayout to whole
+        // columns plus a transform for the fractional remainder that eases away on release.
+        tileSize: 200,
+        minTileSize: 36,
+        maxTileSize: 360,
+        initializeZoom: function () {
+            var container = document.getElementById('file-container');
+            if (!container) {
+                return;
+            }
+            this.grid = container;
+            var stored = null;
+            try { stored = parseFloat(window.localStorage.getItem('miu.gallery.tileSize')); } catch (err) { /* private mode */ }
+            if (stored && stored >= this.minTileSize && stored <= this.maxTileSize) {
+                this.tileSize = stored;
+            }
+            this.applyTileSize(this.tileSize, false);
+            window.addEventListener('resize', function () { this.applyTileSize(this.tileSize, false); }.bind(this));
+
+            var area = container.closest('.gallery-files') || container;
+            var pinch = null;
+            var distance = function (t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); };
+            area.addEventListener('touchstart', function (e) {
+                if (e.touches.length === 2) {
+                    var rect = container.getBoundingClientRect();
+                    var focalY = ((e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top) / Math.max(rect.height, 1);
+                    container.style.setProperty('--pinch-origin-y', (Math.min(Math.max(focalY, 0), 1) * 100) + '%');
+                    pinch = { start: distance(e.touches), size: this.tileSize, live: this.tileSize };
+                    container.classList.remove('is-snapping');
+                    container.classList.add('is-pinching');
+                }
+            }.bind(this), { passive: true });
+            area.addEventListener('touchmove', function (e) {
+                if (!pinch || e.touches.length !== 2) {
+                    return;
+                }
+                e.preventDefault();
+                pinch.live = this.clampTile(pinch.size * distance(e.touches) / pinch.start);
+                this.applyTileSize(pinch.live, true);
+            }.bind(this), { passive: false });
+            var end = function () {
+                if (!pinch) {
+                    return;
+                }
+                this.commitTileSize(pinch.live);
+                pinch = null;
+            }.bind(this);
+            area.addEventListener('touchend', end);
+            area.addEventListener('touchcancel', end);
+
+            // Trackpad pinch arrives as a wheel event with ctrlKey; zoom in steps and settle after a pause.
+            var wheelTimer = null;
+            area.addEventListener('wheel', function (e) {
+                if (!e.ctrlKey) {
+                    return;
+                }
+                e.preventDefault();
+                var live = this.clampTile((this.liveTileSize || this.tileSize) * (1 - e.deltaY * 0.01));
+                this.liveTileSize = live;
+                container.classList.remove('is-snapping');
+                container.classList.add('is-pinching');
+                this.applyTileSize(live, true);
+                window.clearTimeout(wheelTimer);
+                wheelTimer = window.setTimeout(function () {
+                    this.commitTileSize(this.liveTileSize);
+                    this.liveTileSize = null;
+                }.bind(this), 160);
+            }.bind(this), { passive: false });
+        },
+        clampTile: function (size) {
+            return Math.min(this.maxTileSize, Math.max(this.minTileSize, size));
+        },
+        columnsFor: function (size) {
+            var width = this.grid.clientWidth || window.innerWidth;
+            var max = window.innerWidth < 768 ? 10 : 20;
+            return Math.min(max, Math.max(2, Math.floor(width / size)));
+        },
+        // Lays the grid out for a tile size; `live` keeps the fractional remainder as a transform.
+        applyTileSize: function (size, live) {
+            var cols = this.columnsFor(size);
+            var actual = (this.grid.clientWidth || window.innerWidth) / cols;
+            this.grid.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
+            this.grid.style.transform = live ? 'scale(' + (size / actual) + ')' : '';
+            document.body.classList.toggle('tiles-zoomed', actual < 200);
+            document.body.classList.toggle('tiles-compact', actual < 150);
+            document.body.classList.toggle('tiles-tiny', actual < 72);
+            this.tileWidth = actual;
+            this.columns = cols;
+        },
+        commitTileSize: function (size) {
+            this.tileSize = this.clampTile(size);
+            try { window.localStorage.setItem('miu.gallery.tileSize', String(this.tileSize)); } catch (err) { /* private mode */ }
+            var grid = this.grid;
+            grid.classList.remove('is-pinching');
+            grid.classList.add('is-snapping');
+            grid.style.transform = 'scale(1)';
+            var done = function () {
+                grid.classList.remove('is-snapping');
+                grid.style.transform = '';
+                grid.removeEventListener('transitionend', done);
+            };
+            grid.addEventListener('transitionend', done);
+            window.setTimeout(done, 250);
+            // More tiles fit now: fill the viewport if the end came into view.
+            this.autoLoad();
+        },
+        // ---- Infinite scroll: the pager is watched; a page that does not fill the viewport
+        // fetches the next one, and every fetch asks for a page sized to the viewport and zoom.
+        initializeInfiniteScroll: function () {
+            var pager = document.querySelector('.gallery-pager');
+            if (!pager || !('IntersectionObserver' in window)) {
+                return;
+            }
+            this.pager = pager;
+            new IntersectionObserver(function (entries) {
+                if (entries.some(function (en) { return en.isIntersecting; })) {
+                    this.autoLoad();
+                }
+            }.bind(this), { rootMargin: '600px 0px' }).observe(pager);
+        },
+        pagerNear: function () {
+            if (!this.pager) {
+                return false;
+            }
+            return this.pager.getBoundingClientRect().top < window.innerHeight + 600;
+        },
+        pageSizeFor: function () {
+            var cols = this.columns || 4;
+            var tileHeight = document.body.classList.contains('tiles-zoomed') ? (this.tileWidth || 200) : 240;
+            var needed = cols * (Math.ceil(window.innerHeight / tileHeight) + 1);
+            var sizes = [24, 48, 72, 96];
+            for (var i = 0; i < sizes.length; i++) {
+                if (sizes[i] >= needed) {
+                    return sizes[i];
+                }
+            }
+            return sizes[sizes.length - 1];
+        },
+        autoLoad: function () {
+            if (!this.pagerNear()) {
+                return;
+            }
+            var request = this.loadNextPage();
+            if (!request) {
+                return;
+            }
+            request.done(function (data) {
+                // Keep filling while the end is still in view; a page with nothing new ends the chain.
+                if (data.rendered && data.rendered.length && this.pagerNear()) {
+                    window.setTimeout(this.autoLoad.bind(this), 50);
+                }
+            }.bind(this));
+        },
+        // Reloads the gallery with the current query string plus `overrides` (null removes a key).
+        navigate: function (overrides) {
+            var url = new URL(window.location.href);
+            ['cursor', 'order-date', 'order-size'].forEach(function (k) { url.searchParams.delete(k); });
+            Object.keys(overrides).forEach(function (k) {
+                if (overrides[k] === null || overrides[k] === '') {
+                    url.searchParams.delete(k);
+                } else {
+                    url.searchParams.set(k, overrides[k]);
+                }
+            });
+            window.location.href = url.toString();
+        },
+        onOrderChoice: function (e) {
+            var button = $(e.currentTarget);
+            var overrides = {};
+            overrides[button.data('orderField')] = button.data('orderValue');
+            this.navigate(overrides);
+        },
+        applyCalendarRange: function () {
+            var start = $('#calendarRangeStart').val();
+            var end = $('#calendarRangeEnd').val() || start;
+            if (!start) {
+                return;
+            }
+            this.navigate({'calendar-start': start, 'calendar-end': end});
+        },
+        // Desktop: the months column folds away; remembered per browser. Phones use the drawer instead.
+        toggleMonths: function () {
+            var hidden = document.body.classList.toggle('months-collapsed');
+            try { window.localStorage.setItem('miu.gallery.monthsHidden', hidden ? '1' : ''); } catch (err) { /* private mode */ }
+        },
+        restoreMonths: function () {
+            var hidden = false;
+            try { hidden = window.localStorage.getItem('miu.gallery.monthsHidden') === '1'; } catch (err) { /* private mode */ }
+            document.body.classList.toggle('months-collapsed', hidden);
         },
         // Preview: a keyboard cursor over the tiles (arrows), Space toggles the modal, tile button opens it.
         initializePreview: function () {
@@ -296,15 +491,32 @@ $(document).ready(function () {
             $('body').on('click', '.itembox', this.onTileTap.bind(this));
             $('#selectionBar').on('click', '[data-selection-action]', this.onSelectionAction.bind(this));
         },
-        onTileTap: function (e) {
-            if (!this.selectionMedia.matches) {
-                return;
+        // Selection is on once the Select button was pressed (any layout). Touch layouts used to
+        // select on tap; now a tap opens the preview and Select enters selection mode, like the app.
+        selectionActive: function () {
+            return document.body.classList.contains('selection-mode');
+        },
+        toggleSelectionMode: function () {
+            var on = document.body.classList.toggle('selection-mode');
+            $('#gallerySelectBtn').attr('aria-pressed', on ? 'true' : 'false').toggleClass('is-active', on);
+            if (!on) {
+                this.clearSelection();
             }
+            this.updateSelectionBar();
+        },
+        onTileTap: function (e) {
             if ($(e.target).closest('.itembox-controls, .itembox-select').length) {
                 return;
             }
-            var box = $(e.currentTarget).find('.itembox-check');
-            box.prop('checked', !box.prop('checked')).trigger('change');
+            if (this.selectionActive()) {
+                var box = $(e.currentTarget).find('.itembox-check');
+                box.prop('checked', !box.prop('checked')).trigger('change');
+                return;
+            }
+            // Touch layouts have no hover controls: the tile itself opens the preview.
+            if (this.selectionMedia.matches) {
+                this.openPreview($(e.currentTarget));
+            }
         },
         onSelectionChange: function (e) {
             $(e.target).closest('.itembox').toggleClass('is-selected', e.target.checked);
@@ -321,7 +533,7 @@ $(document).ready(function () {
         updateSelectionBar: function () {
             var tiles = this.selectedTiles();
             var count = tiles.length;
-            $('body').toggleClass('has-selection', count > 0 && this.selectionMedia.matches);
+            $('body').toggleClass('has-selection', count > 0 && this.selectionActive());
             var bar = $('#selectionBar');
             bar.find('.selection-count').text(count + (count === 1 ? ' file' : ' files'));
             bar.find('[data-selection-action="preview"]').prop('disabled', count !== 1);
@@ -338,6 +550,12 @@ $(document).ready(function () {
             var tiles = this.selectedTiles();
             if (action === 'clear') {
                 this.clearSelection();
+            } else if (action === 'done') {
+                if (document.body.classList.contains('selection-mode')) {
+                    this.toggleSelectionMode();
+                } else {
+                    this.clearSelection();
+                }
             } else if (action === 'preview') {
                 if (tiles.length === 1) {
                     this.openPreview(tiles.first());
@@ -379,7 +597,7 @@ $(document).ready(function () {
                 this.calendarPointer = 'start';
                 this.clearRangeStart();
                 this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
-                $('#order-form').trigger('submit');
+                this.navigate({'calendar-start': this.calendarRangeStart, 'calendar-end': this.calendarRangeEnd});
                 return;
             }
             this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
@@ -416,16 +634,6 @@ $(document).ready(function () {
                 this.calendarRangeStart = filter['calendar-start'];
                 this.calendarRangeEnd = filter['calendar-end'];
                 this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
-            }
-            var form = $('#order-form');
-            if (filter['order-size']) {
-                $(form).find('select[name="order-size"]').val(filter['order-size']);
-            }
-            if (filter['order-date']) {
-                $(form).find('select[name="order-date"]').val(filter['order-date']);
-            }
-            if (filter['page-size']) {
-                $(form).find('select[name="page-size"]').val(filter['page-size']);
             }
         },
         manageDeletion: function (e) {
@@ -469,6 +677,11 @@ $(document).ready(function () {
                 return null;
             }
             var action = $(button).data('paginationNext');
+            if (this.grid) {
+                var url = new URL(action, window.location.href);
+                url.searchParams.set('page-size', String(this.pageSizeFor()));
+                action = url.pathname + url.search;
+            }
             $('#fetch-in-progress').show();
             this.fetchLock = true;
             var self = this;
@@ -476,7 +689,14 @@ $(document).ready(function () {
                 .done(function (data) {
                     var container = $('#file-container');
                     $.each(data.rendered, function (i, o) {
-                        container.append($(o));
+                        var card = $(o).addClass('is-new');
+                        var group = card.data('group');
+                        var previous = container.children('[data-group]').last().data('group');
+                        if (group && group !== previous) {
+                            container.append($('<div class="gallery-group-header">').attr('data-group', group).text(group));
+                        }
+                        container.append(card);
+                        window.setTimeout(function () { card.removeClass('is-new'); }, 400);
                     });
                     $(button).data('paginationNext', data.nextPageRequest);
                     if (!data.hasNextPage) {

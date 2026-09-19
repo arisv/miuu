@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Service\PurgeNotCancellable;
+use App\Service\PurgeService;
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
 use App\Entity\User;
@@ -391,6 +393,42 @@ class EndpointController extends AbstractController
         }
     }
 
+    /** Admin purge: queue every file of a user for deletion; the typed username is the confirmation. */
+    #[Route(path: '/endpoint/purgeuserfiles/', name: 'admin_purge_user_files', methods: ['POST'])]
+    public function purgeUserFiles(Request $request, UserService $userService, PurgeService $purge, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $userId = (int) $request->request->get('id');
+        $confirmation = trim((string) $request->request->get('confirm', ''));
+        /** @var User $actor */
+        $actor = $this->getUser();
+        $target = $userService->findUser($userId);
+        if (!$target || $confirmation !== $target->getLogin()) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Username confirmation does not match'], 400);
+        }
+        $marked = $purge->purge($target, "admin {$actor->getId()}");
+        return new JsonResponse(['status' => 'ok', 'marked' => $marked, 'purge' => $purge->status($target)]);
+    }
+
+    #[Route(path: '/endpoint/cancelpurge/', name: 'admin_cancel_purge', methods: ['POST'])]
+    public function cancelUserPurge(Request $request, UserService $userService, PurgeService $purge, LoggerInterface $logger)
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $userId = (int) $request->request->get('id');
+        /** @var User $actor */
+        $actor = $this->getUser();
+        $target = $userService->findUser($userId);
+        if (!$target) {
+            return new JsonResponse(['status' => 'error', 'message' => 'User not found'], 404);
+        }
+        try {
+            $restored = $purge->cancel($target, "admin {$actor->getId()}");
+        } catch (PurgeNotCancellable $e) {
+            return new JsonResponse(['status' => 'error', 'message' => $e->getMessage(), 'purge' => $e->status], 409);
+        }
+        return new JsonResponse(['status' => 'ok', 'restored' => $restored, 'purge' => $purge->status($target)]);
+    }
+
     #[Route(path: '/endpoint/resetuserpassword/', name: 'admin_reset_user_password', methods: ['POST'])]
     public function resetUserPassword(Request $request, UserService $userService, LoggerInterface $logger)
     {
@@ -474,7 +512,7 @@ class EndpointController extends AbstractController
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageSize = $cursorService->getPageSizeFromRequest($request);
         $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter, $pageSize);
-        return $this->renderHistoryPageResponse($request, $pageData, 'user_next_files_page', $fileService, $twig);
+        return $this->renderHistoryPageResponse($request, $pageData, 'user_next_files_page', $fileService, $twig, $orderBy->group);
     }
 
     #[Route(path: '/endpoint/admin_next_anonymous_page/', name: 'admin_next_anonymous_page')]
@@ -486,22 +524,24 @@ class EndpointController extends AbstractController
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageSize = $cursorService->getPageSizeFromRequest($request);
         $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter, $pageSize);
-        return $this->renderHistoryPageResponse($request, $pageData, 'admin_next_anonymous_page', $fileService, $twig);
+        return $this->renderHistoryPageResponse($request, $pageData, 'admin_next_anonymous_page', $fileService, $twig, $orderBy->group);
     }
 
     /**
      * Renders one page of file cards for infinite scrolling. Page items may be
      * upload records (user history) or bare stored files (anonymous history).
      */
-    private function renderHistoryPageResponse(Request $request, array $pageData, string $nextPageRoute, FileService $fileService, \Twig\Environment $twig): JsonResponse
+    private function renderHistoryPageResponse(Request $request, array $pageData, string $nextPageRoute, FileService $fileService, \Twig\Environment $twig, string $group = 'none'): JsonResponse
     {
         $result = [];
         $rendered = [];
         $removalPivot = $fileService->getDeletionPivotDate();
         foreach ($pageData['files'] as $item) {
+            // Each card carries its group label; the page script inserts a header where it changes.
             $rendered[] = $twig->render('partials/control_panel_file.html.twig', [
                 'item' => $item instanceof UploadRecord ? $item->getImage() : $item,
-                'pivot' => $removalPivot
+                'pivot' => $removalPivot,
+                'group' => $group,
             ]);
         }
         $result['rendered'] = $rendered;

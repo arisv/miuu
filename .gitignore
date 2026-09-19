@@ -43,3 +43,7 @@ phpstan.neon
 
 # local compose overrides
 /compose.override.yaml
+
+###> phpunit/phpunit ###
+/.phpunit.cache/
+###< phpunit/phpunit ###

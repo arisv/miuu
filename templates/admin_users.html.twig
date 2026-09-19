@@ -31,6 +31,21 @@
                 {% set isAdmin = user.role == constant('App\\Entity\\User::ROLE_ADMIN') %}
                 <span class="admin-stat-value"><span class="admin-chip role-{{ isAdmin ? 'admin' : 'user' }}">{{ isAdmin ? 'Admin' : 'User' }}</span></span>
             </div>
+            {% set purge = purgeStates[user.id]|default(null) %}
+            <div class="admin-stat" data-stat="purge">
+                <span class="admin-stat-label">Files</span>
+                <span class="admin-stat-value" data-purge-state>
+                    {% if purge is null %}
+                        <span class="text-secondary">none</span>
+                    {% elseif purge.pending %}
+                        <span class="badge bg-danger">Purge pending</span>
+                    {% elseif purge.marked %}
+                        {{ purge.active }} active, {{ purge.marked }} in trash
+                    {% else %}
+                        {{ purge.total }} active
+                    {% endif %}
+                </span>
+            </div>
             <div class="admin-stat" data-stat="status">
                 <span class="admin-stat-label">Status</span>
                 <span class="admin-stat-value" data-userstatus>
@@ -57,6 +72,16 @@
                 <button type="button" class="btn btn-secondary" data-reset-password="{{ user.id }}" title="Reset password">
                     <i class="fa-solid fa-key me-1" aria-hidden="true"></i>Reset
                 </button>
+                {% set purge = purgeStates[user.id]|default(null) %}
+                {% if purge and purge.can_cancel %}
+                    <button type="button" class="btn btn-warning" data-cancel-purge="{{ user.id }}" data-login="{{ user.login }}" title="Restore every file of this user">
+                        <i class="fa-solid fa-trash-arrow-up me-1" aria-hidden="true"></i>Cancel purge
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-danger" data-purge-user="{{ user.id }}" data-login="{{ user.login }}" data-active="{{ purge ? purge.active : 0 }}" title="Queue every file of this user for deletion"{% if not purge or purge.active == 0 %} disabled{% endif %}>
+                        <i class="fa-solid fa-broom me-1" aria-hidden="true"></i>Purge
+                    </button>
+                {% endif %}
                 <button type="button" class="btn btn-danger" data-delete-user="{{ user.id }}" data-login="{{ user.login }}" title="Delete user">
                     <i class="fa-solid fa-trash me-1" aria-hidden="true"></i>Delete
                 </button>
@@ -89,6 +114,28 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger" data-delete-submit disabled><i class="fa-solid fa-trash me-2" aria-hidden="true"></i>Delete user</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="purgeUserModal" tabindex="-1" aria-labelledby="purgeUserTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="purgeUserTitle">Purge files of <span data-purge-login-title></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="purgeUserForm" autocomplete="off">
+                <div class="modal-body">
+                    <p>Queues all <strong data-purge-file-count></strong> active files of this user for deletion. Their links stop working immediately; the worker removes the files for good after the grace period. Until then the purge can be cancelled from this list.</p>
+                    <label class="form-label" for="purgeUserConfirm">Type <strong data-purge-login></strong> to continue</label>
+                    <input class="form-control" id="purgeUserConfirm" name="confirm" type="text" autocomplete="off" spellcheck="false">
+                    <div class="small text-danger mt-2" data-purge-error hidden></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" data-purge-submit disabled><i class="fa-solid fa-broom me-2" aria-hidden="true"></i>Purge files</button>
                 </div>
             </form>
         </div>

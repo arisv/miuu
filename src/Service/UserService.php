@@ -205,6 +205,16 @@ ORDER BY dyear DESC, dmonth DESC';
         return $this->buildHistoryPage($pageFiles, $limit);
     }
 
+    public function countUserUploadHistory(User $user, $filter): int
+    {
+        return $this->em->getRepository(StoredFile::class)->countUserUploadHistory($user, $filter);
+    }
+
+    public function countAnonymousUploadHistory($filter): int
+    {
+        return $this->em->getRepository(StoredFile::class)->countAnonymousUploadHistory($filter);
+    }
+
     public function getAnonymousUploadHistoryPage($cursor, $orderBy, $filter, int $limit = CursorService::DEFAULT_PAGE_SIZE)
     {
         $fileRepo = $this->em->getRepository(StoredFile::class);

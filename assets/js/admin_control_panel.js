@@ -8,6 +8,8 @@ $(document).ready(function () {
             $('body').on('click', 'button[data-reset-password]', this.resetUserPassword.bind(this));
             $('body').on('click', 'button[data-deleteaction]', this.toggleFileDeletion.bind(this));
             $('body').on('click', 'button[data-toggle-role]', this.toggleUserRole.bind(this));
+            $('body').on('click', 'button[data-cancel-purge]', this.cancelPurge.bind(this));
+            this.initializePurgeModal();
             this.initializeDeleteUser();
         },
         toggleUserRole: function (e) {
@@ -193,6 +195,95 @@ $(document).ready(function () {
                     });
                 }
             });
+        },
+        // Purge: queue every file of a user for deletion, confirmed by typing the username.
+        initializePurgeModal: function () {
+            var $modal = $('#purgeUserModal');
+            if (!$modal.length) {
+                return;
+            }
+            var modal = new Modal($modal[0]);
+            var input = $modal.find('#purgeUserConfirm');
+            var submit = $modal.find('[data-purge-submit]');
+            var error = $modal.find('[data-purge-error]');
+            var target = null;
+            var self = this;
+            $('body').on('click', 'button[data-purge-user]', function (e) {
+                var button = $(e.currentTarget);
+                target = {id: button.data('purge-user'), login: String(button.data('login')), row: button.closest('[data-userid]')};
+                $modal.find('[data-purge-login], [data-purge-login-title]').text(target.login);
+                $modal.find('[data-purge-file-count]').text(button.data('active'));
+                input.val('');
+                error.prop('hidden', true).text('');
+                submit.prop('disabled', true);
+                modal.show();
+            });
+            $modal.on('shown.bs.modal', function () { input.trigger('focus'); });
+            input.on('input', function () {
+                submit.prop('disabled', !target || input.val().trim() !== target.login);
+            });
+            $modal.find('#purgeUserForm').on('submit', function (e) {
+                e.preventDefault();
+                if (!target || input.val().trim() !== target.login) {
+                    return;
+                }
+                submit.prop('disabled', true);
+                self.postData('/endpoint/purgeuserfiles/', {'id': target.id, 'confirm': input.val().trim()}).done(function (data) {
+                    if (data.status !== 'ok') {
+                        error.text(data.message || 'Unable to purge').prop('hidden', false);
+                        submit.prop('disabled', false);
+                        return;
+                    }
+                    self.renderPurgeState(target.row, data.purge, target.login);
+                    modal.hide();
+                }).fail(function (xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message;
+                    error.text(message || 'Unable to purge').prop('hidden', false);
+                    submit.prop('disabled', false);
+                });
+            });
+        },
+        cancelPurge: function (e) {
+            var button = $(e.currentTarget);
+            var login = String(button.data('login'));
+            if (!window.confirm('Restore every file of "' + login + '"? This cancels the pending purge.')) {
+                return;
+            }
+            var row = button.closest('[data-userid]');
+            var self = this;
+            button.prop('disabled', true);
+            this.postData('/endpoint/cancelpurge/', {'id': button.data('cancel-purge')}).done(function (data) {
+                if (data.status !== 'ok') {
+                    window.alert(data.message || 'Unable to cancel the purge');
+                    button.prop('disabled', false);
+                    return;
+                }
+                self.renderPurgeState(row, data.purge, login);
+            }).fail(function (xhr) {
+                window.alert((xhr.responseJSON && xhr.responseJSON.message) || 'Unable to cancel the purge');
+                button.prop('disabled', false);
+            });
+        },
+        // Redraws the Files stat and swaps the Purge / Cancel purge button for the new state.
+        renderPurgeState: function (row, purge, login) {
+            var state = row.find('[data-purge-state]');
+            if (!purge || purge.total === 0) {
+                state.html('<span class="text-secondary">none</span>');
+            } else if (purge.pending) {
+                state.html('<span class="badge bg-danger">Purge pending</span>');
+            } else if (purge.marked) {
+                state.text(purge.active + ' active, ' + purge.marked + ' in trash');
+            } else {
+                state.text(purge.total + ' active');
+            }
+            var userId = row.data('userid');
+            var button = purge && purge.can_cancel
+                ? $('<button type="button" class="btn btn-warning" title="Restore every file of this user"><i class="fa-solid fa-trash-arrow-up me-1" aria-hidden="true"></i>Cancel purge</button>')
+                    .attr('data-cancel-purge', userId).attr('data-login', login)
+                : $('<button type="button" class="btn btn-danger" title="Queue every file of this user for deletion"><i class="fa-solid fa-broom me-1" aria-hidden="true"></i>Purge</button>')
+                    .attr('data-purge-user', userId).attr('data-login', login).attr('data-active', purge ? purge.active : 0)
+                    .prop('disabled', !purge || purge.active === 0);
+            row.find('button[data-purge-user], button[data-cancel-purge]').replaceWith(button);
         },
         postData: function (url, data) {
             return $.ajax({

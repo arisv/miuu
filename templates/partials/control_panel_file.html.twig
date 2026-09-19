@@ -1,5 +1,6 @@
 {% set previewKind = item.markedForDeletion ? 'hidden' : (item.isMimeType(['image']) ? 'image' : (item.isMimeType(['video']) ? 'video' : (item.isMimeType(['audio']) ? 'audio' : (item.isTextual ? 'text' : 'file')))) %}
-<div class="col">
+{% set groupLabel = file_group_label(item, group|default('none')) %}
+<div class="col"{% if groupLabel is not null %} data-group="{{ groupLabel }}"{% endif %}>
     <div class="itembox" tabindex="0"
         data-preview-kind="{{ previewKind }}"
         data-preview-url="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"

@@ -38,7 +38,7 @@
                                 <li class="list-group-item sidebar-brand"><a href="{{ path('home') }}" class="brand-link" aria-label="MIU home"><img class="app-brand" src="{{ asset('static/logo.png')}}" alt="MIU"></a></li>
                                 {% if is_granted('ROLE_USER') %}
                                 <li class="list-group-item"><a href="{{ path('cabinet_home') }}"><i class="fa-solid fa-user fa-fw me-2" aria-hidden="true"></i>{{ app.user.login }}</a></li>
-                                <li class="list-group-item"><a href="{{ path('cabinet_mypics') }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i>Pictures</a></li>
+                                <li class="list-group-item"><a href="{{ path('cabinet_mypics') }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i>Library</a></li>
                                 <li class="list-group-item"><a href="{{ path('auth_logout') }}"><i class="fa-solid fa-right-from-bracket fa-fw me-2" aria-hidden="true"></i>Logout</a>
                                 {% else %}
                                 <li class="list-group-item"><a href="{{ path('auth_login') }}"><i class="fa-solid fa-right-to-bracket fa-fw me-2" aria-hidden="true"></i>Login</a></li>
@@ -60,7 +60,7 @@
 						{% endif %}
 						{% if is_granted('ROLE_USER') %}
 							<div id="userheader" class="">
-								<ul id="profilebox" class="list-unstyled list-inline text-start"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}"><i class="fa-solid fa-user fa-fw me-2" aria-hidden="true"></i>{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i>Pictures</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}"><i class="fa-solid fa-right-from-bracket fa-fw me-2" aria-hidden="true"></i>Logout</a>
+								<ul id="profilebox" class="list-unstyled list-inline text-start"><li class="list-inline-item"><a href="{{ path('cabinet_home') }}"><i class="fa-solid fa-user fa-fw me-2" aria-hidden="true"></i>{{ app.user.login }}</a></li><li class="list-inline-item"><a href="{{ path('cabinet_mypics') }}"><i class="fa-solid fa-images fa-fw me-2" aria-hidden="true"></i>Library</a></li><li class="list-inline-item"><a href="{{ path('auth_logout') }}"><i class="fa-solid fa-right-from-bracket fa-fw me-2" aria-hidden="true"></i>Logout</a>
 									</li>
 								</ul>
 							</div>

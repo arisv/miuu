@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Service\PurgeNotCancellable;
+use App\Service\PurgeService;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\User;
 use App\Form\Type\UserLoginType;
 use App\Form\Type\UserEmailChangeType;
@@ -176,7 +179,7 @@ class WebController extends AbstractController
     }
 
     #[Route("/manage/", name: "cabinet_home")]
-    public function userCabinetHomeAction(Request $request, UserService $userService, Security $security, LoggerInterface $logger, EntityManagerInterface $em)
+    public function userCabinetHomeAction(Request $request, UserService $userService, Security $security, LoggerInterface $logger, EntityManagerInterface $em, PurgeService $purge)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         /** @var User $user */
@@ -222,8 +225,49 @@ class WebController extends AbstractController
         return $this->render('manage_profile.html.twig', [
             'page' => 'home',
             'form' => $form->createView(),
-            'emailForm' => $emailForm->createView()
+            'emailForm' => $emailForm->createView(),
+            'purge' => $purge->status($user),
         ]);
+    }
+
+    /** "Delete all my files": marks everything for deletion after the password is confirmed. */
+    #[Route("/manage/purge/", name: "cabinet_purge", methods: ['POST'])]
+    public function userPurgeAction(Request $request, PurgeService $purge, UserPasswordHasherInterface $hasher)
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        /** @var User $user */
+        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('purge_files', (string) $request->request->get('_token'))) {
+            $this->addFlash('global-danger', 'The form has expired, please try again.');
+            return $this->redirectToRoute('cabinet_home');
+        }
+        $password = (string) $request->request->get('password', '');
+        if ($password === '' || !$hasher->isPasswordValid($user, $password)) {
+            $this->addFlash('global-danger', 'Password is incorrect; nothing was deleted.');
+            return $this->redirectToRoute('cabinet_home');
+        }
+        $marked = $purge->purge($user, 'the user (web)');
+        $this->addFlash('global-success', $marked === 1 ? '1 file queued for deletion.' : "{$marked} files queued for deletion.");
+        return $this->redirectToRoute('cabinet_home');
+    }
+
+    #[Route("/manage/purge/cancel/", name: "cabinet_purge_cancel", methods: ['POST'])]
+    public function userPurgeCancelAction(Request $request, PurgeService $purge)
+    {
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        /** @var User $user */
+        $user = $this->getUser();
+        if (!$this->isCsrfTokenValid('purge_files', (string) $request->request->get('_token'))) {
+            $this->addFlash('global-danger', 'The form has expired, please try again.');
+            return $this->redirectToRoute('cabinet_home');
+        }
+        try {
+            $restored = $purge->cancel($user, 'the user (web)');
+            $this->addFlash('global-success', $restored === 1 ? '1 file restored.' : "{$restored} files restored.");
+        } catch (PurgeNotCancellable $e) {
+            $this->addFlash('global-danger', $e->getMessage());
+        }
+        return $this->redirectToRoute('cabinet_home');
     }
 
     #[Route("/manage/mytoken/", name: "cabinet_token")]
@@ -255,17 +299,20 @@ class WebController extends AbstractController
             'pageData' => $pageData,
             'dateTree' => $dateTree,
             'pivot' => $removalPivot,
-            'filter' => json_encode($request->query->all())
+            'ordering' => $orderBy->toArray(),
+            'totalCount' => $userService->countUserUploadHistory($user, $filter),
+            'filter' => json_encode($request->query->all() + $orderBy->toArray())
         ]);
     }
 
     #[Route("/manage/admin/users/", name: "admin_manage_users")]
-    public function adminManageUsers(Request $request, UserService $userService)
+    public function adminManageUsers(Request $request, UserService $userService, PurgeService $purge)
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $userData = $userService->getAllUserIndex();
         return $this->render('admin_users.html.twig', [
-            'userlist' => $userData
+            'userlist' => $userData,
+            'purgeStates' => $purge->statusForAll(),
         ]);
     }
 
@@ -284,7 +331,9 @@ class WebController extends AbstractController
             'pageData' => $pageData,
             'dateTree' => $dateTree,
             'pivot' => $removalPivot,
-            'filter' => json_encode($request->query->all())
+            'ordering' => $orderBy->toArray(),
+            'totalCount' => $userService->countAnonymousUploadHistory($filter),
+            'filter' => json_encode($request->query->all() + $orderBy->toArray())
         ]);
     }
 

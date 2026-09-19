@@ -30,7 +30,7 @@ $(document).ready(() => {
     // Slide-in drawers: the site menu (left) and, on the gallery, the calendar (right).
     const drawers = [
         { bodyClass: 'sidebar-open', panel: '#sidebar', show: '#sidebarShowBtn', hide: '#sidebarCloseBtn, #sidebarBackdrop' },
-        { bodyClass: 'calendar-open', panel: '#calendarPanel', show: '#calendarShowBtn', hide: '#calendarCloseBtn, #calendarBackdrop' },
+        { bodyClass: 'calendar-open', panel: '#calendarPanel', show: '#calendarShowBtn, [data-open-months]', hide: '#calendarCloseBtn, #calendarBackdrop' },
     ];
     const setOpen = (d, open) => {
         document.body.classList.toggle(d.bodyClass, open);
@@ -107,15 +107,4 @@ $(document).ready(() => {
             .fail(() => { button.prop('disabled', false); window.alert('Unable to revoke this device'); });
     });
 
-    // Gallery: on phones the order toolbar lives inside the calendar drawer, on wider screens above the tiles.
-    const navpanel = document.getElementById('navpanel');
-    const slot = document.getElementById('calendarToolbarSlot');
-    if (navpanel && slot) {
-        const home = document.createComment('navpanel-home');
-        navpanel.before(home);
-        const phone = window.matchMedia('(max-width: 767.98px)');
-        const dock = () => { if (phone.matches) slot.append(navpanel); else home.after(navpanel); };
-        dock();
-        phone.addEventListener('change', dock);
-    }
 })

@@ -58,6 +58,9 @@ $(document).ready(function () {
                     var rect = container.getBoundingClientRect();
                     var focalY = ((e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top) / Math.max(rect.height, 1);
                     container.style.setProperty('--pinch-origin-y', (Math.min(Math.max(focalY, 0), 1) * 100) + '%');
+                    var fx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    var fy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    this.anchor = this.anchorAt(fx, fy);
                     pinch = { start: distance(e.touches), size: this.tileSize, live: this.tileSize };
                     container.classList.remove('is-snapping');
                     container.classList.add('is-pinching');
@@ -88,6 +91,11 @@ $(document).ready(function () {
                     return;
                 }
                 e.preventDefault();
+                if (!this.liveTileSize) {
+                    var box = container.getBoundingClientRect();
+                    this.anchor = this.anchorAt(e.clientX, e.clientY);
+                    container.style.setProperty('--pinch-origin-y', (Math.min(Math.max((e.clientY - box.top) / Math.max(box.height, 1), 0), 1) * 100) + '%');
+                }
                 var live = this.clampTile((this.liveTileSize || this.tileSize) * (1 - e.deltaY * 0.01));
                 this.liveTileSize = live;
                 container.classList.remove('is-snapping');
@@ -109,6 +117,34 @@ $(document).ready(function () {
             return Math.min(max, Math.max(2, Math.floor(width / size)));
         },
         // Lays the grid out for a tile size; `live` keeps the fractional remainder as a transform.
+        // The tile under the fingers (or pointer) and where its top sat in the viewport: zooming
+        // relayouts the grid, and scrolling so this tile stays put is what makes the zoom land
+        // where the user was looking instead of drifting back to the top.
+        anchorAt: function (x, y) {
+            var el = document.elementFromPoint(x, y);
+            var col = el ? el.closest('#file-container > .col') : null;
+            if (!col) {
+                // Between tiles or over a header: take the visible tile nearest the point.
+                var best = null, bestDist = Infinity;
+                this.grid.querySelectorAll(':scope > .col').forEach(function (c) {
+                    var r = c.getBoundingClientRect();
+                    if (r.bottom < 0 || r.top > window.innerHeight) { return; }
+                    var d = Math.abs((r.top + r.bottom) / 2 - y) + Math.abs((r.left + r.right) / 2 - x) / 4;
+                    if (d < bestDist) { bestDist = d; best = c; }
+                });
+                col = best;
+            }
+            return col ? { el: col, top: col.getBoundingClientRect().top } : null;
+        },
+        keepAnchor: function () {
+            if (!this.anchor || !this.anchor.el.isConnected) {
+                return;
+            }
+            var delta = this.anchor.el.getBoundingClientRect().top - this.anchor.top;
+            if (Math.abs(delta) > 0.5) {
+                window.scrollBy(0, delta);
+            }
+        },
         applyTileSize: function (size, live) {
             var cols = this.columnsFor(size);
             var actual = (this.grid.clientWidth || window.innerWidth) / cols;
@@ -119,6 +155,9 @@ $(document).ready(function () {
             document.body.classList.toggle('tiles-tiny', actual < 72);
             this.tileWidth = actual;
             this.columns = cols;
+            if (live) {
+                this.keepAnchor();
+            }
         },
         commitTileSize: function (size) {
             this.tileSize = this.clampTile(size);
@@ -127,10 +166,14 @@ $(document).ready(function () {
             grid.classList.remove('is-pinching');
             grid.classList.add('is-snapping');
             grid.style.transform = 'scale(1)';
+            var self = this;
             var done = function () {
                 grid.classList.remove('is-snapping');
                 grid.style.transform = '';
                 grid.removeEventListener('transitionend', done);
+                // The snap moved things a last time; land exactly on the anchor tile, then let it go.
+                self.keepAnchor();
+                self.anchor = null;
             };
             grid.addEventListener('transitionend', done);
             window.setTimeout(done, 250);

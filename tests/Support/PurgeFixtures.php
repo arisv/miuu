@@ -41,11 +41,11 @@ final class PurgeFixtures
     }
 
     /** A stored file owned by the user (via an upload record); $marked puts it in the trash. */
-    public function file(User $owner, bool $marked = false): StoredFile
+    public function file(User $owner, bool $marked = false, ?string $name = null): StoredFile
     {
         $n = ++$this->serial;
         $file = new StoredFile();
-        $file->setOriginalName("file-{$n}.png");
+        $file->setOriginalName($name ?? "file-{$n}.png");
         $file->setInternalName("internal-{$n}");
         $file->setCustomUrl("custom{$n}");
         $file->setServiceUrl("service{$n}");

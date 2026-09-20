@@ -148,6 +148,54 @@ body.sidebar-open #sidebarBackdrop {
     }
 }
 
+/* The title gives way before the buttons do: it may shrink and ellipsise, they never wrap. */
+.gallery-toolbar .gallery-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.gallery-toolbar .gallery-title > div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Desktop button group plus refresh, search and Select only just fit between 1400 and 1500 px. */
+@media (min-width: 1400px) and (max-width: 1499.98px) {
+    .gallery-toolbar .btn {
+        padding-left: .55rem;
+        padding-right: .55rem;
+    }
+}
+
+/* Search field: hidden until the magnifier opens it, then it takes the title's slot. */
+.gallery-search {
+    display: none;
+    flex: 1 1 160px;
+    max-width: 420px;
+    min-width: 120px;
+}
+
+.gallery-toolbar.is-searching .gallery-search {
+    display: flex;
+}
+
+.gallery-toolbar.is-searching .gallery-title {
+    display: none;
+}
+
+.gallery-search .form-control {
+    min-width: 0;
+}
+
+/* Our own × button clears; drop WebKit's built-in one. */
+.gallery-search input::-webkit-search-cancel-button,
+.gallery-search input::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
 /* Phones: the gallery page runs flush, tiles edge to edge; only the toolbar keeps a small inset. */
 @media (max-width: 767.98px) {
     body:has(.gallery-toolbar) .app.p-4 {

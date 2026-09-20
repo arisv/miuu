@@ -22,6 +22,7 @@ $(document).ready(function () {
             $('#calendarRangeApply').on('click', this.applyCalendarRange.bind(this));
             $('#galleryRefreshBtn').on('click', function () { window.location.reload(); });
             $('#gallerySelectBtn').on('click', this.toggleSelectionMode.bind(this));
+            this.initializeSearch();
             $('[data-toggle-months]').on('click', this.toggleMonths.bind(this));
             this.restoreMonths();
             this.applyExistingFilter(__filter);
@@ -225,6 +226,36 @@ $(document).ready(function () {
                 if (data.rendered && data.rendered.length && this.pagerNear()) {
                     window.setTimeout(this.autoLoad.bind(this), 50);
                 }
+            }.bind(this));
+        },
+        // ---- Search: the magnifier swaps the title for a field (prefilled from ?q=). Enter reloads
+        // with the term, Escape closes (and clears an active term), × clears.
+        initializeSearch: function () {
+            var input = $('#gallerySearchInput');
+            var active = function () { return (new URL(window.location.href)).searchParams.get('q') || ''; };
+            $('#gallerySearchBtn').on('click', function () {
+                var panel = $('#navpanel');
+                if (panel.hasClass('is-searching') && active() === '') {
+                    panel.removeClass('is-searching');
+                    return;
+                }
+                panel.addClass('is-searching');
+                input.trigger('focus').trigger('select');
+            });
+            input.on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var value = new String(input.val() || "").trim();
+                    if (value !== active()) { this.navigate({q: value}); }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    if (active() !== '') { this.navigate({q: null}); } else { $('#navpanel').removeClass('is-searching'); }
+                }
+            }.bind(this));
+            $('#gallerySearchClear').on('click', function () {
+                if (active() !== '') { this.navigate({q: null}); return; }
+                input.val('');
+                $('#navpanel').removeClass('is-searching');
             }.bind(this));
         },
         // Reloads the gallery with the current query string plus `overrides` (null removes a key).

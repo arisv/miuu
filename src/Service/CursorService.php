@@ -29,8 +29,8 @@ class CursorService
 
     public function getFilterFromRequest(Request $request)
     {
-        $calendarStart = \DateTime::createFromFormat('Y-m-d', $request->query->get('calendar-start'));
-        $calendarEnd = \DateTime::createFromFormat('Y-m-d', $request->query->get('calendar-end'));
+        $calendarStart = \DateTime::createFromFormat('Y-m-d', (string) $request->query->get('calendar-start', ''));
+        $calendarEnd = \DateTime::createFromFormat('Y-m-d', (string) $request->query->get('calendar-end', ''));
 
         $result = [];
 
@@ -38,6 +38,12 @@ class CursorService
             $calendar = [$calendarStart, $calendarEnd];
             sort($calendar);
             $result['calendar'] = $calendar;
+        }
+
+        // Free-text search on the original file name ("q"), applied before sort and group.
+        $q = NameSearch::normalize($request->query->get('q'));
+        if ($q !== null) {
+            $result['q'] = $q;
         }
 
         return $result;

@@ -26,6 +26,8 @@ class ServerController extends AbstractController
             'page_sizes' => CursorService::PAGE_SIZES,
             'thumbnail_width' => ThumbnailService::THUMBNAIL_WIDTH,
             'delete_grace_minutes' => (int) ($_ENV['DELETE_MARKED_FILES_AFTER_MINUTES'] ?? 0),
+            // GET /files accepts q= (file-name search: words, * and ? globs).
+            'search' => true,
         ]);
     }
 }

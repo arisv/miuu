@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Service\ListOrder;
 use App\Service\ListOrdering;
+use App\Service\NameSearch;
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
 use App\Entity\User;
@@ -155,6 +156,13 @@ class StoredFileRepository extends EntityRepository
                 ->andWhere('file.date <= :end')
                 ->setParameter('start', $calendarStart->getTimestamp())
                 ->setParameter('end', $calendarEnd->getTimestamp());
+        }
+        if (isset($filter['q'])) {
+            // Every word must match somewhere in the name; see NameSearch for the pattern rules.
+            foreach (NameSearch::terms($filter['q']) as $i => $word) {
+                $qb->andWhere(sprintf("file.originalName LIKE :q_%d ESCAPE '%s'", $i, NameSearch::ESCAPE))
+                    ->setParameter('q_' . $i, NameSearch::likePattern($word));
+            }
         }
     }
 

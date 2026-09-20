@@ -61,6 +61,8 @@ class FilesController extends AbstractController
             'sort' => $order->sort,
             'order' => $order->order,
             'group' => $order->group,
+            // Normalised search term that was applied, or null.
+            'q' => $filter['q'] ?? null,
         ]);
     }
 

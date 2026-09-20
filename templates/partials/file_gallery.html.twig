@@ -59,6 +59,7 @@
 			{% set groupLabels = {'none': 'None', 'date': 'Date', 'az': 'A – Z', 'type': 'Type', 'size': 'Sizes'} %}
 			{% set orderLabels = {'desc': 'Descending', 'asc': 'Ascending'} %}
 			{% set hasRange = app.request.query.get('calendar-start') is not empty %}
+			{% set q = app.request.query.get('q')|default('')|trim %}
 			{# One list of choices, rendered twice: as dropdowns in the desktop button group and inside the phone menu. #}
 			{% macro choices(field, options, current) %}
 				{% for value, label in options %}
@@ -66,13 +67,19 @@
 				{% endfor %}
 			{% endmacro %}
 			{% import _self as toolbar %}
-			<div id="navpanel" class="gallery-toolbar d-flex align-items-center gap-2">
+			<div id="navpanel" class="gallery-toolbar d-flex align-items-center gap-2{% if q is not empty %} is-searching{% endif %}">
 				<div class="gallery-title me-auto">
 					<div class="gallery-title-main">Library</div>
-					<div class="gallery-title-sub">{{ totalCount|default(pageData.files|length) }} {{ totalCount|default(pageData.files|length) == 1 ? 'item' : 'items' }}</div>
+					{% set shown = totalCount|default(pageData.files|length) %}
+					<div class="gallery-title-sub">{{ shown }} {% if q is not empty %}{{ shown == 1 ? 'result' : 'results' }}{% else %}{{ shown == 1 ? 'item' : 'items' }}{% endif %}</div>
+				</div>
+				{# Search: takes the title's slot while open; Enter applies (reloads with ?q=), Escape or × clears. #}
+				<div class="input-group gallery-search me-auto" role="search">
+					<input type="search" class="form-control" id="gallerySearchInput" value="{{ q }}" placeholder="Search files" aria-label="Search files" autocomplete="off" spellcheck="false" enterkeyhint="search">
+					<button type="button" class="btn btn-secondary" id="gallerySearchClear" title="Clear search" aria-label="Clear search"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 				</div>
 				{# Desktop: the controls as a button group. Narrow windows collapse them into the menu button. #}
-				<div class="btn-group gallery-controls d-none d-xl-inline-flex" role="group" aria-label="Sorting and filters">
+				<div class="btn-group gallery-controls d-none d-xxl-inline-flex" role="group" aria-label="Sorting and filters">
 					<div class="btn-group" role="group">
 						<button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-arrow-down-wide-short me-2" aria-hidden="true"></i>Sort: {{ sortLabels[ordering.sort] }}<i class="fa-solid fa-chevron-down toggle-chevron" aria-hidden="true"></i></button>
 						<ul class="dropdown-menu">{{ toolbar.choices('sort', sortLabels, ordering.sort) }}</ul>
@@ -91,8 +98,9 @@
 					<button type="button" class="btn btn-secondary{% if hasRange %} is-active{% endif %}" data-bs-toggle="modal" data-bs-target="#calendarRangeModal"><i class="fa-regular fa-calendar me-2" aria-hidden="true"></i>Calendar</button>
 				</div>
 				<button type="button" class="btn btn-secondary" id="galleryRefreshBtn" title="Refresh" aria-label="Refresh"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+				<button type="button" class="btn btn-secondary{% if q is not empty %} is-active{% endif %}" id="gallerySearchBtn" title="Search" aria-label="Search" aria-pressed="{{ q is not empty ? 'true' : 'false' }}"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
 				{# Phones and narrow windows: everything in one menu behind the "three shrinking lines" button. #}
-				<div class="dropdown d-xl-none">
+				<div class="dropdown d-xxl-none">
 					<button type="button" class="btn btn-secondary{% if ordering.group != 'none' or hasRange %} is-active{% endif %}" id="galleryMenuBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Sort, group and filter">
 						<svg class="icon-lines-decrease" width="18" height="16" viewBox="0 0 18 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1 3h16M4 8h10M7 13h4"/></svg>
 					</button>

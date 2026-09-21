@@ -27,10 +27,26 @@ class CursorService
         return ListOrdering::fromRequest($request);
     }
 
+    /** A calendar bound from the query string, at midnight. Older links may send an unpadded month. */
+    private function parseCalendarBound(?string $value): ?\DateTime
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $date = \DateTime::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTime::getLastErrors();
+        // A rolled-over date (2025-13-99) parses with a warning; treat it as absent.
+        if (!$date || ($errors && ($errors['warning_count'] || $errors['error_count']))) {
+            return null;
+        }
+
+        return $date;
+    }
+
     public function getFilterFromRequest(Request $request)
     {
-        $calendarStart = \DateTime::createFromFormat('Y-m-d', (string) $request->query->get('calendar-start', ''));
-        $calendarEnd = \DateTime::createFromFormat('Y-m-d', (string) $request->query->get('calendar-end', ''));
+        $calendarStart = $this->parseCalendarBound($request->query->get('calendar-start'));
+        $calendarEnd = $this->parseCalendarBound($request->query->get('calendar-end'));
 
         $result = [];
 

@@ -1092,6 +1092,10 @@ body.glass-ui .bg-secondary-miu {
     color: var(--g-text);
 }
 
+body.glass-ui .calendar-range-bar {
+    border-bottom-color: var(--g-divider);
+}
+
 body.glass-ui .calendar-element {
     border-radius: var(--g-r-capsule);
     margin: 2px 8px;

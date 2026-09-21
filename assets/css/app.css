@@ -121,6 +121,10 @@ body.sidebar-open #sidebarBackdrop {
     min-width: 220px;
 }
 
+.order-direction {
+    padding: .25rem .5rem;
+}
+
 .icon-lines-decrease {
     display: block;
 }
@@ -328,7 +332,9 @@ body.calendar-open #calendarShowBtn {
         z-index: 9999;
         background: #1f1f1f;
         border-right: 0;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         transform: translateX(105%);
         visibility: hidden;
         transition: transform .35s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .35s;
@@ -1015,10 +1021,20 @@ body.tiles-compact .gallery-group-header {
         top: 8px;
         align-self: flex-start;
         max-height: calc(100vh - 16px);
-        overflow-y: auto;
-        overflow-x: hidden;
-        scrollbar-width: thin;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
+}
+
+/* Only the months scroll; the range bar is a fixed header of the panel.
+   min-height keeps the flex item from refusing to shrink below its content. */
+.calendar-column > .list-group {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
 }
 
 /* Keyboard cursor: arrows move it, Space opens the preview. */
@@ -1966,6 +1982,16 @@ button[data-toggle-user] {
 
 .admin-menu a {
     color: black;
+}
+
+.calendar-range-bar {
+    padding: 8px;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.calendar-range-label {
+    font-size: .85rem;
+    min-width: 0;
 }
 
 .calendar-highlight,

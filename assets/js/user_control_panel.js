@@ -97,7 +97,13 @@ $(document).ready(function () {
                     this.anchor = this.anchorAt(e.clientX, e.clientY);
                     container.style.setProperty('--pinch-origin-y', (Math.min(Math.max((e.clientY - box.top) / Math.max(box.height, 1), 0), 1) * 100) + '%');
                 }
-                var live = this.clampTile((this.liveTileSize || this.tileSize) * (1 - e.deltaY * 0.01));
+                // Wheel deltas differ by an order of magnitude between devices: a trackpad pinch
+                // sends a few pixels per event, a mouse notch sends 100 (3 lines in deltaMode 1).
+                // Normalise, cap the step, then scale exponentially — the old linear factor hit
+                // zero at deltaY 100, which snapped a mouse notch straight to the minimum.
+                var step = e.deltaY * (e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? window.innerHeight : 1));
+                step = Math.max(-22, Math.min(22, step));
+                var live = this.clampTile((this.liveTileSize || this.tileSize) * Math.exp(-step * 0.01));
                 this.liveTileSize = live;
                 container.classList.remove('is-snapping');
                 container.classList.add('is-pinching');
@@ -152,8 +158,13 @@ $(document).ready(function () {
             this.grid.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
             this.grid.style.transform = live ? 'scale(' + (size / actual) + ')' : '';
             document.body.classList.toggle('tiles-zoomed', actual < 200);
+            // Crossing into or out of compact changes whether a selection alone raises the bar.
+            var wasCompact = this.compactTiles();
             document.body.classList.toggle('tiles-compact', actual < 150);
             document.body.classList.toggle('tiles-tiny', actual < 72);
+            if (this.compactTiles() !== wasCompact) {
+                this.updateSelectionBar();
+            }
             this.tileWidth = actual;
             this.columns = cols;
             if (live) {
@@ -310,6 +321,13 @@ $(document).ready(function () {
             $(modalEl).on('click', '[data-preview-nav]', function (e) {
                 this.moveCursor(parseInt($(e.currentTarget).data('previewNav'), 10));
             }.bind(this));
+            // Reuses the tile's own button so the endpoint call and state toggle stay in one place.
+            $(modalEl).on('click', '[data-preview-delete]', function (e) {
+                if (!this.cursor) {
+                    return;
+                }
+                this.cursor.find('button[data-deleteaction="' + $(e.currentTarget).data('previewDelete') + '"]').trigger('click');
+            }.bind(this));
             $(modalEl).on('hidden.bs.modal', function () {
                 $(modalEl).find('.preview-body').empty();
                 if (this.cursor) {
@@ -383,6 +401,10 @@ $(document).ready(function () {
                 if (this.isPreviewOpen()) {
                     this.renderPreview();
                 }
+            }
+            // At compact sizes the bar targets whatever is focused, so it moves with the cursor.
+            if (this.compactTiles()) {
+                this.updateSelectionBar();
             }
         },
         columnsPerRow: function () {
@@ -485,6 +507,17 @@ $(document).ready(function () {
         currentMedia: function () {
             return $('#previewModal .preview-player video, #previewModal .preview-player audio')[0] || null;
         },
+        // Follows the tile's inline display, not :visible — small tiles hide the whole group.
+        syncPreviewDelete: function () {
+            if (!this.cursor) {
+                return;
+            }
+            var del = this.cursor.find('button[data-deleteaction="del"]')[0];
+            var deletable = !!del && del.style.display !== 'none';
+            var modal = $('#previewModal');
+            modal.find('[data-preview-delete="del"]').toggleClass('d-none', !deletable);
+            modal.find('[data-preview-delete="undo"]').toggleClass('d-none', deletable);
+        },
         onPreviewButton: function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -513,6 +546,7 @@ $(document).ready(function () {
             modal.find('[data-preview-open]').attr('href', tile.data('previewView'));
             var isMedia = kind === 'image' || kind === 'video' || kind === 'audio';
             modal.find('[data-preview-copy]').attr('data-clipboard-text', new URL(isMedia ? url : tile.data('previewView'), window.location.href).href);
+            this.syncPreviewDelete();
             modal.find('[data-preview-nav="-1"]').prop('disabled', tiles.index(tile) === 0);
             modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1 && !this.hasMorePages());
             var placeholder = function (icon, text) {
@@ -557,7 +591,7 @@ $(document).ready(function () {
                 body.append(placeholder(fileIcon, 'No preview for this file type. Use Download to open it.'));
             }
         },
-        // Touch layouts: hover controls are unreachable, so tiles are selected and acted on from a fixed bar.
+        // Where hover controls are unreachable, tiles are selected and acted on from a fixed bar.
         initializeSelection: function () {
             this.selectionMedia = window.matchMedia('(max-width: 767.98px), (hover: none)');
             this.selectionMedia.addEventListener('change', this.updateSelectionBar.bind(this));
@@ -569,6 +603,10 @@ $(document).ready(function () {
         // select on tap; now a tap opens the preview and Select enters selection mode, like the app.
         selectionActive: function () {
             return document.body.classList.contains('selection-mode');
+        },
+        // Tiles too small for the hover buttons: app.css hides them and the fixed bar takes over.
+        compactTiles: function () {
+            return document.body.classList.contains('tiles-compact');
         },
         toggleSelectionMode: function () {
             var on = document.body.classList.toggle('selection-mode');
@@ -587,7 +625,14 @@ $(document).ready(function () {
                 box.prop('checked', !box.prop('checked')).trigger('change');
                 return;
             }
-            // Touch layouts have no hover controls: the tile itself opens the preview.
+            // Small tiles have no hover buttons: a click moves the focus the bar acts on, so
+            // stepping from one tile to the next stays a single click.
+            if (this.compactTiles()) {
+                this.setCursor($(e.currentTarget), false);
+                $(e.currentTarget).trigger('focus');
+                return;
+            }
+            // Touch layouts have no hover controls either: there a tap opens the preview.
             if (this.selectionMedia.matches) {
                 this.openPreview($(e.currentTarget));
             }
@@ -599,17 +644,28 @@ $(document).ready(function () {
         selectedTiles: function () {
             return $('.itembox-check:checked').closest('.itembox');
         },
+        // What the bar acts on: the ticked tiles, or the focused one when small tiles moved
+        // the per-tile actions into the bar without an explicit selection.
+        activeTiles: function () {
+            var tiles = this.selectedTiles();
+            if (tiles.length === 0 && this.compactTiles() && this.cursor) {
+                return this.cursor;
+            }
+            return tiles;
+        },
         visibleDeleteButtons: function (tiles, action) {
             return tiles.find('button[data-deleteaction="' + action + '"]').filter(function () {
                 return this.style.display !== 'none';
             });
         },
         updateSelectionBar: function () {
-            var tiles = this.selectedTiles();
+            var tiles = this.activeTiles();
             var count = tiles.length;
-            $('body').toggleClass('has-selection', count > 0 && this.selectionActive());
+            $('body').toggleClass('has-selection', count > 0 && (this.selectionActive() || this.compactTiles()));
             var bar = $('#selectionBar');
-            bar.find('.selection-count').text(count + (count === 1 ? ' file' : ' files'));
+            // One file is better identified by its name than by counting it.
+            var single = count === 1 ? tiles.data('previewName') : null;
+            bar.find('.selection-count').text(single || (count + (count === 1 ? ' file' : ' files'))).attr('title', single || null);
             bar.find('[data-selection-action="preview"]').prop('disabled', count !== 1);
             bar.find('[data-selection-action="del"]').prop('disabled', this.visibleDeleteButtons(tiles, 'del').length === 0);
             bar.find('[data-selection-action="undo"]').prop('disabled', this.visibleDeleteButtons(tiles, 'undo').length === 0);
@@ -617,11 +673,15 @@ $(document).ready(function () {
         clearSelection: function () {
             $('.itembox-check:checked').prop('checked', false);
             $('.itembox.is-selected').removeClass('is-selected');
+            // At compact the bar follows the focused tile, so clearing has to drop that too.
+            if (this.compactTiles()) {
+                this.setCursor(null);
+            }
             this.updateSelectionBar();
         },
         onSelectionAction: function (e) {
             var action = $(e.currentTarget).data('selectionAction');
-            var tiles = this.selectedTiles();
+            var tiles = this.activeTiles();
             if (action === 'clear') {
                 this.clearSelection();
             } else if (action === 'done') {
@@ -751,6 +811,7 @@ $(document).ready(function () {
                         $(pressed).hide();
                         $(newButton).show();
                         self.updateSelectionBar();
+                        self.syncPreviewDelete();
                     }
                 });
         },

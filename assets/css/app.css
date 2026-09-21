@@ -943,9 +943,19 @@ body.tiles-zoomed .itembox-icon > svg {
 }
 
 body.tiles-compact .itembox-text,
-body.tiles-tiny .itembox-ext,
-body.tiles-tiny .itembox-hover {
+body.tiles-compact .itembox-hover,
+body.tiles-tiny .itembox-ext {
     display: none !important;
+}
+
+/* Too small for the hover buttons: a click focuses a tile and the fixed bar carries its
+   actions, so moving to the next tile stays one click. */
+body.tiles-compact .itembox {
+    cursor: pointer;
+}
+
+body.tiles-compact.has-selection #selectionBar {
+    display: flex;
 }
 
 body.tiles-compact .itembox-icon {
@@ -1599,6 +1609,19 @@ body.tiles-compact .gallery-group-header {
 .itembox.is-selected {
     outline: 3px solid #34e6a1;
     outline-offset: -3px;
+}
+
+/* The label carries a filename when one file is in play, so it ellipsises rather than
+   pushing the actions off the bar. */
+.selection-count {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#selectionBar .btn-group {
+    flex: none;
 }
 
 #selectionBar {

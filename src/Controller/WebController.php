@@ -304,6 +304,7 @@ class WebController extends AbstractController
             'pivot' => $removalPivot,
             'ordering' => $orderBy->toArray(),
             'totalCount' => $userService->countUserUploadHistory($user, $filter),
+            'calendarRange' => $filter['calendar'] ?? null,
             'purge' => $purge->status($user),
             'filter' => json_encode($request->query->all() + $orderBy->toArray())
         ]);
@@ -337,6 +338,7 @@ class WebController extends AbstractController
             'pivot' => $removalPivot,
             'ordering' => $orderBy->toArray(),
             'totalCount' => $userService->countAnonymousUploadHistory($filter),
+            'calendarRange' => $filter['calendar'] ?? null,
             'filter' => json_encode($request->query->all() + $orderBy->toArray())
         ]);
     }

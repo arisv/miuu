@@ -20,7 +20,7 @@ $(document).ready(function () {
                 this.navigate({'calendar-start': null, 'calendar-end': null});
             }.bind(this));
             $('#calendarRangeApply').on('click', this.applyCalendarRange.bind(this));
-            $('#galleryRefreshBtn').on('click', function () { window.location.reload(); });
+            $('#galleryRefreshBtn').on('click', function () { window.location.href = window.location.pathname; });
             $('#gallerySelectBtn').on('click', this.toggleSelectionMode.bind(this));
             this.initializeSearch();
             $('[data-toggle-months]').on('click', this.toggleMonths.bind(this));
@@ -676,6 +676,11 @@ $(document).ready(function () {
             }
             this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
         },
+        // Date.parse reads an unpadded month as local midnight but a padded one as UTC — pad first.
+        normalizeDate: function (value) {
+            var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(value || ''));
+            return m ? m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2) : value;
+        },
         markRangeStart: function (el) {
             this.clearRangeStart();
             $(el).addClass('calendar-range-start')
@@ -688,8 +693,8 @@ $(document).ready(function () {
         repaintCalendar: function (rangeStart, rangeEnd) {
             var months = $('[data-date]');
             $(months).removeClass('calendar-highlight');
-            var firstDate = Date.parse(rangeStart);
-            var secondDate = Date.parse(rangeEnd);
+            var firstDate = Date.parse(this.normalizeDate(rangeStart));
+            var secondDate = Date.parse(this.normalizeDate(rangeEnd));
 
             if (secondDate > firstDate) {
                 var temp = firstDate;
@@ -697,18 +702,33 @@ $(document).ready(function () {
                 secondDate = temp;
             }
             $(months).each(function (i, o) {
-                var thisDate = Date.parse($(o).data('date'));
+                var thisDate = Date.parse(this.normalizeDate($(o).data('date')));
                 if (thisDate <= firstDate && thisDate >= secondDate) {
                     $(o).addClass('calendar-highlight');
                 }
             }.bind(this));
         },
         applyExistingFilter: function (filter) {
-            if (filter['calendar-start'] && filter['calendar-start']) {
+            if (filter['calendar-start'] && filter['calendar-end']) {
                 this.calendarRangeStart = filter['calendar-start'];
                 this.calendarRangeEnd = filter['calendar-end'];
                 this.repaintCalendar(this.calendarRangeStart, this.calendarRangeEnd);
+                this.scrollToSelection();
             }
+        },
+        // Scroll the months into view without moving the page, so a reload doesn't yank the
+        // grid around. The scroller is the list on wide screens and the drawer on phones.
+        scrollToSelection: function () {
+            var panel = document.getElementById('calendarPanel');
+            var first = panel && panel.querySelector('.calendar-highlight');
+            if (!first) {
+                return;
+            }
+            var box = first.parentElement;
+            while (box !== panel && box.scrollHeight <= box.clientHeight) {
+                box = box.parentElement;
+            }
+            box.scrollTop += first.getBoundingClientRect().top - box.getBoundingClientRect().top - 8;
         },
         manageDeletion: function (e) {
             var pressed = e.currentTarget;

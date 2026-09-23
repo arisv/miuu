@@ -9,6 +9,8 @@ use Doctrine\ORM\Mapping\Index;
 
 #[ORM\Table(name: 'filestorage')]
 #[Index(name: 'search_idx', columns: ['custom_url'])]
+#[Index(name: 'internal_name_idx', columns: ['internal_name'])]
+#[Index(name: 'service_url_idx', columns: ['service_url'])]
 #[ORM\Entity(repositoryClass: 'App\Repository\StoredFileRepository')]
 class StoredFile
 {

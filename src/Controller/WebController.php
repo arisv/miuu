@@ -13,6 +13,7 @@ use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
 use App\Service\DeviceTokenService;
 use App\Service\FileService;
+use App\Service\ImageOrientation;
 use App\Service\SettingsService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -108,9 +109,12 @@ class WebController extends AbstractController
         }
         $imageSize = null;
         if ($kind === 'image' && !$file->markedForDeletion()) {
-            $dims = @getimagesize($fileService->buildFullFilePath($file));
+            $path = $fileService->buildFullFilePath($file);
+            $dims = @getimagesize($path);
             if ($dims) {
-                $imageSize = ['width' => $dims[0], 'height' => $dims[1]];
+                $imageSize = ImageOrientation::swapsDimensions(ImageOrientation::read($path))
+                    ? ['width' => $dims[1], 'height' => $dims[0]]
+                    : ['width' => $dims[0], 'height' => $dims[1]];
             }
         }
         return $this->render('view_file.html.twig', [

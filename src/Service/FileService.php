@@ -135,7 +135,22 @@ class FileService
         ], Router::ABSOLUTE_URL);
     }
 
-    private function addFileToStorage(UploadedFile $file, ?User $user)
+    /** Stores a copy of a local file owned by $user, dated $timestamp; the source is left untouched. */
+    public function importLocalFile(string $path, User $user, int $timestamp): StoredFile
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'miuimport');
+        (new Filesystem())->copy($path, $tmp, true);
+        try {
+            return $this->addFileToStorage(new UploadedFile($tmp, basename($path), test: true), $user, $timestamp);
+        } finally {
+            // Moved into storage on success; only a failed store leaves it behind.
+            if (is_file($tmp)) {
+                unlink($tmp);
+            }
+        }
+    }
+
+    private function addFileToStorage(UploadedFile $file, ?User $user, ?int $timestamp = null)
     {
         if ($user?->isPurging()) {
             throw new UploadBlockedException();
@@ -150,7 +165,7 @@ class FileService
             $extension = "bin";
         }
         $storedFile->setOriginalExtension($extension);
-        $storedFile->setDate(time());
+        $storedFile->setDate($timestamp ?? time());
         $storedFile->setInternalName($sha . '_' . $storedFile->getDate());
         $storedFile->setCustomUrl($this->generateCustomURL());
         $storedFile->setServiceUrl($this->generateServiceURL());

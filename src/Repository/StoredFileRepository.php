@@ -147,6 +147,32 @@ class StoredFileRepository extends EntityRepository
         return $ts !== null && $ts['purgeTs'] !== null;
     }
 
+    /**
+     * A file of the user with the given content in the same year-month storage bucket as $timestamp,
+     * trashed or not; internal names are "<sha1>_<ts>".
+     */
+    public function findUserFileInBucket(User $user, string $sha1, int $timestamp): ?StoredFile
+    {
+        // Buckets are formatted in the PHP zone, like StoredFile::storageSubdirectory().
+        $start = (new \DateTimeImmutable('@' . $timestamp))
+            ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
+            ->modify('first day of this month midnight');
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('file')
+            ->from('App\Entity\StoredFile', 'file')
+            ->join('App\Entity\UploadRecord', 'log', Expr\Join::WITH, 'log.image = file')
+            ->where('log.user = :user')
+            ->andWhere('file.internalName LIKE :prefix')
+            ->andWhere('file.date >= :start AND file.date < :end')
+            ->setParameter('user', $user)
+            ->setParameter('prefix', $sha1 . '_%')
+            ->setParameter('start', $start->getTimestamp())
+            ->setParameter('end', $start->modify('+1 month')->getTimestamp())
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     private function applyFilter(QueryBuilder $qb, $filter): void
     {
         if (isset($filter['calendar'])) {

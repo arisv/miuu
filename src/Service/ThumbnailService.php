@@ -114,6 +114,9 @@ class ThumbnailService
                 break;
             case IMAGETYPE_JPEG:
                 $image = imagecreatefromjpeg($from);
+                if ($image) {
+                    $image = ImageOrientation::apply($image, ImageOrientation::read($from));
+                }
                 break;
             case IMAGETYPE_PNG:
                 $image = imagecreatefrompng($from);
@@ -132,6 +135,9 @@ class ThumbnailService
                 break;
             default:
                 return false;
+        }
+        if (!$image) {
+            return false;
         }
         $resized = imagescale($image, self::THUMBNAIL_WIDTH);
         return imagewebp($resized, $to, self::THUMBNAIL_QUALITY);
@@ -189,6 +195,34 @@ class ThumbnailService
             }
         }
         $this->io->progressFinish();
+    }
+
+    /** Rebuilds the thumbnails of JPEGs stored sideways; those made before orientation was honoured are wrong. */
+    public function regenerateReorientedThumbnails(): void
+    {
+        $this->disableSqlLoggers(["em"]);
+        $this->io->progressStart($this->storedFileRepository()->countTotalProducts());
+        $redone = 0;
+        foreach ($this->storedFileRepository()->allFilesGenerator() as $filePage) {
+            foreach ($filePage as $storedFile) {
+                $this->io->progressAdvance();
+                if ($storedFile->getInternalMimetype() !== 'image/jpeg') {
+                    continue;
+                }
+                $path = join(DIRECTORY_SEPARATOR, [$this->projectDir, $this->storageDir, $storedFile->relativePath()]);
+                if (!is_file($path) || ImageOrientation::read($path) === ImageOrientation::NORMAL) {
+                    continue;
+                }
+                try {
+                    $this->generateThumbnail($storedFile);
+                    $redone++;
+                } catch (\Throwable $e) {
+                    $this->io->warning(sprintf("File %d: %s", $storedFile->getId(), $e->getMessage()));
+                }
+            }
+        }
+        $this->io->progressFinish();
+        $this->io->writeln(sprintf("Thumbnails rebuilt: %d", $redone));
     }
 
     private function generateForSingleFile(StoredFile $file)

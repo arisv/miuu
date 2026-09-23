@@ -13,7 +13,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:thumbnails:create-missing',
-    description: 'Add a short description for your command',
+    description: 'Generate missing thumbnails, or rebuild those of rotated JPEGs with --reorient',
 )]
 class ThumbnailsCreateMissingCommand extends Command
 {
@@ -26,12 +26,17 @@ class ThumbnailsCreateMissingCommand extends Command
 
     protected function configure(): void
     {
-
+        $this->addOption('reorient', null, InputOption::VALUE_NONE, 'Rebuild existing thumbnails of JPEGs with an EXIF rotation');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
+            if ($input->getOption('reorient')) {
+                $output->writeln("Rebuilding thumbnails of rotated JPEGs");
+                $this->thumbnailService->regenerateReorientedThumbnails();
+                return Command::SUCCESS;
+            }
             $output->writeln("Preparing to generate thumbnails for all files");
             $this->thumbnailService->generateMissingThumbnails();
             return Command::SUCCESS;

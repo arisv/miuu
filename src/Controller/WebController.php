@@ -13,7 +13,7 @@ use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
 use App\Service\DeviceTokenService;
 use App\Service\FileService;
-use App\Service\ImageOrientation;
+use App\Service\FileViewData;
 use App\Service\SettingsService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -86,7 +86,7 @@ class WebController extends AbstractController
     }
 
     #[Route("/v/{customUrl}.{fileExtension}", name: "view_file")]
-    public function viewFileAction(string $customUrl, string $fileExtension, FileService $fileService)
+    public function viewFileAction(string $customUrl, string $fileExtension, FileService $fileService, FileViewData $viewData)
     {
         $file = $fileService->getFileForView($customUrl);
         /** @var User|null $user */
@@ -95,38 +95,7 @@ class WebController extends AbstractController
         if (!$file || ($file->markedForDeletion() && !$canManage)) {
             throw $this->createNotFoundException();
         }
-        $kind = $file->previewKind();
-        $text = null;
-        $textTruncated = false;
-        if ($kind === 'text' && !$file->markedForDeletion()) {
-            $limit = 512 * 1024;
-            $path = $fileService->buildFullFilePath($file);
-            if (is_readable($path)) {
-                $text = (string) file_get_contents($path, false, null, 0, $limit + 1);
-                $textTruncated = strlen($text) > $limit;
-                $text = mb_convert_encoding(substr($text, 0, $limit), 'UTF-8', 'UTF-8');
-            }
-        }
-        $imageSize = null;
-        if ($kind === 'image' && !$file->markedForDeletion()) {
-            $path = $fileService->buildFullFilePath($file);
-            $dims = @getimagesize($path);
-            if ($dims) {
-                $imageSize = ImageOrientation::swapsDimensions(ImageOrientation::read($path))
-                    ? ['width' => $dims[1], 'height' => $dims[0]]
-                    : ['width' => $dims[0], 'height' => $dims[1]];
-            }
-        }
-        return $this->render('view_file.html.twig', [
-            'text' => $text,
-            'textTruncated' => $textTruncated,
-            'imageSize' => $imageSize,
-            'file' => $file,
-            'kind' => $kind,
-            'canManage' => $canManage,
-            'size' => UserService::formatSize($file->getInternalSize()),
-            'extension' => $file->getOriginalExtension() ?: 'bin'
-        ]);
+        return $this->render('view_file.html.twig', $viewData->build($file, $canManage));
     }
 
     #[Route("/login", name: "auth_login")]

@@ -41,6 +41,24 @@ class StoredFileRepository extends EntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * The file behind a custom URL, if it is served: visible, not in the trash and not purging.
+     * Nobody manages anything at /u/, so trashed files are hidden there as on a stranger's /v/ page.
+     */
+    public function findFileByAlias(string $alias): ?StoredFile
+    {
+        return $this->createQueryBuilder('f')
+            ->join('App\Entity\UploadRecord', 'ar', 'WITH', 'ar.image = f')
+            ->join('App\Entity\FileAlias', 'a', 'WITH', 'a.uploadRecord = ar')
+            ->where('a.alias = :alias')
+            ->setParameter('alias', $alias)
+            ->andWhere('f.visibilityStatus = true')
+            ->andWhere('f.markedForDeletionAt IS NULL')
+            ->andWhere(self::NOT_PURGING)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function getUserUploadHistoryPage(User $user, array $cursor, $limit, ListOrder $orderBy, $filter)
     {
         $qb = $this->getEntityManager()->createQueryBuilder()

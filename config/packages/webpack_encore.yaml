@@ -40,6 +40,7 @@ framework:
 #        # Available in version 1.2
 #        cache: true
 
-#when@test:
-#    webpack_encore:
-#        strict_mode: false
+# Tests render pages without requiring a frontend build (public/build is not in git).
+when@test:
+    webpack_encore:
+        strict_mode: false

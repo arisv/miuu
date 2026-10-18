@@ -47,6 +47,18 @@ final class PurgeFixtures
     /** A stored file owned by the user (via an upload record); $marked puts it in the trash. */
     public function file(User $owner, bool $marked = false, ?string $name = null): StoredFile
     {
+        $file = $this->anonymousFile($marked, $name);
+        $record = new UploadRecord();
+        $record->setUser($owner);
+        $record->setImage($file);
+        $this->em->persist($record);
+        $this->em->flush();
+        return $file;
+    }
+
+    /** A stored file without an upload record, as uploaded by a visitor who was not logged in. */
+    public function anonymousFile(bool $marked = false, ?string $name = null): StoredFile
+    {
         $n = ++$this->serial;
         $file = new StoredFile();
         $file->setOriginalName($name ?? "file-{$n}.png");
@@ -60,11 +72,6 @@ final class PurgeFixtures
         $file->setVisibilityStatus(!$marked);
         $file->setMarkedForDeletionAt($marked ? new \DateTime('-1 minute') : null);
         $this->em->persist($file);
-
-        $record = new UploadRecord();
-        $record->setUser($owner);
-        $record->setImage($file);
-        $this->em->persist($record);
         $this->em->flush();
         return $file;
     }

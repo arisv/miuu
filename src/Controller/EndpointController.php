@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Exception\FileNotInStorageException;
 use App\Exception\UploadBlockedException;
 use App\Service\PurgeNotCancellable;
 use App\Service\PurgeService;
@@ -10,10 +11,12 @@ use App\Entity\UploadRecord;
 use App\Entity\User;
 use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
+use App\Service\FileAliasService;
 use App\Service\DeviceTokenService;
 use App\Service\FileIconResolver;
 use App\Service\FileNameRules;
 use App\Service\FileService;
+use App\Service\FileViewData;
 use App\Service\ThumbnailService;
 use App\Service\UserService;
 use Psr\Log\LoggerInterface;
@@ -30,6 +33,8 @@ use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
 class EndpointController extends AbstractController
 {
     private const ANONYMOUS_UPLOADS_DISABLED_MESSAGE = 'Anonymous uploads are disabled, please log in to upload files';
+    /** A custom URL can be moved to another file, so caches may keep it only briefly. */
+    private const ALIAS_MAX_AGE = 300;
 
     #[Route("/i/{customUrl}.{fileExtension}", name: "get_file_custom_legacy", stateless: true)]
     public function serveFileLegacyAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
@@ -71,6 +76,35 @@ class EndpointController extends AbstractController
             $logger->error('Error serving file: ' . $e->getMessage());
             throw $this->createNotFoundException();
         }
+    }
+
+    /**
+     * Custom URL of a file. Media streams like the raw link; anything else renders the file page in
+     * place, with the owner's controls (/u/ is in the session firewall, like /v/).
+     */
+    #[Route('/u/{alias}', name: 'file_alias', requirements: ['alias' => '[A-Za-z0-9]{1,64}'], methods: ['GET'])]
+    public function serveAliasAction(string $alias, Request $request, FileAliasService $aliases, FileService $fileService, FileViewData $viewData, LoggerInterface $logger): Response
+    {
+        $file = $aliases->resolve($alias) ?? throw $this->createNotFoundException();
+        if (!$file->shouldEmbed()) {
+            /** @var User|null $user */
+            $user = $this->getUser();
+            return $this->render('view_file.html.twig', $viewData->build($file, $fileService->canManage($user, $file)));
+        }
+        try {
+            $path = $fileService->buildFullFilePath($file);
+        } catch (FileNotInStorageException $e) {
+            $logger->error('Error serving file: ' . $e->getMessage());
+            throw $this->createNotFoundException();
+        }
+        $response = $this->generateFileServeResponse($file, $path, self::ALIAS_MAX_AGE);
+        if ($request->cookies->count() > 0) {
+            // The firewall may sign a viewer with cookies in (session or remember-me) and set new
+            // cookies on this response, so no shared cache may keep it.
+            $response->setPrivate();
+            $response->headers->removeCacheControlDirective('s-maxage');
+        }
+        return $response;
     }
 
     #[Route("/getfile/", name: "set_file_form")]
@@ -584,12 +618,18 @@ class EndpointController extends AbstractController
         return $user !== null || $this->getParameter('app.allow_anonymous_uploads');
     }
 
-    private function generateFileServeResponse(StoredFile $file, string $path): BinaryFileResponse
+    /** Shared caches keep raw links for a day; pass $maxAge for links whose target can change. */
+    private function generateFileServeResponse(StoredFile $file, string $path, ?int $maxAge = null): BinaryFileResponse
     {
         $response = new BinaryFileResponse($path);
         $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
         $response->setAutoEtag();
-        $response->setSharedMaxAge(86400);
+        if ($maxAge === null) {
+            $response->setSharedMaxAge(86400);
+        } else {
+            $response->setMaxAge($maxAge);
+            $response->setSharedMaxAge($maxAge);
+        }
         $response->headers->addCacheControlDirective('must-revalidate', true);
         $response->headers->set('Content-Type', $file->getInternalMimetype());
         $response->trustXSendfileTypeHeader();

@@ -21,6 +21,21 @@ final class FileEditException extends \RuntimeException
         return new self(self::INVALID_NAME, $message, 'base_name');
     }
 
+    public static function aliasInvalid(): self
+    {
+        return new self(self::ALIAS_INVALID, 'Custom URLs are 1 to 64 letters and digits (A–Z, a–z, 0–9).', 'custom_url');
+    }
+
+    public static function aliasTaken(): self
+    {
+        return new self(self::ALIAS_TAKEN, 'This custom URL is already taken.', 'custom_url');
+    }
+
+    public static function noOwner(): self
+    {
+        return new self(self::NO_OWNER, 'Files uploaded without an account cannot have a custom URL.');
+    }
+
     public static function historyNotFound(): self
     {
         return new self(self::HISTORY_NOT_FOUND, 'Name history entry not found');

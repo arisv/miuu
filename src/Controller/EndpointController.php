@@ -557,7 +557,7 @@ class EndpointController extends AbstractController
     }
 
     #[Route(path: '/endpoint/user_next_files_page/', name: 'user_next_files_page')]
-    public function fetchNextFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
+    public function fetchNextFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig, FileAliasService $aliases)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
@@ -566,11 +566,11 @@ class EndpointController extends AbstractController
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageSize = $cursorService->getPageSizeFromRequest($request);
         $pageData = $userService->getUserUploadHistoryPage($user, $cursor, $orderBy, $filter, $pageSize);
-        return $this->renderHistoryPageResponse($request, $pageData, 'user_next_files_page', $fileService, $twig, $orderBy->group);
+        return $this->renderHistoryPageResponse($request, $pageData, 'user_next_files_page', $fileService, $aliases, $twig, $orderBy->group);
     }
 
     #[Route(path: '/endpoint/admin_next_anonymous_page/', name: 'admin_next_anonymous_page')]
-    public function fetchNextAnonymousFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig)
+    public function fetchNextAnonymousFilesPage(Request $request, FileService $fileService, UserService $userService, CursorService $cursorService, \Twig\Environment $twig, FileAliasService $aliases)
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $orderBy = $cursorService->getOrderFromRequest($request);
@@ -578,24 +578,27 @@ class EndpointController extends AbstractController
         $cursor = $cursorService->decodeCursor($request->query->get('cursor'));
         $pageSize = $cursorService->getPageSizeFromRequest($request);
         $pageData = $userService->getAnonymousUploadHistoryPage($cursor, $orderBy, $filter, $pageSize);
-        return $this->renderHistoryPageResponse($request, $pageData, 'admin_next_anonymous_page', $fileService, $twig, $orderBy->group);
+        return $this->renderHistoryPageResponse($request, $pageData, 'admin_next_anonymous_page', $fileService, $aliases, $twig, $orderBy->group);
     }
 
     /**
      * Renders one page of file cards for infinite scrolling. Page items may be
      * upload records (user history) or bare stored files (anonymous history).
      */
-    private function renderHistoryPageResponse(Request $request, array $pageData, string $nextPageRoute, FileService $fileService, \Twig\Environment $twig, string $group = 'none'): JsonResponse
+    private function renderHistoryPageResponse(Request $request, array $pageData, string $nextPageRoute, FileService $fileService, FileAliasService $aliases, \Twig\Environment $twig, string $group = 'none'): JsonResponse
     {
         $result = [];
         $rendered = [];
         $removalPivot = $fileService->getDeletionPivotDate();
-        foreach ($pageData['files'] as $item) {
+        $files = array_map(fn ($item) => $item instanceof UploadRecord ? $item->getImage() : $item, $pageData['files']);
+        $aliasMap = $aliases->aliasesFor($files);
+        foreach ($files as $file) {
             // Each card carries its group label; the page script inserts a header where it changes.
             $rendered[] = $twig->render('partials/control_panel_file.html.twig', [
-                'item' => $item instanceof UploadRecord ? $item->getImage() : $item,
+                'item' => $file,
                 'pivot' => $removalPivot,
                 'group' => $group,
+                'aliases' => $aliasMap,
             ]);
         }
         $result['rendered'] = $rendered;

@@ -11,8 +11,9 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Turns any exception under /api/ into {"error": {code, message, details?}}. Runs after the
- * security ExceptionListener (priority 1) so access denials are already HTTP exceptions here.
+ * Turns any exception under /api/, and any ApiException elsewhere (the web gallery's JSON
+ * endpoints), into {"error": {code, message, details?}}. Runs after the security
+ * ExceptionListener (priority 1) so access denials are already HTTP exceptions here.
  */
 class ApiExceptionSubscriber implements EventSubscriberInterface
 {
@@ -39,10 +40,10 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
 
     public function onException(ExceptionEvent $event): void
     {
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/api/')) {
+        $e = $event->getThrowable();
+        if (!$e instanceof ApiException && !str_starts_with($event->getRequest()->getPathInfo(), '/api/')) {
             return;
         }
-        $e = $event->getThrowable();
         $headers = [];
         if ($e instanceof ApiException) {
             $status = $e->getStatusCode();

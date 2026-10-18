@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Service\CursorService;
+use App\Service\FileNameRules;
 use App\Service\ThumbnailService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -28,6 +29,9 @@ class ServerController extends AbstractController
             'delete_grace_minutes' => (int) ($_ENV['DELETE_MARKED_FILES_AFTER_MINUTES'] ?? 0),
             // GET /files accepts q= (file-name search: words, * and ? globs).
             'search' => true,
+            // POST /files/{id}/rename, GET /files/{id}/name-history, POST /files/{id}/name-history/{entry}/revert.
+            'rename' => true,
+            'name_max_bytes' => FileNameRules::MAX_BYTES,
         ]);
     }
 }

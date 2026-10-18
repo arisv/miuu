@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Exception\UploadBlockedException;
+use App\Api\FileEditActions;
 use App\Api\FileNormalizer;
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
@@ -11,7 +12,6 @@ use App\Exception\ApiException;
 use App\Service\CursorService;
 use App\Service\FileService;
 use App\Service\UserService;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -26,7 +26,7 @@ class FilesController extends AbstractController
     public function __construct(
         private FileService $files,
         private FileNormalizer $normalizer,
-        private EntityManagerInterface $em,
+        private FileEditActions $edits,
         private LoggerInterface $logger
     ) {
     }
@@ -138,6 +138,28 @@ class FilesController extends AbstractController
         return $this->toggle($id, $user, 'undo');
     }
 
+    /** Changes the part of the name before the extension; the extension is kept. */
+    #[Route('/{id}/rename', name: 'api_files_rename', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function rename(int $id, Request $request, #[CurrentUser] User $user): JsonResponse
+    {
+        $baseName = (string) $request->getPayload()->get('base_name', '');
+        return $this->json($this->edits->rename($this->ownedFile($id, $user), $baseName, $user));
+    }
+
+    #[Route('/{id}/name-history', name: 'api_files_name_history', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function nameHistory(int $id, Request $request, #[CurrentUser] User $user): JsonResponse
+    {
+        $limit = $request->query->getInt('limit', FileEditActions::HISTORY_LIMIT);
+        return $this->json($this->edits->history($this->ownedFile($id, $user), $limit));
+    }
+
+    /** Restores the name the file had before the given rename. */
+    #[Route('/{id}/name-history/{entryId}/revert', name: 'api_files_name_revert', requirements: ['id' => '\d+', 'entryId' => '\d+'], methods: ['POST'])]
+    public function revertName(int $id, int $entryId, #[CurrentUser] User $user): JsonResponse
+    {
+        return $this->json($this->edits->revert($this->ownedFile($id, $user), $entryId, $user));
+    }
+
     private function toggle(int $id, User $user, string $action): JsonResponse
     {
         $this->ownedFile($id, $user); // 404 for missing, foreign and frozen files
@@ -155,10 +177,6 @@ class FilesController extends AbstractController
      */
     private function ownedFile(int $id, User $user): StoredFile
     {
-        $file = $this->em->getRepository(StoredFile::class)->find($id);
-        if (!$file || !$this->files->canManage($user, $file) || $user->isPurging() || $this->files->ownerIsPurging($file)) {
-            throw ApiException::notFound('File not found');
-        }
-        return $file;
+        return $this->files->findManageableFile($user, $id) ?? throw ApiException::notFound('File not found');
     }
 }

@@ -386,6 +386,19 @@ class FileService
         ]);
     }
 
+    /**
+     * The file, when $user may change it: they uploaded it or are an admin, and neither they nor
+     * the file's owner have a purge pending. Null otherwise, so missing and foreign ids look alike.
+     */
+    public function findManageableFile(User $user, int $id): ?StoredFile
+    {
+        $file = $this->em->getRepository(StoredFile::class)->find($id);
+        if (!$file || !$this->canManage($user, $file) || $user->isPurging() || $this->ownerIsPurging($file)) {
+            return null;
+        }
+        return $file;
+    }
+
     /** For the HTML view page: hidden files resolve too, so their managers can still undelete them. */
     public function getFileForView(string $customUrl): ?StoredFile
     {

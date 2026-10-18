@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Service\PurgeNotCancellable;
 use App\Service\PurgeService;
+use App\Service\RawFileResponder;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\UploadRecord;
 use App\Entity\User;
@@ -11,6 +12,7 @@ use App\Form\Type\UserLoginType;
 use App\Form\Type\UserEmailChangeType;
 use App\Form\Type\UserPasswordChangeType;
 use App\Form\Type\UserRegistrationType;
+use App\Service\ClientNegotiation;
 use App\Service\CursorService;
 use App\Service\DeviceTokenService;
 use App\Service\FileAliasService;
@@ -87,9 +89,19 @@ class WebController extends AbstractController
         return $response;
     }
 
+    /** The file page for browsers and link previews; tools and embeds (curl, wget, <img>) get the file itself. */
     #[Route("/v/{customUrl}.{fileExtension}", name: "view_file")]
-    public function viewFileAction(string $customUrl, string $fileExtension, FileService $fileService, FileViewData $viewData)
+    public function viewFileAction(Request $request, string $customUrl, string $fileExtension, FileService $fileService, FileViewData $viewData, RawFileResponder $raw)
     {
+        if (!ClientNegotiation::wantsPage($request)) {
+            try {
+                // Same rules as the raw link: hidden and purging files are not served.
+                [$file, $path] = $fileService->getFileByCustomURL($customUrl);
+            } catch (\Exception) {
+                throw $this->createNotFoundException();
+            }
+            return ClientNegotiation::vary($raw->respondTo($request, $file, $path));
+        }
         $file = $fileService->getFileForView($customUrl);
         /** @var User|null $user */
         $user = $this->getUser();
@@ -97,7 +109,7 @@ class WebController extends AbstractController
         if (!$file || ($file->markedForDeletion() && !$canManage)) {
             throw $this->createNotFoundException();
         }
-        return $this->render('view_file.html.twig', $viewData->build($file, $canManage));
+        return ClientNegotiation::vary($this->render('view_file.html.twig', $viewData->build($file, $canManage)));
     }
 
     #[Route("/login", name: "auth_login")]

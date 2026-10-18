@@ -25,6 +25,8 @@ final class CustomUrlTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = static::createClient();
+        // Act as a browser: without Accept: text/html, /u/ serves the file itself (see RawClientsTest).
+        $this->client->setServerParameter('HTTP_ACCEPT', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
         $container = static::getContainer();
         $this->em = $container->get(EntityManagerInterface::class);
         $this->fixtures = new PurgeFixtures($this->em, $container->get(UserPasswordHasherInterface::class));

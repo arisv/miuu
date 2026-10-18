@@ -4,6 +4,7 @@ namespace App\Api;
 
 use App\Entity\FileNameChange;
 use App\Entity\StoredFile;
+use App\Service\FileAliasService;
 use App\Service\FileIconResolver;
 use App\Service\FileNameRules;
 use App\Service\FileService;
@@ -16,14 +17,22 @@ class FileNormalizer
     public function __construct(
         private FileService $files,
         private FileIconResolver $icons,
-        private RouterInterface $router
+        private RouterInterface $router,
+        private FileAliasService $aliases
     ) {
     }
 
     /** @return array<string, mixed> */
     public function normalize(StoredFile $file, bool $withDeleteLink = false): array
     {
+        return $this->build($file, $withDeleteLink, $this->aliases->aliasFor($file));
+    }
+
+    /** @return array<string, mixed> */
+    private function build(StoredFile $file, bool $withDeleteLink, ?string $alias): array
+    {
         $deleted = $file->markedForDeletion();
+        $custom = $alias !== null ? $this->aliases->url($alias) : null;
         $direct = $this->files->generateFullURL($file);
         $view = $this->files->generateViewURL($file);
         $nameParts = FileNameRules::split((string) $file->getOriginalName());
@@ -35,6 +44,8 @@ class FileNormalizer
             'base_name' => $nameParts['base'],
             'name_extension' => $nameParts['extension'],
             'extension' => $file->getOriginalExtension(),
+            // Path segment of the /u/ link, or null; "slug" is the generated token.
+            'custom_url' => $alias,
             'mime' => $file->getInternalMimetype(),
             'size' => (int) $file->getInternalSize(),
             'size_formatted' => UserService::formatSize($file->getInternalSize()),
@@ -48,7 +59,9 @@ class FileNormalizer
             'urls' => [
                 'direct' => $direct,
                 'view' => $view,
-                'share' => $file->shouldEmbed() ? $direct : $view,
+                // The custom URL replaces the default share link when set.
+                'share' => $custom ?? ($file->shouldEmbed() ? $direct : $view),
+                'custom' => $custom,
                 'thumbnail' => ($file->isThumbnailable() && !$deleted) ? $this->router->generate('serve_file_thumbnail', [
                     'customUrl' => $file->getCustomUrl(),
                     'fileExtension' => $file->getOriginalExtension(),
@@ -80,9 +93,11 @@ class FileNormalizer
      */
     public function normalizeMany(iterable $files, bool $withDeleteLink = false): array
     {
+        $files = is_array($files) ? $files : iterator_to_array($files, false);
+        $aliases = $this->aliases->aliasesFor($files);
         $out = [];
         foreach ($files as $file) {
-            $out[] = $this->normalize($file, $withDeleteLink);
+            $out[] = $this->build($file, $withDeleteLink, $aliases[$file->getId()] ?? null);
         }
         return $out;
     }

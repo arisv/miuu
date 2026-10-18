@@ -160,6 +160,20 @@ class FilesController extends AbstractController
         return $this->json($this->edits->revert($this->ownedFile($id, $user), $entryId, $user));
     }
 
+    /** Sets or replaces the file's /u/ link; the previous one is freed at once. */
+    #[Route('/{id}/custom-url', name: 'api_files_custom_url_set', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function setCustomUrl(int $id, Request $request, #[CurrentUser] User $user): JsonResponse
+    {
+        $alias = (string) $request->getPayload()->get('custom_url', '');
+        return $this->json($this->edits->setCustomUrl($this->ownedFile($id, $user), $alias));
+    }
+
+    #[Route('/{id}/custom-url', name: 'api_files_custom_url_remove', requirements: ['id' => '\d+'], methods: ['DELETE'])]
+    public function removeCustomUrl(int $id, #[CurrentUser] User $user): JsonResponse
+    {
+        return $this->json($this->edits->removeCustomUrl($this->ownedFile($id, $user)));
+    }
+
     private function toggle(int $id, User $user, string $action): JsonResponse
     {
         $this->ownedFile($id, $user); // 404 for missing, foreign and frozen files

@@ -1290,7 +1290,14 @@ body.glass-ui .preview-edit .input-group > :not(:first-child):not(:last-child) {
     --bs-btn-border-radius: 0;
 }
 
+body.glass-ui .preview-edit-history-entry {
+    border-top-color: var(--g-divider);
+}
+
 body.glass-ui .preview-edit-label,
+body.glass-ui .preview-edit-history summary,
+body.glass-ui .preview-edit-history-old,
+body.glass-ui .preview-edit-history-meta,
 body.glass-ui .preview-edit-status:not(.is-error):not(.is-ok) {
     color: var(--g-text-dim);
 }

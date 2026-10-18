@@ -1,5 +1,6 @@
 import { Modal } from 'bootstrap';
 import { buildPlayer } from './media-player';
+import { applyFileToTile, createFileEditor } from './file-edit';
 
 $(document).ready(function () {
     var UserGalleryControls = {
@@ -314,6 +315,7 @@ $(document).ready(function () {
             }
             this.previewModal = new Modal(modalEl);
             this.cursor = null;
+            this.fileEdit = createFileEditor(modalEl, {onFileUpdated: this.onFileUpdated.bind(this)});
             $('body').on('click', '[data-preview]', this.onPreviewButton.bind(this));
             $('body').on('focusin', '.itembox', function (e) {
                 this.setCursor($(e.currentTarget), false);
@@ -338,7 +340,7 @@ $(document).ready(function () {
             // Touch: a horizontal swipe over the preview steps to the previous/next file.
             var swipe = null;
             modalEl.addEventListener('touchstart', function (e) {
-                if (e.touches.length !== 1 || e.target.closest('.player-controls, .modal-footer, .modal-header')) {
+                if (e.touches.length !== 1 || e.target.closest('.player-controls, .modal-footer, .modal-header, .preview-edit')) {
                     swipe = null;
                     return;
                 }
@@ -369,6 +371,11 @@ $(document).ready(function () {
                         return;
                     }
                     e.preventDefault();
+                    // The edit panel takes Escape first; Bootstrap's own dismiss ignores preventDefault.
+                    if (self.fileEdit.handleEscape(e)) {
+                        e.stopPropagation();
+                        return;
+                    }
                     self.closePreview();
                 }, true);
             });
@@ -460,6 +467,10 @@ $(document).ready(function () {
             return $('#previewModal').hasClass('show');
         },
         onPreviewKey: function (e) {
+            // Typing in the edit panel must not page through files, play media or close the modal.
+            if ($(e.target).closest('[data-file-edit], [data-file-edit-toggle]').length) {
+                return;
+            }
             if ($(e.target).is('input, select, textarea') && (!this.isPreviewOpen() || $(e.target).is('.player-seek'))) {
                 return;
             }
@@ -528,6 +539,27 @@ $(document).ready(function () {
             this.renderPreview();
             this.previewModal.show();
         },
+        // Title, links and buttons; re-run alone after an edit so playing media is left alone.
+        renderPreviewChrome: function (tile) {
+            var modal = $('#previewModal');
+            var kind = tile.data('previewKind');
+            var url = tile.data('previewUrl');
+            // Names are user text: read the attribute, .data() would turn "123" or "null" into other types.
+            var name = tile.attr('data-preview-name');
+            var tiles = this.tiles();
+            modal.find('#previewTitle').text(name).attr('title', name);
+            modal.find('.preview-counter').text((tiles.index(tile) + 1) + ' / ' + tiles.length);
+            modal.find('.preview-meta').text(tile.data('previewDate'));
+            modal.find('[data-preview-download]').attr('href', url);
+            modal.find('[data-preview-open]').attr('href', tile.data('previewView'));
+            var isMedia = kind === 'image' || kind === 'video' || kind === 'audio';
+            // A custom URL, when set, is the link to share.
+            var share = tile.attr('data-preview-share') || new URL(isMedia ? url : tile.data('previewView'), window.location.href).href;
+            modal.find('[data-preview-copy]').attr('data-clipboard-text', share);
+            this.syncPreviewDelete();
+            modal.find('[data-preview-nav="-1"]').prop('disabled', tiles.index(tile) === 0);
+            modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1 && !this.hasMorePages());
+        },
         renderPreview: function () {
             var tile = this.cursor;
             if (!tile) {
@@ -537,18 +569,9 @@ $(document).ready(function () {
             var body = modal.find('.preview-body').empty();
             var kind = tile.data('previewKind');
             var url = tile.data('previewUrl');
-            var name = tile.data('previewName');
-            var tiles = this.tiles();
-            modal.find('#previewTitle').text(name).attr('title', name);
-            modal.find('.preview-counter').text((tiles.index(tile) + 1) + ' / ' + tiles.length);
-            modal.find('.preview-meta').text(tile.data('previewDate'));
-            modal.find('[data-preview-download]').attr('href', url);
-            modal.find('[data-preview-open]').attr('href', tile.data('previewView'));
-            var isMedia = kind === 'image' || kind === 'video' || kind === 'audio';
-            modal.find('[data-preview-copy]').attr('data-clipboard-text', new URL(isMedia ? url : tile.data('previewView'), window.location.href).href);
-            this.syncPreviewDelete();
-            modal.find('[data-preview-nav="-1"]').prop('disabled', tiles.index(tile) === 0);
-            modal.find('[data-preview-nav="1"]').prop('disabled', tiles.index(tile) === tiles.length - 1 && !this.hasMorePages());
+            var name = tile.attr('data-preview-name');
+            this.renderPreviewChrome(tile);
+            this.fileEdit.sync(tile);
             var placeholder = function (icon, text) {
                 return $('<div class="preview-placeholder">').append($('<i class="fa-solid" aria-hidden="true">').addClass(icon)).append($('<div>').text(text));
             };
@@ -590,6 +613,14 @@ $(document).ready(function () {
             } else {
                 body.append(placeholder(fileIcon, 'No preview for this file type. Use Download to open it.'));
             }
+        },
+        // A rename or custom-URL change came back from the server: refresh everything showing the file.
+        onFileUpdated: function (tile, file) {
+            applyFileToTile(tile, file);
+            if (this.cursor && this.cursor[0] === tile[0] && this.isPreviewOpen()) {
+                this.renderPreviewChrome(tile);
+            }
+            this.updateSelectionBar();
         },
         // Where hover controls are unreachable, tiles are selected and acted on from a fixed bar.
         initializeSelection: function () {
@@ -664,7 +695,7 @@ $(document).ready(function () {
             $('body').toggleClass('has-selection', count > 0 && (this.selectionActive() || this.compactTiles()));
             var bar = $('#selectionBar');
             // One file is better identified by its name than by counting it.
-            var single = count === 1 ? tiles.data('previewName') : null;
+            var single = count === 1 ? tiles.attr('data-preview-name') : null;
             bar.find('.selection-count').text(single || (count + (count === 1 ? ' file' : ' files'))).attr('title', single || null);
             bar.find('[data-selection-action="preview"]').prop('disabled', count !== 1);
             bar.find('[data-selection-action="del"]').prop('disabled', this.visibleDeleteButtons(tiles, 'del').length === 0);
@@ -844,7 +875,13 @@ $(document).ready(function () {
                 .done(function (data) {
                     var container = $('#file-container');
                     $.each(data.rendered, function (i, o) {
-                        var card = $(o).addClass('is-new');
+                        var card = $(o);
+                        // Name order pages by name: a file renamed after loading can come round again.
+                        var id = card.find('.itembox').attr('data-file-id');
+                        if (id && container.find('.itembox[data-file-id="' + id + '"]').length) {
+                            return;
+                        }
+                        card.addClass('is-new');
                         var group = card.data('group');
                         var previous = container.children('[data-group]').last().data('group');
                         if (group && group !== previous) {

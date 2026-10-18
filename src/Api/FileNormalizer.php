@@ -2,8 +2,10 @@
 
 namespace App\Api;
 
+use App\Entity\FileNameChange;
 use App\Entity\StoredFile;
 use App\Service\FileIconResolver;
+use App\Service\FileNameRules;
 use App\Service\FileService;
 use App\Service\UserService;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -24,10 +26,14 @@ class FileNormalizer
         $deleted = $file->markedForDeletion();
         $direct = $this->files->generateFullURL($file);
         $view = $this->files->generateViewURL($file);
+        $nameParts = FileNameRules::split((string) $file->getOriginalName());
         $data = [
             'id' => $file->getId(),
             'slug' => $file->getCustomUrl(),
             'name' => $file->getOriginalName(),
+            // What a rename edits, and the extension it keeps (taken from the name, unlike "extension").
+            'base_name' => $nameParts['base'],
+            'name_extension' => $nameParts['extension'],
             'extension' => $file->getOriginalExtension(),
             'mime' => $file->getInternalMimetype(),
             'size' => (int) $file->getInternalSize(),
@@ -53,6 +59,19 @@ class FileNormalizer
             $data['urls']['delete'] = $this->files->generateDeletionURL($file);
         }
         return $data;
+    }
+
+    /** @return array<string, mixed> */
+    public function nameChange(FileNameChange $change): array
+    {
+        return [
+            'id' => $change->getId(),
+            'old_name' => $change->getOldName(),
+            'new_name' => $change->getNewName(),
+            'revert' => $change->isRevert(),
+            'renamed_at' => $change->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            'renamed_by' => $change->getRenamedBy()?->getLogin(),
+        ];
     }
 
     /**

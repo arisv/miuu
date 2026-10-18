@@ -184,6 +184,10 @@
 					<span class="selection-count"></span>
 					<div class="btn-group btn-group-sm">
 						<button type="button" class="btn btn-secondary" data-selection-action="preview" title="Preview"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+						<button type="button" class="btn btn-secondary" data-selection-action="rename" title="Rename"><i class="fa-solid fa-i-cursor" aria-hidden="true"></i></button>
+						{% if customUrls|default(false) %}
+						<button type="button" class="btn btn-secondary" data-selection-action="custom-url" title="Custom URL"><i class="fa-solid fa-link" aria-hidden="true"></i></button>
+						{% endif %}
 						<button type="button" class="btn btn-primary" data-selection-action="download" title="Download"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-danger" data-selection-action="del" title="Delete"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
 						<button type="button" class="btn btn-warning" data-selection-action="undo" title="Undelete"><i class="fa-solid fa-trash-arrow-up" aria-hidden="true"></i></button>

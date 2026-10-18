@@ -697,7 +697,7 @@ $(document).ready(function () {
             // One file is better identified by its name than by counting it.
             var single = count === 1 ? tiles.attr('data-preview-name') : null;
             bar.find('.selection-count').text(single || (count + (count === 1 ? ' file' : ' files'))).attr('title', single || null);
-            bar.find('[data-selection-action="preview"]').prop('disabled', count !== 1);
+            bar.find('[data-selection-action="preview"], [data-selection-action="rename"], [data-selection-action="custom-url"]').prop('disabled', count !== 1);
             bar.find('[data-selection-action="del"]').prop('disabled', this.visibleDeleteButtons(tiles, 'del').length === 0);
             bar.find('[data-selection-action="undo"]').prop('disabled', this.visibleDeleteButtons(tiles, 'undo').length === 0);
         },
@@ -724,6 +724,12 @@ $(document).ready(function () {
             } else if (action === 'preview') {
                 if (tiles.length === 1) {
                     this.openPreview(tiles.first());
+                }
+            } else if (action === 'rename' || action === 'custom-url') {
+                // One editor to maintain: the preview opens with its edit panel on the right field.
+                if (tiles.length === 1) {
+                    this.openPreview(tiles.first());
+                    this.fileEdit.open(action === 'rename' ? 'name' : 'alias');
                 }
             } else if (action === 'download') {
                 var urls = tiles.find('.itembox-controls a').map(function () {

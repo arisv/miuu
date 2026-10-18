@@ -1,4 +1,4 @@
-import { ALIAS_PATTERN, joinName, nameProblem, portabilityWarnings } from './file-name-rules';
+import { ALIAS_PATTERN, MAX_NAME_BYTES, byteLength, joinName, nameProblem, portabilityWarnings } from './file-name-rules';
 
 // Rename and custom-URL panel of the preview modal ("Spotlight"), with the name history and its
 // reverts. It talks to the gallery endpoints under /endpoint/files/{id}/ with the page's CSRF
@@ -87,6 +87,9 @@ export function createFileEditor(modalEl, { onFileUpdated }) {
 
     const fill = () => {
         const ext = tile.attr('data-name-ext') || '';
+        // The limit is in bytes and maxlength counts characters, so this only caps ASCII names
+        // exactly; nameProblem() still checks the bytes on save.
+        nameInput.attr('maxlength', MAX_NAME_BYTES - (ext ? byteLength('.' + ext) : 0));
         nameInput.val(tile.attr('data-name-base') || '');
         extLabel.text(ext ? '.' + ext : '').prop('hidden', !ext);
         aliasInput.val(tile.attr('data-file-alias') || '').removeClass('is-invalid');

@@ -1,8 +1,9 @@
 import { ALIAS_PATTERN, joinName, nameProblem, portabilityWarnings } from './file-name-rules';
 
-// Rename and custom-URL panel of the preview modal ("Spotlight"). It talks to the gallery
-// endpoints under /endpoint/files/{id}/ with the page's CSRF token and hands every updated file
-// to onFileUpdated, which refreshes the tile, the preview chrome and the selection bar.
+// Rename and custom-URL panel of the preview modal ("Spotlight"), with the name history and its
+// reverts. It talks to the gallery endpoints under /endpoint/files/{id}/ with the page's CSRF
+// token and hands every updated file to onFileUpdated, which refreshes the tile, the preview
+// chrome and the selection bar.
 
 /** Copies a file object from the endpoints onto its tile. Attributes, not .data(): jQuery would coerce names like "null" or "123". */
 export function applyFileToTile(tile, file) {
@@ -29,7 +30,11 @@ export function createFileEditor(modalEl, { onFileUpdated }) {
     const warning = panel.find('[data-file-edit-warning]');
     const aliasInput = panel.find('[data-file-edit-alias]');
     const status = panel.find('[data-file-edit-status]');
+    const history = panel.find('[data-file-edit-history]');
+    const historyList = panel.find('[data-file-edit-history-list]');
     let tile = null;
+    // File id whose history is in the list; null until the section is first opened.
+    let historyFor = null;
     // The exact name the user chose to save despite the portability warnings.
     let confirmedName = null;
     let swallowEscapeKeyup = false;
@@ -88,10 +93,84 @@ export function createFileEditor(modalEl, { onFileUpdated }) {
         resetConfirmation();
     };
 
-    const updated = (file, message) => {
+    const historyRow = (entry) => {
+        const when = new Date(entry.renamed_at);
+        const meta = [when.toLocaleString()];
+        if (entry.renamed_by) {
+            meta.push(entry.renamed_by);
+        }
+        if (entry.revert) {
+            meta.push('revert');
+        }
+        return $('<li class="preview-edit-history-entry">').attr('data-entry-id', entry.id).append(
+            $('<div class="preview-edit-history-names">').append(
+                $('<span class="preview-edit-history-old">').text(entry.old_name),
+                $('<span class="preview-edit-history-arrow" aria-hidden="true">').text(' → '),
+                $('<span class="visually-hidden">').text(' renamed to '),
+                $('<span>').text(entry.new_name),
+            ),
+            $('<div class="preview-edit-history-meta">').append(
+                $('<time>').attr('datetime', entry.renamed_at).text(meta.join(' · ')),
+                $('<button type="button" class="btn btn-secondary btn-sm" data-file-edit-revert>')
+                    .attr('data-old-name', entry.old_name)
+                    .attr('title', 'Rename back to ' + entry.old_name)
+                    .text('Revert'),
+            ),
+        );
+    };
+
+    // Reverting to the name the file already has would do nothing.
+    const syncRevertButtons = () => {
+        const current = tile ? tile.attr('data-preview-name') : null;
+        historyList.find('[data-file-edit-revert]').each(function () {
+            this.disabled = this.getAttribute('data-old-name') === current;
+        });
+    };
+
+    const loadHistory = () => {
+        const fileId = tile.attr('data-file-id');
+        historyFor = fileId;
+        historyList.empty().append($('<li class="preview-edit-history-note">').text('Loading…'));
+        send('GET', '/name-history')
+            .done((r) => {
+                if (historyFor !== fileId) {
+                    return;
+                }
+                historyList.empty();
+                if (!r.history.length) {
+                    historyList.append($('<li class="preview-edit-history-note">').text('No renames yet.'));
+                }
+                r.history.forEach((entry) => historyList.append(historyRow(entry)));
+                syncRevertButtons();
+            })
+            .fail((xhr) => {
+                if (historyFor === fileId) {
+                    historyFor = null;
+                    historyList.empty().append($('<li class="preview-edit-history-note is-error">').text(errorText(xhr, 'history')));
+                }
+            });
+    };
+
+    const resetHistory = () => {
+        historyFor = null;
+        history.prop('open', false);
+        historyList.empty();
+    };
+
+    const recordChange = (entry) => {
+        if (!entry || historyFor !== tile.attr('data-file-id')) {
+            return;
+        }
+        historyList.find('.preview-edit-history-note').remove();
+        historyList.prepend(historyRow(entry));
+    };
+
+    const updated = (file, message, entry) => {
         onFileUpdated(tile, file);
         fill();
         showStatus(message, 'ok');
+        recordChange(entry);
+        syncRevertButtons();
     };
 
     const run = (request, field) => {
@@ -128,7 +207,7 @@ export function createFileEditor(modalEl, { onFileUpdated }) {
             return;
         }
         run(send('POST', '/rename', { base_name: base }), 'base_name')
-            .done((r) => updated(r.file, r.changed ? 'Renamed.' : 'The name is unchanged.'));
+            .done((r) => updated(r.file, r.changed ? 'Renamed.' : 'The name is unchanged.', r.entry));
     };
 
     const saveAlias = () => {
@@ -186,6 +265,20 @@ export function createFileEditor(modalEl, { onFileUpdated }) {
     });
     panel.find('[data-file-edit-save="alias"]').on('click', saveAlias);
     panel.find('[data-file-edit-remove]').on('click', removeAlias);
+    // "toggle" does not bubble, so it is bound on the element itself.
+    history.on('toggle', () => {
+        if (history.prop('open') && tile && historyFor !== tile.attr('data-file-id')) {
+            loadHistory();
+        }
+    });
+    historyList.on('click', '[data-file-edit-revert]', function () {
+        if (busy || !tile) {
+            return;
+        }
+        const entryId = $(this).closest('[data-entry-id]').attr('data-entry-id');
+        run(send('POST', '/name-history/' + entryId + '/revert'), 'history')
+            .done((r) => updated(r.file, r.changed ? 'Name restored.' : 'The name is unchanged.', r.entry));
+    });
 
     const focusField = (field) => {
         const input = field === 'alias' && aliasInput.length ? aliasInput : nameInput;
@@ -231,6 +324,7 @@ export function createFileEditor(modalEl, { onFileUpdated }) {
         sync(newTile) {
             tile = newTile;
             fill();
+            resetHistory();
             showStatus('');
         },
         /**

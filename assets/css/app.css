@@ -1563,12 +1563,79 @@ body.tiles-compact .gallery-group-header {
     color: #fff;
 }
 
-/* Room for the panel: the media gives up some height while it is open. */
+/* Name history: collapsed by default, loaded on first open, scrolls on its own. */
+.preview-edit-history {
+    grid-column: 1 / -1;
+    font-size: .85rem;
+}
+
+.preview-edit-history summary {
+    width: fit-content;
+    color: #8f948f;
+    cursor: pointer;
+}
+
+.preview-edit-history ol {
+    max-height: 30vh;
+    margin: 6px 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+    scrollbar-width: thin;
+}
+
+.preview-edit-history-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    flex-wrap: wrap;
+    padding: 6px 0;
+    border-top: 1px solid #3d3d3d;
+}
+
+.preview-edit-history-names {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.preview-edit-history-old,
+.preview-edit-history-arrow {
+    color: #8f948f;
+}
+
+.preview-edit-history-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #8f948f;
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+.preview-edit-history-note {
+    padding: 6px 0;
+    color: #8f948f;
+}
+
+.preview-edit-history-note.is-error {
+    color: #ea868f;
+}
+
+/* Room for the panel: the media gives up some height while it is open, more with the history. */
 .preview-content.is-editing .preview-body,
 .preview-content.is-editing .preview-body img,
 .preview-content.is-editing .preview-body video,
 .preview-content.is-editing .preview-text {
     max-height: 56vh;
+}
+
+.preview-content.is-editing:has(.preview-edit-history[open]) :is(.preview-body, .preview-body img, .preview-body video, .preview-text) {
+    max-height: 34vh;
+}
+
+.preview-content.is-editing:has(.preview-edit-history[open]) .preview-edit-history ol {
+    max-height: 24vh;
 }
 
 @media (max-width: 767.98px) {
@@ -1591,6 +1658,18 @@ body.tiles-compact .gallery-group-header {
 
     .preview-content.is-editing .preview-body {
         max-height: none;
+    }
+
+    .preview-content.is-editing:has(.preview-edit-history[open]) :is(.preview-body img, .preview-body video, .preview-player video, .preview-text) {
+        max-height: calc(100dvh - 380px - 22vh);
+    }
+
+    .preview-content.is-editing:has(.preview-edit-history[open]) .preview-body {
+        max-height: none;
+    }
+
+    .preview-content.is-editing:has(.preview-edit-history[open]) .preview-edit-history ol {
+        max-height: 22vh;
     }
 }
 

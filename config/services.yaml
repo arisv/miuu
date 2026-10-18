@@ -41,3 +41,6 @@ when@test:
         # SQLite ignores foreign keys unless asked; enforce them so cascades behave as on MariaDB.
         Doctrine\DBAL\Driver\AbstractSQLiteDriver\Middleware\EnableForeignKeys:
             tags: [doctrine.middleware]
+        # MySQL date functions used by raw gallery SQL, so gallery pages render in tests.
+        App\Tests\Support\SqliteMysqlFunctions:
+            tags: [doctrine.middleware]

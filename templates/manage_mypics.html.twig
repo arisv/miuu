@@ -3,7 +3,8 @@
 {% block managecontent %}
 	{% include 'partials/file_gallery.html.twig' with {
 		'nextPageRoute': 'user_next_files_page',
-		'emptyMessage': 'You have not uploaded anything yet.'
+		'emptyMessage': 'You have not uploaded anything yet.',
+		'customUrls': true
 	} %}
 {% endblock %}
 

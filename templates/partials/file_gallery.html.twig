@@ -1,5 +1,6 @@
 {# Paginated file gallery with calendar sidebar and ordering controls.
    Expects: pageData, dateTree, nextPageRoute (route name for the "Get more" endpoint), emptyMessage.
+   Optional: aliases (custom URL by file id), customUrls (offer custom URLs; off where files have no owner).
    Items in pageData.files may be upload records (exposing .image) or bare stored files. #}
 {% set months = {
     "1": "January",
@@ -190,7 +191,8 @@
 						<button type="button" class="btn btn-secondary" data-selection-action="done" title="Done selecting">Done</button>
 					</div>
 				</div>
-				<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewTitle" aria-hidden="true">
+				<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewTitle" aria-hidden="true"
+					data-file-edit-token="{{ csrf_token('file_edit') }}" data-file-edit-custom-urls="{{ customUrls|default(false) ? '1' : '0' }}">
 					<div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-md-down preview-dialog">
 						<div class="modal-content preview-content">
 							<div class="modal-header">

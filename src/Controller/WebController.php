@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Service\PurgeNotCancellable;
 use App\Service\PurgeService;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Entity\UploadRecord;
 use App\Entity\User;
 use App\Form\Type\UserLoginType;
 use App\Form\Type\UserEmailChangeType;
@@ -12,6 +13,7 @@ use App\Form\Type\UserPasswordChangeType;
 use App\Form\Type\UserRegistrationType;
 use App\Service\CursorService;
 use App\Service\DeviceTokenService;
+use App\Service\FileAliasService;
 use App\Service\FileService;
 use App\Service\FileViewData;
 use App\Service\SettingsService;
@@ -259,7 +261,7 @@ class WebController extends AbstractController
     }
 
     #[Route("/manage/mypics/", name: "cabinet_mypics")]
-    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService, PurgeService $purge)
+    public function userCabinetViewPicturesAction(Request $request, UserService $userService, CursorService $cursorService, FileService $fileService, PurgeService $purge, FileAliasService $aliases)
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $user = $this->getUser();
@@ -273,6 +275,7 @@ class WebController extends AbstractController
         return $this->render('manage_mypics.html.twig', [
             'page' => 'mypics',
             'pageData' => $pageData,
+            'aliases' => $aliases->aliasesFor(array_map(fn (UploadRecord $record) => $record->getImage(), $pageData['files'])),
             'dateTree' => $dateTree,
             'pivot' => $removalPivot,
             'ordering' => $orderBy->toArray(),

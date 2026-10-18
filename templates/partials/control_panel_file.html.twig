@@ -1,7 +1,14 @@
 {% set previewKind = item.markedForDeletion ? 'hidden' : (item.isMimeType(['image']) ? 'image' : (item.isMimeType(['video']) ? 'video' : (item.isMimeType(['audio']) ? 'audio' : (item.isTextual ? 'text' : 'file')))) %}
 {% set groupLabel = file_group_label(item, group|default('none')) %}
+{% set nameParts = file_name_parts(item.originalName) %}
+{% set alias = (aliases|default({}))[item.id]|default(null) %}
 <div class="col"{% if groupLabel is not null %} data-group="{{ groupLabel }}"{% endif %}>
     <div class="itembox" tabindex="0"
+        data-file-id="{{ item.id }}"
+        data-name-base="{{ nameParts.base }}"
+        data-name-ext="{{ nameParts.extension }}"
+        data-file-alias="{{ alias }}"
+        data-preview-share="{{ alias ? url('file_alias', {'alias': alias}) : '' }}"
         data-preview-kind="{{ previewKind }}"
         data-preview-url="{{ path('get_file_custom_url', {'customUrl': item.customUrl, 'fileExtension': item.originalExtension}) }}"
         data-preview-name="{{ item.originalName }}"
@@ -16,7 +23,7 @@
         {% if item.markedForDeletion %}
             <div class="itembox-icon is-hidden-file" aria-hidden="true"><i class="fa-solid fa-trash"></i><span class="itembox-ext">deleted</span></div>
         {% elseif not item.isThumbnailable %}
-            {% set shownExt = '.' in item.originalName ? item.originalName|split('.')|last : item.originalExtension %}
+            {% set shownExt = nameParts.extension ?? item.originalExtension %}
             <div class="itembox-icon" aria-hidden="true"><i class="fa-solid {{ file_icon(item.internalMimetype, item.originalExtension, item.originalName) }}"></i><span class="itembox-ext">{{ (shownExt ?: 'bin')|slice(0, 7) }}</span></div>
         {% endif %}
         <label class="itembox-select">

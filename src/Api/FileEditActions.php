@@ -6,6 +6,7 @@ use App\Entity\StoredFile;
 use App\Entity\User;
 use App\Exception\ApiException;
 use App\Exception\FileEditException;
+use App\Service\FileAliasService;
 use App\Service\FileRenameService;
 
 /**
@@ -19,6 +20,7 @@ class FileEditActions
 
     public function __construct(
         private FileRenameService $renames,
+        private FileAliasService $aliases,
         private FileNormalizer $normalizer
     ) {
     }
@@ -60,10 +62,30 @@ class FileEditActions
         return ['history' => array_map($this->normalizer->nameChange(...), $this->renames->history($file, $limit))];
     }
 
+    /** @return array{file: array<string, mixed>} */
+    public function setCustomUrl(StoredFile $file, string $alias): array
+    {
+        try {
+            $this->aliases->set($file, $alias);
+        } catch (FileEditException $e) {
+            throw $this->apiError($e);
+        }
+        return ['file' => $this->normalizer->normalize($file, true)];
+    }
+
+    /** @return array{file: array<string, mixed>} */
+    public function removeCustomUrl(StoredFile $file): array
+    {
+        $this->aliases->remove($file);
+        return ['file' => $this->normalizer->normalize($file, true)];
+    }
+
     private function apiError(FileEditException $e): ApiException
     {
         return match ($e->reason) {
             FileEditException::HISTORY_NOT_FOUND => ApiException::notFound($e->getMessage()),
+            FileEditException::ALIAS_TAKEN => new ApiException(409, $e->reason, $e->getMessage(), [$e->field => [$e->getMessage()]]),
+            FileEditException::NO_OWNER => new ApiException(409, $e->reason, $e->getMessage()),
             default => ApiException::validation([$e->field ?? 'file' => [$e->getMessage()]]),
         };
     }

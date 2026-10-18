@@ -32,6 +32,9 @@ class ServerController extends AbstractController
             // POST /files/{id}/rename, GET /files/{id}/name-history, POST /files/{id}/name-history/{entry}/revert.
             'rename' => true,
             'name_max_bytes' => FileNameRules::MAX_BYTES,
+            // POST|DELETE /files/{id}/custom-url; files carry custom_url and urls.custom, and urls.share prefers it.
+            'custom_urls' => true,
+            'custom_url_max_length' => 64,
         ]);
     }
 }

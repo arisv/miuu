@@ -6,10 +6,12 @@ use App\Exception\FileNotInStorageException;
 use App\Exception\UploadBlockedException;
 use App\Service\PurgeNotCancellable;
 use App\Service\PurgeService;
+use App\Service\RawFileResponder;
 use App\Entity\StoredFile;
 use App\Entity\UploadRecord;
 use App\Entity\User;
 use App\Repository\StoredFileRepository;
+use App\Service\ClientNegotiation;
 use App\Service\CursorService;
 use App\Service\FileAliasService;
 use App\Service\DeviceTokenService;
@@ -66,12 +68,12 @@ class EndpointController extends AbstractController
     }
 
     #[Route("/{customUrl}.{fileExtension}", name: "get_file_custom_url", stateless: true)]
-    public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService)
+    public function serveFileDirectAction(Request $request, $customUrl, $fileExtension, LoggerInterface $logger, FileService $fileService, RawFileResponder $raw)
     {
         try {
             /** @var StoredFile $file */
             [$file, $path] = $fileService->getFileByCustomURL($customUrl);
-            return $this->generateFileServeResponse($file, $path);
+            return $raw->respond($file, $path);
         } catch (\Exception $e) {
             $logger->error('Error serving file: ' . $e->getMessage());
             throw $this->createNotFoundException();
@@ -80,16 +82,18 @@ class EndpointController extends AbstractController
 
     /**
      * Custom URL of a file. Media streams like the raw link; anything else renders the file page in
-     * place, with the owner's controls (/u/ is in the session firewall, like /v/).
+     * place, with the owner's controls (/u/ is in the session firewall, like /v/), unless the client
+     * is a tool or an embed rather than a browser: those get the file itself.
      */
     #[Route('/u/{alias}', name: 'file_alias', requirements: ['alias' => '[A-Za-z0-9]{1,64}'], methods: ['GET'])]
-    public function serveAliasAction(string $alias, Request $request, FileAliasService $aliases, FileService $fileService, FileViewData $viewData, LoggerInterface $logger): Response
+    public function serveAliasAction(string $alias, Request $request, FileAliasService $aliases, FileService $fileService, FileViewData $viewData, RawFileResponder $raw, LoggerInterface $logger): Response
     {
         $file = $aliases->resolve($alias) ?? throw $this->createNotFoundException();
-        if (!$file->shouldEmbed()) {
+        $negotiated = !$file->shouldEmbed();
+        if ($negotiated && ClientNegotiation::wantsPage($request)) {
             /** @var User|null $user */
             $user = $this->getUser();
-            return $this->render('view_file.html.twig', $viewData->build($file, $fileService->canManage($user, $file)));
+            return ClientNegotiation::vary($this->render('view_file.html.twig', $viewData->build($file, $fileService->canManage($user, $file))));
         }
         try {
             $path = $fileService->buildFullFilePath($file);
@@ -97,14 +101,8 @@ class EndpointController extends AbstractController
             $logger->error('Error serving file: ' . $e->getMessage());
             throw $this->createNotFoundException();
         }
-        $response = $this->generateFileServeResponse($file, $path, self::ALIAS_MAX_AGE);
-        if ($request->cookies->count() > 0) {
-            // The firewall may sign a viewer with cookies in (session or remember-me) and set new
-            // cookies on this response, so no shared cache may keep it.
-            $response->setPrivate();
-            $response->headers->removeCacheControlDirective('s-maxage');
-        }
-        return $response;
+        $response = $raw->respondTo($request, $file, $path, self::ALIAS_MAX_AGE);
+        return $negotiated ? ClientNegotiation::vary($response) : $response;
     }
 
     #[Route("/getfile/", name: "set_file_form")]
@@ -619,30 +617,6 @@ class EndpointController extends AbstractController
     private function canUploadAnonymously($user): bool
     {
         return $user !== null || $this->getParameter('app.allow_anonymous_uploads');
-    }
-
-    /** Shared caches keep raw links for a day; pass $maxAge for links whose target can change. */
-    private function generateFileServeResponse(StoredFile $file, string $path, ?int $maxAge = null): BinaryFileResponse
-    {
-        $response = new BinaryFileResponse($path);
-        $response->headers->set(AbstractSessionListener::NO_AUTO_CACHE_CONTROL_HEADER, 'true');
-        $response->setAutoEtag();
-        if ($maxAge === null) {
-            $response->setSharedMaxAge(86400);
-        } else {
-            $response->setMaxAge($maxAge);
-            $response->setSharedMaxAge($maxAge);
-        }
-        $response->headers->addCacheControlDirective('must-revalidate', true);
-        $response->headers->set('Content-Type', $file->getInternalMimetype());
-        $response->trustXSendfileTypeHeader();
-        $response->headers->set('X-Accel-Redirect', sprintf("/protected-files/%s", $file->relativePath()));
-        if ($file->shouldEmbed()) {
-            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, FileNameRules::forDisposition($file->getOriginalName()));
-        } else {
-            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, FileNameRules::forDisposition($file->getOriginalName()));
-        }
-        return $response;
     }
 
     private function generateThumbnailServeResponse(StoredFile $file, string $path): BinaryFileResponse

@@ -35,3 +35,9 @@ services:
 
     Symfony\Component\Console\Style\SymfonyStyle:
         factory: ['@App\Console\ConsoleOutputFactory', 'create']
+
+when@test:
+    services:
+        # SQLite ignores foreign keys unless asked; enforce them so cascades behave as on MariaDB.
+        Doctrine\DBAL\Driver\AbstractSQLiteDriver\Middleware\EnableForeignKeys:
+            tags: [doctrine.middleware]

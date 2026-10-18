@@ -12,6 +12,7 @@ use App\Repository\StoredFileRepository;
 use App\Service\CursorService;
 use App\Service\DeviceTokenService;
 use App\Service\FileIconResolver;
+use App\Service\FileNameRules;
 use App\Service\FileService;
 use App\Service\ThumbnailService;
 use App\Service\UserService;
@@ -594,9 +595,9 @@ class EndpointController extends AbstractController
         $response->trustXSendfileTypeHeader();
         $response->headers->set('X-Accel-Redirect', sprintf("/protected-files/%s", $file->relativePath()));
         if ($file->shouldEmbed()) {
-            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, FileNameRules::forDisposition($file->getOriginalName()));
         } else {
-            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, FileNameRules::forDisposition($file->getOriginalName()));
         }
         return $response;
     }
@@ -612,9 +613,9 @@ class EndpointController extends AbstractController
         $response->trustXSendfileTypeHeader();
         $response->headers->set('X-Accel-Redirect', sprintf("/protected-files/%s", $file->relativeThumbPath()));
         if ($file->shouldEmbed()) {
-            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, $file->getOriginalName());
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, FileNameRules::forDisposition($file->getOriginalName()));
         } else {
-            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getOriginalName());
+            $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, FileNameRules::forDisposition($file->getOriginalName()));
         }
         return $response;
     }

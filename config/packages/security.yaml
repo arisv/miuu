@@ -23,8 +23,8 @@ security:
                 realm: MIU
                 failure_handler: App\Security\ApiAuthenticationHandler
         main:
-            # The trailing (/|$) keeps raw file URLs such as /vxyz.png in the stateless images firewall.
-            pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile|share|v)(/|$))
+            # The trailing (/|$) keeps raw file URLs such as /vxyz.png or /uxyz.png in the stateless images firewall.
+            pattern: ^(/$|/(login|logout|register|manage|endpoint|getfile|mirrorfile|share|v|u)(/|$))
             provider: users
             user_checker: App\Security\UserChecker
             form_login:

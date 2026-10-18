@@ -3,7 +3,9 @@
 namespace App\Tests\Command;
 
 use App\Command\PurgeCommand;
+use App\Entity\FileAlias;
 use App\Entity\User;
+use App\Service\FileAliasService;
 use App\Tests\Support\PurgeFixtures;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -57,6 +59,22 @@ final class PurgeCommandTest extends KernelTestCase
         self::assertCount(0, $this->fixtures->filesOf($bob), $this->tester->getDisplay());
         self::assertCount(1, $this->fixtures->filesOf($alice), "alice's file survives");
         self::assertNull($this->fixtures->reload($bob)->getPurgeTs(), 'bob is unfrozen afterwards');
+    }
+
+    public function testPurgedFilesFreeTheirCustomUrls(): void
+    {
+        $bob = $this->fixtures->user('bob', 'bob12345');
+        $alice = $this->fixtures->user('alice', 'alice123');
+        $aliases = static::getContainer()->get(FileAliasService::class);
+        $aliases->set($this->fixtures->file($bob), 'Holiday');
+        $this->due($bob);
+
+        $this->tester->execute([]);
+
+        $this->tester->assertCommandIsSuccessful();
+        $this->em->clear();
+        self::assertSame(0, $this->em->getRepository(FileAlias::class)->count([]));
+        $aliases->set($this->fixtures->file($this->fixtures->reload($alice)), 'Holiday');
     }
 
     public function testFutureDeadlinesAreLeftAlone(): void

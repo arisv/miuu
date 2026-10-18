@@ -22,8 +22,12 @@ final class PurgeFixtures
     {
         $tool = new SchemaTool($this->em);
         $metadata = $this->em->getMetadataFactory()->getAllMetadata();
+        // Foreign keys are enforced in tests; dropping tables that still hold rows needs them off.
+        $connection = $this->em->getConnection();
+        $connection->executeStatement('PRAGMA foreign_keys = OFF');
         $tool->dropSchema($metadata);
         $tool->createSchema($metadata);
+        $connection->executeStatement('PRAGMA foreign_keys = ON');
     }
 
     public function user(string $login, string $password, int $role = User::ROLE_USER): User
@@ -63,6 +67,21 @@ final class PurgeFixtures
         $this->em->persist($record);
         $this->em->flush();
         return $file;
+    }
+
+    /** Writes bytes where FileService looks for the file (and its thumbnail with $thumbnail). */
+    public function storeOnDisk(StoredFile $file, string $storageRoot, string $contents = 'x', bool $thumbnail = false): void
+    {
+        $paths = [$storageRoot . '/' . $file->relativePath()];
+        if ($thumbnail) {
+            $paths[] = $storageRoot . '/' . $file->relativeThumbPath();
+        }
+        foreach ($paths as $path) {
+            if (!is_dir(dirname($path))) {
+                mkdir(dirname($path), 0777, true);
+            }
+            file_put_contents($path, $contents);
+        }
     }
 
     /** Fresh copies of the user's files straight from the database. */

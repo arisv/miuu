@@ -197,12 +197,35 @@
 						<div class="modal-content preview-content">
 							<div class="modal-header">
 								<h5 class="modal-title text-truncate" id="previewTitle"></h5>
+								<button type="button" class="btn btn-secondary btn-sm preview-edit-toggle ms-2" data-file-edit-toggle aria-expanded="false" aria-controls="previewEdit" title="Rename{{ customUrls|default(false) ? ' / custom URL' : '' }}"><i class="fa-solid fa-pen" aria-hidden="true"></i><span class="visually-hidden">Edit name{{ customUrls|default(false) ? ' and custom URL' : '' }}</span></button>
 								<span class="preview-counter ms-3 text-nowrap"></span>
 								<button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
 							</div>
 							<div class="preview-nav-strip d-md-none" role="group" aria-label="Previous and next file">
 								<button type="button" class="btn btn-secondary" data-preview-nav="-1" aria-label="Previous file"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
 								<button type="button" class="btn btn-secondary" data-preview-nav="1" aria-label="Next file"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+							</div>
+							<div class="preview-edit" id="previewEdit" data-file-edit role="group" aria-label="Edit file" hidden>
+								<label class="preview-edit-label" for="previewEditName">Name</label>
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control" id="previewEditName" data-file-edit-name autocomplete="off" autocapitalize="off" spellcheck="false">
+									<span class="input-group-text" data-file-edit-ext></span>
+									<button type="button" class="btn btn-primary" data-file-edit-save="name">Save</button>
+								</div>
+								<div class="preview-edit-warning" data-file-edit-warning role="alert" hidden>
+									<p>This name may cause trouble on other systems:</p>
+									<ul></ul>
+								</div>
+								<div class="preview-edit-alias" data-file-edit-alias-row>
+									<label class="preview-edit-label" for="previewEditAlias">Custom URL</label>
+									<div class="input-group input-group-sm">
+										<span class="input-group-text">/u/</span>
+										<input type="text" class="form-control" id="previewEditAlias" data-file-edit-alias maxlength="64" placeholder="letters and digits" autocomplete="off" autocapitalize="off" spellcheck="false">
+										<button type="button" class="btn btn-secondary" data-file-edit-remove title="Remove the custom URL"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span class="visually-hidden">Remove</span></button>
+										<button type="button" class="btn btn-primary" data-file-edit-save="alias">Save</button>
+									</div>
+								</div>
+								<div class="preview-edit-status" data-file-edit-status role="status" aria-live="polite"></div>
 							</div>
 							<div class="modal-body preview-body"></div>
 							<div class="modal-footer">

@@ -1471,6 +1471,129 @@ body.tiles-compact .gallery-group-header {
     font-size: .875rem;
 }
 
+/* Edit panel of the preview: name with its fixed extension, custom URL, name history. A label
+   column and a field column; min-width: 0 keeps long names from widening the fit-content dialog. */
+.preview-edit {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 12px;
+    flex: none;
+    width: 0;
+    min-width: 100%;
+    padding: 12px 16px;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.preview-edit-alias {
+    display: contents;
+}
+
+.preview-edit-label {
+    margin: 0;
+    color: #8f948f;
+    font-size: .875rem;
+}
+
+.preview-edit .input-group {
+    flex-wrap: nowrap;
+}
+
+.preview-edit .form-control {
+    min-width: 0;
+    background: #131715;
+    color: #e6e6e6;
+    border-color: #3d3d3d;
+    color-scheme: dark;
+}
+
+.preview-edit .form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.preview-edit .input-group-text {
+    background: #2a2a2a;
+    color: #8f948f;
+    border-color: #3d3d3d;
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preview-edit-warning,
+.preview-edit-status {
+    grid-column: 1 / -1;
+    font-size: .85rem;
+}
+
+.preview-edit-warning {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255, 193, 7, .12);
+    color: #ffda6a;
+}
+
+.preview-edit-warning p {
+    margin: 0 0 4px;
+}
+
+.preview-edit-warning ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.preview-edit-status {
+    color: #8f948f;
+    overflow-wrap: anywhere;
+}
+
+.preview-edit-status:empty {
+    display: none;
+}
+
+.preview-edit-status.is-error {
+    color: #ea868f;
+}
+
+.preview-edit-status.is-ok {
+    color: #75b798;
+}
+
+.preview-edit-toggle.active {
+    color: #fff;
+}
+
+/* Room for the panel: the media gives up some height while it is open. */
+.preview-content.is-editing .preview-body,
+.preview-content.is-editing .preview-body img,
+.preview-content.is-editing .preview-body video,
+.preview-content.is-editing .preview-text {
+    max-height: 56vh;
+}
+
+@media (max-width: 767.98px) {
+    .preview-edit {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+        padding: 8px 10px;
+    }
+
+    .preview-edit-alias .preview-edit-label {
+        margin-top: 6px;
+    }
+
+    .preview-content.is-editing .preview-body img,
+    .preview-content.is-editing .preview-body video,
+    .preview-content.is-editing .preview-player video,
+    .preview-content.is-editing .preview-text {
+        max-height: calc(100dvh - 380px);
+    }
+
+    .preview-content.is-editing .preview-body {
+        max-height: none;
+    }
+}
+
 /* Phones: the previewer is full screen; a thin prev/next strip sits above the media and the actions form one toolbar. */
 .preview-nav-strip {
     display: none;
